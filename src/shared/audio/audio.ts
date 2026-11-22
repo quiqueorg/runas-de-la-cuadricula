@@ -4,14 +4,10 @@ import { progress } from '../../core/state';
 interface MusicZone {
   bajo?: readonly number[] | boolean;
   eco?: readonly number[] | number;
-  adorno?: number;
-  prob?: number;
   tempo?: number;
   arm?: number;
-  soloExtremos?: boolean;
   oct?: number;
   brillo?: number;
-  temblor?: boolean;
   tink?: readonly number[];
   suave?: boolean;
   sinBombo?: boolean;
@@ -27,8 +23,6 @@ interface MusicZone {
   tambor?: boolean;
   pad?: number;
   tema?: boolean;
-  acomp?: boolean;
-  pulso?: boolean;
 }
 
 type ZoneMap = Record<string, MusicZone>;
@@ -36,6 +30,8 @@ type ZoneMap = Record<string, MusicZone>;
 declare global {
   interface Window {
     webkitAudioContext?: typeof AudioContext;
+    /** Shuts down a previous copy of this module (hot reload / duplicate import). */
+    __kalimbaAudioDispose?: () => void;
   }
 }
 
@@ -60,6 +56,20 @@ function createNoiseBuffer(ctx: AudioContext, dur: number, shape: (i: number, n:
   const d = buf.getChannelData(0);
   for (let i = 0; i < n; i++) d[i] = shape(i, n);
   return buf;
+}
+
+/** Schroeder allpass: y = -g·w + w[n-d], w = x + g·w[n-d]. Smears echoes without colouring the tone. */
+function createAllpass(ctx: AudioContext, input: AudioNode, d: number, g: number): AudioNode {
+  const w = ctx.createGain();
+  const delay = ctx.createDelay(0.05); delay.delayTime.value = d;
+  const fb = ctx.createGain(); fb.gain.value = g;
+  const ff = ctx.createGain(); ff.gain.value = -g;
+  const out = ctx.createGain();
+  input.connect(w);
+  w.connect(delay); delay.connect(fb); fb.connect(w);
+  w.connect(ff); ff.connect(out);
+  delay.connect(out);
+  return out;
 }
 
 function getEngine(): AudioEngine | null {
@@ -98,27 +108,37 @@ function getEngine(): AudioEngine | null {
     sfxFb.connect(sfxDelay);
     sfxLp.connect(master);
 
-    // Music master + lightweight cross-coupled stereo delay reverb (replaces heavy 3.2s ConvolverNode)
+    // Music master + a small, cheap room reverb (no ConvolverNode).
+    // The old 173/241 ms ping-pong delay repeated every pluck as a distinct, quieter copy a moment later,
+    // which made one kalimba sound like a second one trailing behind it. Short damped combs + allpass
+    // diffusers blur the repeats into a smooth ~1 s tail instead.
     const musicMaster = ctx.createGain();
     musicMaster.gain.value = 0.0001;
     musicMaster.connect(master);
 
     const reverbSend = ctx.createGain();
-    reverbSend.gain.value = 0.24;
-    const dL = ctx.createDelay(0.5); dL.delayTime.value = 0.173;
-    const dR = ctx.createDelay(0.5); dR.delayTime.value = 0.241;
-    const lpL = ctx.createBiquadFilter(); lpL.type = 'lowpass'; lpL.frequency.value = 2800;
-    const lpR = ctx.createBiquadFilter(); lpR.type = 'lowpass'; lpR.frequency.value = 2300;
-    const fbL = ctx.createGain(); fbL.gain.value = 0.34;
-    const fbR = ctx.createGain(); fbR.gain.value = 0.34;
+    reverbSend.gain.value = 0.26;
+    const reverbHp = ctx.createBiquadFilter(); // keep kicks and bass from booming in the room
+    reverbHp.type = 'highpass'; reverbHp.frequency.value = 180;
+    reverbSend.connect(reverbHp);
     const merger = ctx.createChannelMerger(2);
-
-    reverbSend.connect(dL);
-    reverbSend.connect(dR);
-    dL.connect(lpL); lpL.connect(fbL); fbL.connect(dR);
-    dR.connect(lpR); lpR.connect(fbR); fbR.connect(dL);
-    lpL.connect(merger, 0, 0);
-    lpR.connect(merger, 0, 1);
+    const COMBS = [[0.0253, 0.029, 0.0322, 0.0353], [0.0269, 0.0307, 0.0338, 0.0367]];
+    const DIFFUSERS = [[0.0126, 0.0077], [0.0131, 0.0083]];
+    COMBS.forEach((times, ch) => {
+      const sum = ctx.createGain();
+      sum.gain.value = 0.3;
+      for (const d of times) {
+        const dl = ctx.createDelay(0.1); dl.delayTime.value = d;
+        const damp = ctx.createBiquadFilter();
+        damp.type = 'lowpass'; damp.frequency.value = 3600; damp.Q.value = -3; // Butterworth: no resonant peak in the loop
+        const fb = ctx.createGain(); fb.gain.value = 0.8;
+        reverbHp.connect(dl); dl.connect(damp); damp.connect(fb); fb.connect(dl);
+        damp.connect(sum);
+      }
+      let out: AudioNode = sum;
+      for (const d of DIFFUSERS[ch]) out = createAllpass(ctx, out, d, 0.5);
+      out.connect(merger, 0, ch);
+    });
     merger.connect(musicMaster);
 
     // Pre-allocated noise buffers (zero per-note AudioBuffer allocations)
@@ -213,55 +233,44 @@ export const sound = (() => {
 })();
 
 // ════════════════════════════════════════════ ambient music: 17-key kalimba, underground & sky
-//Surface melody (kalimba tablature, the dot marks the upper octave):
-//   4 5 1̇ 7 6  ×2   ·   4 5 3̇ 7 1  ×2   + gentle second-pass variation and warm harmonic bed.
 interface TrackBus {
   gain: GainNode;
   body: BiquadFilterNode;
+  loop?: AudioBufferSourceNode;
+  loading?: boolean;
 }
 
 export const music = (() => {
   //17 keys in C: 1..7 = C4..B4 · dotted 1..7 = C5..B5 · double-dotted 1 2 3 = C6..E6
   const F = [261.63, 293.66, 329.63, 349.23, 392.0, 440.0, 493.88, 523.25, 587.33, 659.25, 698.46, 783.99, 880.0, 987.77, 1046.5, 1174.66, 1318.51];
-  const PASO = 0.82, FIN_FRASE = 1.64, RESPIRO = 1.05;
-  const A = [3, 4, 7, 6, 5], B = [3, 4, 9, 6, 0]; // 4 5 1̇ 7 6 · 4 5 3̇ 7 1
-  const A2 = [3, 4, 7, 8, 7, 5], B2 = [3, 4, 9, 7, 6, 4]; // second-pass answer with passing tones
-  // Harmonic progression across the 4 phrases: Fmaj7 -> Dm7 -> Am7 -> G -> C
-  const SURF_CHORDS: readonly { bass: number; pad: readonly number[]; acomp: readonly number[] }[] = [
-    { bass: 174.61, pad: [174.61, 220.0, 261.63], acomp: [0, 2, 4] },   // F
-    { bass: 146.83, pad: [146.83, 220.0, 261.63], acomp: [1, 3, 5] },   // Dm7
-    { bass: 174.61, pad: [174.61, 220.0, 329.63], acomp: [0, 4, 5] },   // Fmaj7
-    { bass: 130.81, pad: [130.81, 196.0, 261.63], acomp: [0, 2, 4] },   // C
-  ];
-  interface KalimbaStep { k: number; ini: boolean; fin: boolean; dt: number; phrase: number; idx: number }
-  function buildSequence(phrases: readonly (readonly number[])[]): KalimbaStep[] {
-    const out: KalimbaStep[] = [];
-    phrases.forEach((fr, phrase) => {
-      fr.forEach((k, idx) => {
-        const isLast = idx === fr.length - 1;
-        const stepDt = fr.length > 5 && (idx === 2 || idx === 3) ? PASO * 0.55 : PASO;
-        out.push({ k, ini: idx === 0, fin: isLast, dt: isLast ? FIN_FRASE : stepDt, phrase, idx });
-      });
-    });
-    out[out.length - 1].dt += RESPIRO;
-    return out;
-  }
-  const SEC = buildSequence([A, A, B, B]);
-  const SEC_B = buildSequence([A, A2, B, B2]);
+  const recordings = {
+    menu: new URL('../../../assets/kalimba-menu.wav', import.meta.url).href,
+    surface: new URL('../../../assets/kalimba-surface.wav', import.meta.url).href,
+  };
+  const decoded = new Map<string, Promise<AudioBuffer>>();
 
-  //the same melody, colored by the region (with distinct title screen & rich first world)
+  // Regional tempo changes take effect between phrases.
   const ZONAS: ZoneMap = {
-    inicio: { tempo: 1.08, pad: 0.032, bajo: [0, 4], brillo: 0.16, acomp: true },
-    pradera: { tempo: 0.96, pad: 0.026, bajo: [0], acomp: true, pulso: true },
-    bosque: { tempo: 1.12, pad: 0.03, brillo: 0.24, acomp: true },
-    canon: { eco: [0.42, 0.84], pad: 0.022, bajo: [0] },
-    valle: { tempo: 0.9, arm: 2, acomp: true, pulso: true },
-    lago: { tempo: 1.05, pad: 0.028, adorno: 1, prob: 0.6, acomp: true },
-    cumbres: { oct: 7, tempo: 1.12, pad: 0.026, brillo: 0.15 },
-    desierto: { bajo: [0, 4], adorno: -1, prob: 0.5, pulso: true },
-    aldea: { tempo: 0.92, adorno: 2, prob: 0.65, temblor: true, acomp: true, pulso: true },
-    ciudadela: { tempo: 1.06, bajo: [0], arm: 4, soloExtremos: true, pad: 0.034 },
-    secreto: { oct: 7, tempo: 1.08, eco: [0.46], brillo: 0.2, pad: 0.026 },
+    inicio: { tempo: 1.08 },
+    pradera: { tempo: 0.96 },
+    bosque: { tempo: 1.12 },
+    canon: { tempo: 1.1 },
+    valle: { tempo: 0.98 },
+    lago: { tempo: 1.05 },
+    cumbres: { tempo: 1.12 },
+    desierto: { tempo: 1.04 },
+    aldea: { tempo: 0.96 },
+    ciudadela: { tempo: 1.06 },
+    secreto: { tempo: 1.14 },
+    // the apprentice's isle shares the surface theme
+    embarcadero: { tempo: 1 },
+    patio: { tempo: 1.1 },
+    tintas: { tempo: 1.04 },
+    imprenta: { tempo: 0.98 },
+    almacen: { tempo: 1.06 },
+    canal: { tempo: 0.94 },
+    farola: { tempo: 1 },
+    aula: { tempo: 1.08 },
   };
 
   let scene: MusicZone = ZONAS.inicio;
@@ -269,9 +278,8 @@ export const music = (() => {
   let currentZoneName = 'inicio';
   let trackBus: TrackBus | null = null;
   let musicTimer = 0;
-  let phraseIndex = 0;
   let nextTime = 0;
-  let song = 'kalimba', step = 0, cycle = 0;
+  let song = 'menu', step = 0, cycle = 0;
 
   // ── The underground: D dorian at 104 bpm, eight bars of eighth notes with rhythmic variations
   const CORCHEA = 60 / 104 / 2;
@@ -318,6 +326,8 @@ export const music = (() => {
   ZONAS_CIELO.final = ZONAS_CIELO.vacio = { tempo: 0.56, menor: true, tambor: true, bajo: true, pad: 0.055, tema: true, campanillas: 0.1 };
   const MEL_TEMA = [[[0, 77], [1, 79], [2, 84], [4, 83]], [[0, 81]], [[0, 77], [1, 79], [2, 84], [4, 83]], [[0, 81]], [[0, 77], [1, 79], [2, 88], [4, 83]], [[0, 84]], [[0, 77], [1, 79], [2, 88], [4, 83]], [[0, 84], [3, 79]]];
   const aMenor = (m: number) => ([4, 9, 11].includes(((m % 12) + 12) % 12) ? m - 1 : m);
+  //F lydian uses only the white keys: nudge a black key down onto the scale (keeps harmony notes in key)
+  const enEscala = (m: number) => ([1, 3, 6, 8, 10].includes(((m % 12) + 12) % 12) ? m - 1 : m);
 
   function createTrackBus(e: AudioEngine, fadeInDelay = 0): TrackBus {
     const { ctx, musicMaster, reverbSend } = e;
@@ -337,17 +347,18 @@ export const music = (() => {
     body.connect(suave);
     suave.connect(gain);
     gain.connect(musicMaster);
-    gain.connect(reverbSend);
+    if (song === 'sub' || song === 'cielo') gain.connect(reverbSend);
     return { gain, body };
   }
 
-  function retireTrackBus(oldBus: TrackBus | null, e: AudioEngine) {
+  function retireTrackBus(oldBus: TrackBus | null, e: AudioEngine, tau = 0.12) {
     if (!oldBus) return;
     const now = e.ctx.currentTime;
-    rampGain(oldBus.gain.gain, 0.0001, now, 0.12);
+    rampGain(oldBus.gain.gain, 0.0001, now, tau);
+    oldBus.loop?.stop(now + 6 * tau);
     window.setTimeout(() => {
       try { oldBus.body.disconnect(); oldBus.gain.disconnect(); } catch { /* already disconnected */ }
-    }, 900);
+    }, Math.max(900, tau * 5000));
   }
 
   function ensureTrackBus(): { e: AudioEngine; bus: TrackBus } | null {
@@ -500,13 +511,13 @@ export const music = (() => {
         if (p !== st) continue;
         const m = m0 + oct, t = t0 + hum(), v = 0.15 + Math.random() * 0.03;
         pluck(e, bus, tono(m), t, v);
-        if (z.arm && m + z.arm < 100) pluck(e, bus, tono(m - 12 + z.arm), t + 0.03, v * 0.4);
+        if (z.arm) pluck(e, bus, tono(enEscala(m - 12 + z.arm)), t + 0.03, v * 0.4);
         if (typeof z.eco === 'number') pluck(e, bus, tono(m), t + z.eco, v * 0.28);
         if (z.brillo && m + 12 <= 100) pluck(e, bus, tono(m + 12), t + 0.18, v * z.brillo);
       }
       if (st === 0) {
         //pad: three chord tones that enter slowly
-        arp.slice(0, 3).forEach((m, j) => playPartial(e, bus, tono(m - 12), t0 + j * 0.02, z.pad || 0.03, 2.2 * (z.tempo || 1), 'sine', 0.65));
+        arp.slice(0, 3).forEach((m, j) => playPartial(e, bus, tono(m - 12), t0 + j * 0.02, z.pad || 0.024, 2 * corch, 'sine', corch));
         if (z.bajo) playBass(e, bus, tono(b), t0, z.menor ? 0.15 : 0.11, 2);
         if (z.campanas) [0, 0.12].forEach((d, j) => playTin(e, bus, t0 + d, 0.02 / (j + 1)));
         if (z.viento && c % 2 === 0) playGust(e, bus, t0, 0.05);
@@ -565,6 +576,31 @@ export const music = (() => {
     }
   }
 
+  async function playRecording(e: AudioEngine, bus: TrackBus, url: string) {
+    bus.loading = true;
+    try {
+      let buffer = decoded.get(url);
+      if (!buffer) {
+        buffer = fetch(url).then(response => {
+          if (!response.ok) throw new Error(`HTTP ${response.status}: ${url}`);
+          return response.arrayBuffer();
+        }).then(bytes => e.ctx.decodeAudioData(bytes));
+        decoded.set(url, buffer);
+      }
+      const audio = await buffer;
+      if (trackBus !== bus || !musicTimer) return;
+      const source = e.ctx.createBufferSource();
+      source.buffer = audio;
+      source.loop = true;
+      source.connect(bus.body);
+      bus.loop = source;
+      source.start();
+    } catch (error) {
+      decoded.delete(url);
+      console.error('No se pudo reproducir la kalimba:', error);
+    }
+  }
+
   function scheduleNotes() {
     if (!progress.musica) return;
     const ready = ensureTrackBus();
@@ -574,68 +610,12 @@ export const music = (() => {
     if (song === 'sub') return scheduleUnderground(e, bus);
     if (song === 'cielo') return scheduleSky(e, bus);
 
-    const ahora = e.ctx.currentTime;
-    clampDrift(ahora);
-    while (nextTime < ahora + 0.5) {
-      const seq = cycle % 2 ? SEC_B : SEC;
-      const n = seq[phraseIndex % seq.length];
-      if (n.ini) applyPendingScene();
-      const z = scene;
-      const tempo = z.tempo || 1;
-      const chord = SURF_CHORDS[n.phrase] ?? SURF_CHORDS[0];
-      let k = n.k + (z.oct || 0);
-      if (k > 16) k -= 7;
-      const t = Math.max(nextTime + (Math.random() - 0.5) * 0.035, ahora + 0.02);
-      const v = 0.18 + Math.random() * 0.035;
-
-      // Warm harmonic pad & root bass on phrase entry
-      if (n.ini) {
-        const padVol = z.pad ?? 0.022;
-        if (padVol > 0) {
-          chord.pad.forEach((pf, j) => playPartial(e, bus, pf, t + j * 0.03, padVol, 2.3 * tempo, 'sine', 0.55));
-        }
-        playBass(e, bus, chord.bass, t + 0.01, 0.095, 1.8);
-      }
-
-      if (z.adorno && !n.ini && z.prob !== undefined && Math.random() < z.prob) {
-        const ka = k + z.adorno;
-        if (ka >= 0 && ka <= 16) pluck(e, bus, F[ka] ?? 0, Math.max(ahora + 0.01, t - 0.1), v * 0.38);
-      }
-      pluck(e, bus, F[k] ?? 0, t, v);
-
-      // Gentle two-thumb off-beat accompaniment pluck between melody notes
-      if (z.acomp && !n.fin) {
-        const acKey = chord.acomp[n.idx % chord.acomp.length];
-        const halfStep = n.dt * tempo * 0.5;
-        if (halfStep >= 0.28) {
-          pluck(e, bus, F[acKey] ?? 0, t + halfStep, v * 0.36);
-        }
-      }
-
-      // Soft organic pulse for livelier surface regions
-      if (z.pulso) {
-        if (n.ini) playKick(e, bus, t, 0.11, 88, 46);
-        else if (n.idx % 2 === 1) playTick(e, bus, t + n.dt * tempo * 0.5, 0.022, 5200, 0.03);
-      }
-
-      if (z.arm && (!z.soloExtremos || n.ini || n.fin)) {
-        const k2 = k + z.arm;
-        if (k2 <= 16) pluck(e, bus, F[k2] ?? 0, t + 0.032, v * 0.42);
-      }
-      if (Array.isArray(z.bajo) && n.ini) {
-        z.bajo.forEach((kb, j) => pluck(e, bus, F[kb] ?? 0, t + 0.015 + j * 0.035, v * 0.42));
-      }
-      if (Array.isArray(z.eco)) {
-        z.eco.forEach((d, j) => pluck(e, bus, F[k] ?? 0, t + d, v * (0.28 / (j + 1))));
-      }
-      if (z.brillo && k + 7 <= 16) pluck(e, bus, F[k + 7] ?? 0, t + 0.18, v * z.brillo);
-      if (z.temblor && n.fin) pluck(e, bus, F[k] ?? 0, t + 0.15, v * 0.5);
-
-      nextTime += n.dt * tempo;
-      if (++phraseIndex >= seq.length) {
-        phraseIndex = 0;
-        cycle++;
-      }
+    applyPendingScene();
+    if (!bus.loading) void playRecording(e, bus, song === 'menu' ? recordings.menu : recordings.surface);
+    if (bus.loop && song === 'surface') {
+      const rate = 0.96 / (scene.tempo ?? 1);
+      if (Math.abs(bus.loop.playbackRate.value - rate) > 0.0001)
+        bus.loop.playbackRate.setTargetAtTime(rate, e.ctx.currentTime, 0.25);
     }
   }
 
@@ -646,7 +626,7 @@ export const music = (() => {
     const { e } = ready;
     rampGain(e.musicMaster.gain, 0.55, e.ctx.currentTime, 0.45);
     if (!musicTimer) {
-      phraseIndex = 0; step = 0;
+      step = 0;
       nextTime = e.ctx.currentTime + 0.25;
       musicTimer = window.setInterval(scheduleNotes, 100);
       scheduleNotes();
@@ -654,9 +634,13 @@ export const music = (() => {
   }
 
   function stopMusic() {
+    if (musicTimer) { clearInterval(musicTimer); musicTimer = 0; }
     if (!engine) return;
     rampGain(engine.musicMaster.gain, 0.0001, engine.ctx.currentTime, 0.25);
-    if (musicTimer) { clearInterval(musicTimer); musicTimer = 0; }
+    // Drop the notes already queued ~0.5 s ahead: otherwise a quick stop → start (tab switch)
+    // lets them play on top of the restarted song.
+    retireTrackBus(trackBus, engine, 0.25);
+    trackBus = null;
   }
 
   return {
@@ -666,7 +650,7 @@ export const music = (() => {
       if (nombre === currentZoneName) return;
       currentZoneName = nombre;
       const sub = nombre in ZONAS_SUB, cie = nombre in ZONAS_CIELO;
-      const nueva = sub ? 'sub' : cie ? 'cielo' : 'kalimba';
+      const nueva = sub ? 'sub' : cie ? 'cielo' : nombre === 'inicio' ? 'menu' : 'surface';
       const nextScene = (sub ? ZONAS_SUB : cie ? ZONAS_CIELO : ZONAS)[nombre] || ZONAS.inicio;
 
       if (nueva !== song) {
@@ -674,8 +658,8 @@ export const music = (() => {
         song = nueva;
         scene = nextScene;
         pendingScene = null;
-        phraseIndex = 0; step = 0; cycle = 0;
-        if (engine) {
+        step = 0; cycle = 0;
+        if (engine && musicTimer) {
           retireTrackBus(trackBus, engine);
           trackBus = createTrackBus(engine, 0.16);
           nextTime = engine.ctx.currentTime + 0.22;
@@ -691,19 +675,32 @@ export const music = (() => {
   };
 })();
 
+// If an older copy of this module is still alive (dev hot reload, or the file imported twice),
+// it has its own AudioContext and scheduler and the song would play twice. Shut it down first.
+window.__kalimbaAudioDispose?.();
+
 progress.musica = progress.musica !== false;
+const UNLOCK_EVENTS = ['pointerdown', 'touchend', 'click', 'keydown'] as const;
+function removeGestureListeners() {
+  UNLOCK_EVENTS.forEach((ev) => removeEventListener(ev, onFirstGesture));
+}
 export const onFirstGesture = () => {
   if (progress.musica) music.sonar();
-  removeEventListener('pointerdown', onFirstGesture);
-  removeEventListener('touchend', onFirstGesture);
-  removeEventListener('click', onFirstGesture);
-  removeEventListener('keydown', onFirstGesture);
+  // On touch screens a pointerdown does not unlock audio (touchend/click do), so keep
+  // listening until the AudioContext is actually running.
+  if (!progress.musica || engine?.ctx.state === 'running') removeGestureListeners();
 };
-addEventListener('pointerdown', onFirstGesture);
-addEventListener('touchend', onFirstGesture);
-addEventListener('click', onFirstGesture);
-addEventListener('keydown', onFirstGesture);
-document.addEventListener('visibilitychange', () => {
+const onVisibility = () => {
   if (document.hidden) music.callar();
   else if (progress.musica) music.sonar();
-});
+};
+UNLOCK_EVENTS.forEach((ev) => addEventListener(ev, onFirstGesture));
+document.addEventListener('visibilitychange', onVisibility);
+
+window.__kalimbaAudioDispose = () => {
+  music.callar();
+  removeGestureListeners();
+  document.removeEventListener('visibilitychange', onVisibility);
+  engine?.ctx.close().catch(() => {});
+  engine = null;
+};

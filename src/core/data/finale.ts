@@ -30,7 +30,7 @@ export const finaleLevels: LevelDraft[] = [
   {
     id: 'x0-1', r: 0, n: 'Los cimientos', fase: 'Grid y Flexbox', examen: true, t: 'ciudadela', dim: false, w: 460, h: 320, ok: uniqueList(FINALE_GRID, FINALE_FLEX),
     enc: '¡JI, JI! Has ordenado tres mundos… qué aburrimiento. Yo vivo entre ellos y me alimento de desorden. ¿Quieres detenerme? Empieza por levantar estos cimientos: una cuadrícula… ¡y dentro, una fila!',
-    obj: 'Rejilla con columnas <code>80px 1fr 80px</code>, filas <code>60px 1fr 50px</code> y 8px de hueco. El muro de arriba y el de abajo ocupan toda la fila; en medio, torre, sala y torre. La sala es flex: sus tres gemas, centradas en vertical y repartidas con el mismo espacio alrededor (<code>space-evenly</code>).',
+    obj: 'Rejilla con columnas <code>80px 1fr 80px</code>, filas <code>60px 1fr 50px</code> y 8px de hueco. El muro de arriba y el de abajo ocupan toda la fila; en medio, torre, sala y torre. La sala es flex: centra las tres gemas en vertical y deja cuatro huecos horizontales iguales, incluidos los dos de los extremos (<code>space-evenly</code>).',
     p: ['muro@cima', 'torre', 'sala', ['gema', 'gema', 'gema'], 'torre', 'muro@base'],
     b: [{ s: '.tablero', sol: 'display: grid;\ngrid-template-columns: 80px 1fr 80px;\ngrid-template-rows: 60px 1fr 50px;\ngap: 8px;' }, { s: '.cima', sol: 'grid-column: 1 / -1;' }, { s: '.base', sol: 'grid-column: 1 / -1;' }, { s: '.sala', sol: 'display: flex;\njustify-content: space-evenly;\nalign-items: center;' }, { s: '.gema', f: 'width: 44px;\nheight: 44px;', ed: false }],
   },
@@ -53,7 +53,7 @@ export const finaleLevels: LevelDraft[] = [
     b: [{ s: '.tablero', sol: 'display: flex;\njustify-content: center;\nalign-items: center;\ngap: var(--u);\n--u: 14px;' }, { s: '.pieza', f: 'width: calc(var(--u) * 3);\nheight: calc(var(--u) * 3);', ed: false }, { s: '.grande', f: 'width: calc(var(--u) * 5);\nheight: calc(var(--u) * 5);', ed: false }, { s: '.tablero', m: { sol: '(min-width: 500px)' }, sol: '--u: 22px;' }],
   },
   {
-    id: 'x0-4', r: 0, n: 'El latido del garabato', fase: 'Transiciones, :hover y variables', examen: true, t: 'tormenta', estado: 'hover', w: 440, h: 240, ok: uniqueList(FINALE_TRANSITION, ['--t']),
+    id: 'x0-4', r: 0, n: 'El latido del garabato', fase: 'Transiciones, :hover y variables', examen: true, t: 'tormenta', estado: 'hover', cmp: ['transform'], w: 440, h: 240, ok: uniqueList(FINALE_TRANSITION, ['--t']),
     enc: '¡Ji, ji, ji! Mis escudos tiemblan cuando los miras… ¡pero cada uno a su ritmo! Ritmos guardados en un nombre, claro. ¿Te acuerdas de cuál?',
     obj: 'Con el cursor encima, cada escudo crece y gira (<code>scale(1.3) rotate(10deg)</code>). La transición de <code>transform</code> dura <code>var(--t)</code> con <code>ease-out</code>: <code>--t</code> vale <b>0.4s</b> en el tablero y <b>1.2s</b> en el escudo lento.',
     p: ['escudo', 'escudo@lento', 'escudo'],

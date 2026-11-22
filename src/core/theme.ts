@@ -22,3 +22,5 @@ import "../features/home/home-sky.css";
 import "../features/map/map-sky.css";
 import "../features/challenge/challenge-floors.css";
 import "../features/map/map-veil.css";
+import "../features/challenge/challenge-base.css";
+import "../features/map/map-isle.css";

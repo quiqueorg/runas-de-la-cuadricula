@@ -2,10 +2,11 @@
 import { useEffect, useRef, type CSSProperties, type ReactNode } from 'react';
 import type { WorldId } from '../../core/models';
 import { trackMotion } from '../../shared/canvas/motion';
+import { observeRenderVisibility } from '../../shared/canvas/visibility';
 import { Rune } from '../../shared/icons/Rune';
-import { Flag, Flock, Flyer, flyerSize, Walker } from './figures';
+import { Flag, Flock, Flyer, flyerSize } from './figures';
 import { routeSample } from './model';
-import { paintBlades, paintBolt, paintFish, paintFlowCanvas, paintRunes, paintSketch, paintSpout } from './paint';
+import { paintAirship, paintBlades, paintBolt, paintFish, paintFlowCanvas, paintMinecart, paintRunes, paintSketch, paintSpout } from './paint';
 import scenery from './scenery.json';
 
 type Pair = readonly number[];
@@ -28,7 +29,19 @@ function FlowCanvas({ paths, classes }: { readonly paths: readonly { d: Path; da
     const started = performance.now();
     const draw = (now: number) => paintFlowCanvas(canvas, pathsRef.current, (now - started) / 1000);
     draw(started);
-    return trackMotion(draw);
+    let stopMotion: (() => void) | null = trackMotion(draw);
+    const stopVisibility = observeRenderVisibility(canvas, (visible) => {
+      if (visible && !stopMotion) {
+        stopMotion = trackMotion(draw);
+      } else if (!visible && stopMotion) {
+        stopMotion();
+        stopMotion = null;
+      }
+    });
+    return () => {
+      stopMotion?.();
+      stopVisibility();
+    };
   }, []);
   return <canvas ref={canvasRef} className={`${classes} rune`} aria-hidden="true" />;
 }
@@ -48,7 +61,19 @@ function Sketch({ className, style, box, draw, moving = false }: { readonly clas
       observer.observe(canvas);
       return () => observer.disconnect();
     }
-    return trackMotion(paint);
+    let stopMotion: (() => void) | null = trackMotion(paint);
+    const stopVisibility = observeRenderVisibility(canvas, (visible) => {
+      if (visible && !stopMotion) {
+        stopMotion = trackMotion(paint);
+      } else if (!visible && stopMotion) {
+        stopMotion();
+        stopMotion = null;
+      }
+    });
+    return () => {
+      stopMotion?.();
+      stopVisibility();
+    };
   }, [box, moving]);
   return <canvas ref={canvasRef} className={`${className} rune`} style={style} aria-hidden="true" />;
 }
@@ -81,6 +106,7 @@ export function Effects({ world }: { readonly world: WorldId }) {
   if (world === 'flex') return <Underground />;
   if (world === 'cielo') return <Sky />;
   if (world === 'final') return <Finale />;
+  if (world === 'base') return <IsleLife />;
   return <Grid />;
 }
 
@@ -90,8 +116,6 @@ function Grid() {
   return (
     <>
       <FlowCanvas classes="fx-rios" paths={rivers.map((river) => ({ d: river, dash: [2, 16], color: 'rgba(236,255,252,.9)', width: 1.3, speed: 8 }))} />
-      <i className="fx-lava" style={spot(fx.volcan)} />
-      {Array.from({ length: 7 }, (_, puff) => <i key={puff} className="fx-humo" style={spot(fx.volcan, { '--d': `${(-puff * 1.3).toFixed(1)}s`, '--dx': (puff % 3) * 0.6 })} />)}
       {fx.chimeneas.flatMap((point, group) => Array.from({ length: 3 }, (_, puff) => <i key={`${group}-${puff}`} className="fx-humo chica" style={spot(point, { '--d': `${(-puff * 1.8 - group * 0.7).toFixed(1)}s` })} />))}
       <Sketch className="fx-aspas" style={spot(fx.molino)} box={[40, 40]} draw={paintBlades} />
       <i className="fx-faro" style={spot(fx.faro)} />
@@ -116,6 +140,24 @@ function Grid() {
   );
 }
 
+function IsleLife() {
+  const fx = scenery.base;
+  return (
+    <>
+      <FlowCanvas classes="fx-rios" paths={[{ d: fx.canal, dash: [2, 16], color: 'rgba(236,255,252,.9)', width: 1.3, speed: 7 }]} />
+      {smoke(fx.chimeneas, 3, true)}
+      <i className="fx-faro" style={spot(fx.faro)} />
+      <i className="fx-lampara" style={spot(fx.faro)} />
+      {fx.ondas.map((point, index) => <i key={index} className="fx-onda" style={spot(point, { '--d': `${(-index * 0.9).toFixed(1)}s` })} />)}
+      {fx.brillos.map((point, index) => <i key={index} className="fx-brillo" style={spot(point, { '--d': `${(-index * 0.77).toFixed(2)}s` })} />)}
+      <i className="fx-aura" style={spot(fx.aura)} />
+      {[[0.3, 78, -14], [0.72, 96, -58]].map(([y, duration, delay], index) => (
+        <Flock key={index} style={{ ['--y' as string]: y, ['--dur' as string]: `${duration}s`, ['--d' as string]: `${delay}s` }} />
+      ))}
+    </>
+  );
+}
+
 function Underground() {
   const fx = scenery.flex;
   return (
@@ -125,14 +167,7 @@ function Underground() {
         { d: fx.rios.lava, dash: [3, 14], color: 'rgba(255,240,170,.95)', width: 1.3, speed: 4 },
       ]} />
       <Along points={fx.carril} duration={16} ping className="vag">
-        <Sketch className="" box={[28, 20]} draw={(ctx) => {
-          ctx.fillStyle = '#8a643c';
-          ctx.strokeStyle = '#1a1008';
-          ctx.lineWidth = 1.6;
-          ctx.beginPath();
-          ctx.moveTo(3, 2); ctx.lineTo(25, 2); ctx.lineTo(22, 12); ctx.lineTo(6, 12); ctx.closePath();
-          ctx.fill(); ctx.stroke();
-        }} />
+        <Sketch className="" box={[28, 20]} style={{ aspectRatio: '28 / 20' }} draw={paintMinecart} />
       </Along>
       <i className="fx-rayo" style={spot(fx.luz)} />
       {fx.esporas.map((point, index) => <i key={index} className="fx-espora" style={spot(point, { '--d': `${(-index * 0.9).toFixed(1)}s`, '--c': index % 3 ? '#a8fff0' : '#e0b0ff' })} />)}
@@ -165,19 +200,18 @@ function Sky() {
       <i className="fx-vortice" style={spot(fx.vortice)}><b /><b /></i>
       <i className="fx-aura ojo" style={spot(fx.vortice)} />
       {fx.relampagos.map((point, index) => <Sketch key={index} className="fx-relampago" style={spot(point, { '--d': `${(-index * 2.3 - 1).toFixed(1)}s`, '--dur': `${(6 + (index % 3) * 1.7).toFixed(1)}s` })} box={[20, 40]} draw={paintBolt} />)}
-      <Along points={fx.dirigible} duration={80} className="dir"><Rune id="i-dirigible" /></Along>
-      {fx.globos.map((balloon, index) => <i key={index} className={`fx-globo-c v${balloon[3] ?? 0}`} style={spot(balloon, { '--e': balloon[2] ?? 1, '--d': `${(-index * 1.7).toFixed(1)}s` })}><Rune id="i-globo" /><b /></i>)}
-      {fx.molinillos.map((point, index) => <i key={index} className="fx-molinillo" style={spot(point, { '--d': `${(-index * 0.6).toFixed(1)}s`, '--dur': `${(1.6 + (index % 3) * 0.7).toFixed(1)}s` })}><Rune id="i-helice" /></i>)}
+      <Along points={fx.dirigible} duration={80} className="dir"><Sketch className="" box={[60, 40]} style={{ aspectRatio: '3 / 2' }} draw={paintAirship} /></Along>
       {fx.campanas.map((point, index) => <i key={index} className="fx-campana" style={spot(point)}><Rune id="i-campana" /></i>)}
       {fx.banderas.map((point, index) => <Flag key={index} style={spot(point, { '--d': `${(-index * 0.37).toFixed(2)}s` })} />)}
-      {fx.cascadas.map((fall, index) => <i key={index} className="fx-cascada" style={{ ['--x' as string]: fall[0], ['--y' as string]: fall[1], ['--h' as string]: fall[2] }} />)}
-      {fx.stars.map((point, index) => <i key={index} className="fx-brillo estelar" style={spot(point, { '--d': `${(-index * 0.61).toFixed(2)}s` })} />)}
+      <svg className="fx-rios sky-streams" viewBox="0 0 900 618.75" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M195 384 C197 405 216 415 220 430 S220 450 231 461 S243 479 243 492 S249 518 253 532" />
+        <path d="M837 301 Q836 305 841 309 Q844 312 835 316" />
+      </svg>
       {smoke(fx.chimeneas, 3, true)}
       <i className="fx-faro" style={spot(fx.faro)} />
       <i className="fx-lampara" style={spot(fx.faro)} />
       <Sketch className="fx-aspas" style={spot(fx.aspas)} box={[40, 40]} draw={paintBlades} />
       <i className="fx-surtidor" style={spot(fx.surtidor)}><b /><b /><b /></i>
-      <Walker style={spot(fx.funambula)} />
       {[[0.3, 74, -12], [0.7, 96, -60]].map(([y, duration, delay], index) => (
         <Flock key={index} style={{ ['--y' as string]: y, ['--dur' as string]: `${duration}s`, ['--d' as string]: `${delay}s` }} />
       ))}
@@ -205,5 +239,5 @@ export function cloudLayer(world: WorldId): ReactNode {
   if (world === 'final') return Array.from({ length: 10 }, (_, index) => <i key={index} className="mota" style={{ ['--y' as string]: (0.08 + index * 0.09).toFixed(2), ['--dur' as string]: `${60 + (index % 4) * 17}s`, ['--d' as string]: `${-index * 11}s`, ['--c' as string]: ['#c8a8ff', '#ffd0f0', '#a8e8ff'][index % 3] ?? '#fff' }} />);
   if (world === 'flex') return Array.from({ length: 9 }, (_, index) => <i key={index} className="mota" style={{ ['--y' as string]: (0.1 + index * 0.1).toFixed(2), ['--dur' as string]: `${70 + (index % 4) * 18}s`, ['--d' as string]: `${-index * 13}s`, ['--c' as string]: ['#a8fff0', '#e0b0ff', '#fff0b0'][index % 3] ?? '#fff' }} />);
   if (world === 'cielo') return [[0.08, 170, -40, 1, 11], [0.44, 210, -150, 2, 9], [0.94, 190, -90, 3, 12]].map(([y, duration, delay, variant, width], index) => <i key={index} className={`nube-paso v${variant}`} style={{ ['--y' as string]: y, ['--dur' as string]: `${duration}s`, ['--d' as string]: `${delay}s`, ['--w' as string]: `${width}cqi` }}><b /></i>);
-  return [[0.14, 150, -20, 1, 13], [0.4, 190, -120, 2, 10], [0.66, 170, -60, 3, 12], [0.86, 210, -160, 1, 9]].map(([y, duration, delay, variant, width], index) => <i key={index} className={`nube-paso v${variant}`} style={{ ['--y' as string]: y, ['--dur' as string]: `${duration}s`, ['--d' as string]: `${delay}s`, ['--w' as string]: `${width}cqi` }}><b /></i>);
+  return [[0.09, 220, -31, 1, 8], [0.35, 170, -118, 2, 12], [0.63, 230, -67, 3, 9], [0.84, 155, -22, 1, 15]].map(([y, duration, delay, variant, width], index) => <i key={index} className={`passing-cloud ${index % 2 ? 'near' : 'far'} v${variant}`} style={{ ['--y' as string]: y, ['--dur' as string]: `${duration}s`, ['--d' as string]: `${delay}s`, ['--w' as string]: `${width}cqi` }}><b /></i>);
 }

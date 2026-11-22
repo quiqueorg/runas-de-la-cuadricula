@@ -8,10 +8,9 @@ export interface Ripple {
 }
 
 export interface Joke {
+  readonly speaker: string;
   readonly name: string;
   readonly text: string;
-  readonly x: number;
-  readonly y: number;
 }
 
 export interface MapUi {

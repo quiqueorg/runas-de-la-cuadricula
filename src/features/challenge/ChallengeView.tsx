@@ -20,10 +20,14 @@ export interface ChallengeViewProps {
   readonly linesOn: boolean;
   readonly active: boolean;
   readonly hintOpen: boolean;
+  readonly hintStep: number;
+  readonly onNextHint: () => void;
   readonly texts: readonly string[];
   readonly conditions: readonly string[];
+  readonly selectors: readonly string[];
   readonly rows: readonly EditorRow[];
-  readonly boardWidth: number;
+  readonly viewIndex: number;
+  readonly peeking: boolean;
   readonly rootsRef: RefObject<HTMLElement | null>;
   readonly objectiveStyleRef: RefObject<HTMLStyleElement | null>;
   readonly playerStyleRef: RefObject<HTMLStyleElement | null>;
@@ -39,7 +43,8 @@ export interface ChallengeViewProps {
   readonly outlineRef: RefObject<HTMLDivElement | null>;
   readonly onNavigate: (hash: string) => void;
   readonly onLines: (on: boolean) => void;
-  readonly onWidth: (width: number) => void;
+  readonly onViewChange: (index: number) => void;
+  readonly onPeek: (on: boolean) => void;
   readonly onToggleState: () => void;
   readonly onSubmit: () => void;
   readonly onToggleHint: () => void;
@@ -48,6 +53,7 @@ export interface ChallengeViewProps {
   readonly onInsertRune: (prop: string) => void;
   readonly onEditRule: (index: number, value: string) => void;
   readonly onEditCondition: (index: number, value: string) => void;
+  readonly onEditSelector: (index: number, value: string) => void;
   readonly onFocusArea: (area: HTMLTextAreaElement) => void;
   readonly onTab: (area: HTMLTextAreaElement) => void;
   readonly onShake: () => void;
@@ -56,9 +62,16 @@ export interface ChallengeViewProps {
 export function ChallengeView(props: ChallengeViewProps) {
   const { chrome, level, view } = props;
   const sky = chrome.sky;
+  const priorHints = level.pistasPrevias ?? [];
+  const reveal = level.b.flatMap((rule) => rule.sol.split(';')).filter((part) => part.trim()).length > 1 ? 'la solución' : 'la declaración';
   const ruleBlock = (rule: EditorRule) => (
     <div key={`rule-${rule.index}`} className={`stack${rule.editable ? '' : ' solo-lectura'}`}>
-      <div className="bl-lin"><span className="t-sel">{rule.selector}</span> <span className="t-llave">{'{'}</span></div>
+      {rule.ownSelector ? (
+        <div className="bl-lin sel-ed">
+          <CodeField value={props.selectors[rule.index] ?? ''} label="Selector de la regla" placeholder="selector" selector={rule.index} allowed={chrome.runes} onChange={(value) => props.onEditSelector(rule.index, value)} onFocus={props.onFocusArea} />{' '}
+          <span className="t-llave">{'{'}</span>
+        </div>
+      ) : <div className="bl-lin"><span className="t-sel">{rule.selector}</span> <span className="t-llave">{'{'}</span></div>}
       {rule.fixed ? <div className="locked-rule"><CodeText text={rule.fixed} fixed allowed={chrome.runes} /></div> : null}
       {rule.editable ? (
         <CodeField
@@ -97,11 +110,11 @@ export function ChallengeView(props: ChallengeViewProps) {
         <div id="board-zone" className={`panel ${chrome.blow}`}>
           <div id="stage-frame" ref={props.frameRef}>
             <div className="stage" id="stage" ref={props.stageRef}>
-              <div className="canvas" id="canvas" ref={props.canvasRef}>
+              <div className={`canvas${props.peeking ? ' peek' : ''}`} id="canvas" ref={props.canvasRef}>
                 <div className={`floor t-${chrome.floor}`} ref={props.floorRef} />
                 <Guides drawing={view?.guides ?? null} />
-                <Layer id="probe" ref={props.probeRef}><div className="tablero">{sky ? <PieceTree level={level} /> : null}</div></Layer>
-                <Layer id="probe-target" ref={props.probeTargetRef}><div className="tablero">{sky ? <PieceTree level={level} /> : null}</div></Layer>
+                <Layer id="probe" ref={props.probeRef}><div className="tablero">{chrome.probes ? <PieceTree level={level} /> : null}</div></Layer>
+                <Layer id="probe-target" ref={props.probeTargetRef}><div className="tablero">{chrome.probes ? <PieceTree level={level} /> : null}</div></Layer>
                 <Layer id="target-layer" ref={props.targetRef}><div className="tablero"><PieceTree level={level} /></div></Layer>
                 <Layer id="player-layer" ref={props.playerRef}><div className="tablero" aria-label={chrome.boardLabel}><PieceTree level={level} matches={view?.matches} /></div></Layer>
                 <Layer id="outline-layer" ref={props.outlineRef}><div className="tablero"><PieceTree level={level} matches={view?.matches} /></div></Layer>
@@ -111,16 +124,25 @@ export function ChallengeView(props: ChallengeViewProps) {
             </div>
           </div>
           <div className="board-controls">
-            <label className="switch">
-              <input type="checkbox" checked={props.linesOn} onChange={(event) => props.onLines(event.target.checked)} />
-              <span className="switch-track" />
-              <span>{chrome.lineLabel}</span>
-            </label>
-            {chrome.widths.length > 1 ? (
-              <div className="segmented compact" role="group" aria-label="Ancho del tablero">
-                {chrome.widths.map((width, widthIndex) => (
-                  <button key={width} type="button" aria-pressed={width === props.boardWidth} onClick={() => props.onWidth(width)}>
-                    <span className="match-mark">{view?.widthOk[widthIndex] ? <Rune id="i-hecho" /> : null}</span>{width}px
+            {chrome.guides ? (
+              <label className="switch">
+                <input type="checkbox" checked={props.linesOn} onChange={(event) => props.onLines(event.target.checked)} />
+                <span className="switch-track" />
+                <span>{chrome.lineLabel}</span>
+              </label>
+            ) : null}
+            {chrome.peek ? (
+              <label className="switch">
+                <input type="checkbox" checked={props.peeking} onChange={(event) => props.onPeek(event.target.checked)} />
+                <span className="switch-track" />
+                <span>Ver el objetivo</span>
+              </label>
+            ) : null}
+            {chrome.views.length ? (
+              <div className="segmented compact" role="group" aria-label={chrome.viewsLabel}>
+                {chrome.views.map((name, viewIndex) => (
+                  <button key={viewIndex} type="button" aria-pressed={viewIndex === props.viewIndex} onClick={() => props.onViewChange(viewIndex)}>
+                    <span className="match-mark">{view?.widthOk[viewIndex] ? <Rune id="i-hecho" /> : null}</span>{name}
                   </button>
                 ))}
               </div>
@@ -164,6 +186,7 @@ export function ChallengeView(props: ChallengeViewProps) {
           <div className="teo">
             {chrome.theory.kind === 'lesson' ? <RichText html={chrome.theory.html} /> : <p className="examen-intro"><RichText html={chrome.theory.html} /></p>}
           </div>
+          {chrome.markup ? <div className="marcado"><h3>El HTML del tablero</h3><pre>{chrome.markup}</pre></div> : null}
           {chrome.exam ? <div className="plano"><h3>Plano del arquitecto</h3><Blueprint views={props.plans} /></div> : null}
           <div className="meta">
             <h3><Rune id="emblema" />Objetivo</h3>
@@ -186,17 +209,22 @@ export function ChallengeView(props: ChallengeViewProps) {
             <h3>Tablilla rúnica</h3>
             <div className="tab-acc">
               {chrome.exam ? <button className="button small primary" type="button" onClick={props.onSubmit}><Rune id="i-entregar" />Entregar</button> : null}
-              {chrome.exam ? null : <button className="button small" type="button" onClick={props.onToggleHint}><Rune id="i-ojo" />Pista</button>}
+              {chrome.exam ? null : <button className="button small" type="button" aria-expanded={props.hintOpen} onClick={props.onToggleHint}><Rune id="i-ojo" />Pista</button>}
               <button className="button small" type="button" onClick={props.onReset}><Rune id="i-reiniciar" />Reiniciar</button>
             </div>
           </div>
           {props.hintOpen ? (
             <div className="pista-caja">
-              <RichText html={chrome.hintHtml} />
-              <button className="text-link" type="button" onClick={props.onShowSolution}>Mostrar la solución</button>
+              <div aria-live="polite">
+                {priorHints.length > 0 && <b>Pista {props.hintStep + 1} de {priorHints.length + 1}: </b>}
+                <RichText html={priorHints[props.hintStep] ?? chrome.hintHtml} />
+              </div>
+              {props.hintStep < priorHints.length
+                ? <button className="text-link" type="button" onClick={props.onNextHint}>{props.hintStep + 1 === priorHints.length ? `Revelar ${reveal}` : 'Siguiente pista'}</button>
+                : <button className="text-link" type="button" onClick={props.onShowSolution}>{priorHints.length ? `Aplicar ${reveal}` : 'Mostrar la solución'}</button>}
             </div>
           ) : null}
-          <div className="runas-perm"><span className="rp-et">Runas permitidas</span><span>{chrome.runes.map((prop) => <button key={prop} type="button" className="chip" title={`Insertar ${prop}`} onClick={() => props.onInsertRune(prop)}>{prop}</button>)}</span></div>
+          {chrome.runes.length ? <div className="runas-perm"><span className="rp-et">Runas permitidas</span><span>{chrome.runes.map((prop) => <button key={prop} type="button" className="chip" title={`Insertar ${prop}`} onClick={() => props.onInsertRune(prop)}>{prop}</button>)}</span></div> : null}
           <div className="code-surface">
             {props.rows.map((row) => row.kind === 'rule' ? ruleBlock(row) : (
               <div key={`media-${row.id}`} className={`media${row.fixed ? '' : ' cond-ed'}`}>
@@ -244,20 +272,22 @@ function tokenClass(kind: string): string {
   return 't-pun';
 }
 
-function CodeField({ value, label, placeholder, rule, media, allowed, onChange, onFocus, onTab }: {
+function CodeField({ value, label, placeholder, rule, media, selector, allowed, onChange, onFocus, onTab }: {
   readonly value: string;
   readonly label: string;
   readonly placeholder: string;
   readonly rule?: number;
   readonly media?: number;
+  readonly selector?: number;
   readonly allowed: readonly string[];
   readonly onChange: (value: string) => void;
   readonly onFocus: (area: HTMLTextAreaElement) => void;
   readonly onTab?: (area: HTMLTextAreaElement) => void;
 }) {
+  const oneLine = media !== undefined || selector !== undefined;
   return (
-    <div className={`code-line${media !== undefined ? ' cond' : ''}`}>
-      <pre aria-hidden="true"><CodeText text={value.endsWith('\n') || !value ? `${value} ` : value} fixed={false} allowed={allowed} /></pre>
+    <div className={`code-line${media !== undefined ? ' cond' : ''}${selector !== undefined ? ' cond sel' : ''}`}>
+      <pre aria-hidden="true">{selector !== undefined ? <span className="t-sel">{value || ' '}</span> : <CodeText text={value.endsWith('\n') || !value ? `${value} ` : value} fixed={false} allowed={allowed} />}</pre>
       <textarea
         value={value}
         rows={1}
@@ -269,13 +299,14 @@ function CodeField({ value, label, placeholder, rule, media, allowed, onChange, 
         placeholder={placeholder}
         data-b={rule}
         data-m={media}
+        data-s={selector}
         onFocus={(event) => onFocus(event.currentTarget)}
         onChange={(event) => onChange(event.currentTarget.value)}
         onKeyDown={(event) => {
-          if (event.key === 'Enter' && media !== undefined) event.preventDefault();
-          if (event.key === 'Tab' && !event.shiftKey && !event.altKey && !event.ctrlKey && !event.metaKey) {
+          if (event.key === 'Enter' && oneLine) event.preventDefault();
+          if (event.key === 'Tab' && onTab && !event.shiftKey && !event.altKey && !event.ctrlKey && !event.metaKey) {
             event.preventDefault();
-            onTab?.(event.currentTarget);
+            onTab(event.currentTarget);
           }
         }}
       />

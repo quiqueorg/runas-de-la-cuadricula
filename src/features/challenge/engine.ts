@@ -1,6 +1,6 @@
 /** Board measurement, rune checking and the guide geometry. The DOM is only read, never filled with HTML. */
 import { CSS_PROPS, EXERCISE_COUNTS, canvasGutter, exerciseProgress, finaleUnlocked, isModernLevel, levelsInRegion, levelsInWorld, regionStats, regions, routeOf, secretsInWorld } from '../../core/catalog';
-import type { Level, RuntimePiece } from '../../core/models';
+import type { BoardView, Level, RuntimePiece } from '../../core/models';
 import { progress, saveProgress } from '../../core/state';
 import { music, sound } from '../../shared/audio/audio';
 
@@ -56,6 +56,7 @@ export interface ExamSnapshot {
   readonly enSitio: number;
   readonly total: number;
   readonly fallos: readonly number[];
+  readonly vistasFallidas: readonly string[];
   readonly limpio: boolean;
   readonly reglasOk: boolean;
 }
@@ -126,6 +127,7 @@ export interface Evaluation {
 }
 
 export interface VictoryModel {
+  readonly practice?: Level['practica'];
   readonly title: string;
   readonly stars: number | null;
   readonly bodyHtml: string;
@@ -139,7 +141,7 @@ export interface VictoryModel {
 }
 
 export interface LiveChallenge {
-  boardWidth: number;
+  vista: number;
   stageScale: number;
   usedHelp: boolean;
   celebrated: boolean;
@@ -151,8 +153,17 @@ export interface LiveChallenge {
   clock: ChallengeClock;
 }
 
-export const CONDITION_TOKENS = new Set(['min-width', 'max-width', 'width', 'and', '<', '<=', '>', '>=']);
-const MQ_OK = new Set(['width', 'min-width', 'max-width']);
+export const CONDITION_TOKENS = new Set([
+  'min-width', 'max-width', 'width', 'min-height', 'max-height', 'height', 'orientation', 'aspect-ratio', 'min-aspect-ratio', 'max-aspect-ratio',
+  'hover', 'pointer', 'prefers-color-scheme', 'prefers-reduced-motion', 'screen', 'print', 'all', 'and', 'or', 'not', '<', '<=', '>', '>=',
+]);
+const SIZE_FEATURES = new Set(['width', 'min-width', 'max-width', 'height', 'min-height', 'max-height', 'aspect-ratio', 'min-aspect-ratio', 'max-aspect-ratio', 'orientation']);
+const DEVICE_FEATURES = new Set(['hover', 'any-hover', 'pointer', 'any-pointer', 'prefers-color-scheme', 'prefers-reduced-motion']);
+const MEDIA_TYPES = new Set(['all', 'screen', 'print', 'speech']);
+// The board is the window, so a media query becomes a container query. What the board cannot
+// measure (the medium, the pointer, the user's preferences) is answered here and written as a size test.
+const ALWAYS = '(width >= 0px)';
+const NEVER = '(width < 0px)';
 const cacheMedia = new Map<string, MediaConversion>();
 const BEZ: Record<string, readonly number[]> = {
   ease: [0.25, 0.1, 0.25, 1],
@@ -161,12 +172,22 @@ const BEZ: Record<string, readonly number[]> = {
   'ease-in-out': [0.42, 0, 0.58, 1],
   linear: [0, 0, 1, 1],
 };
-const COMPARE_LABELS: Record<string, string> = { 'background-color': 'el color', opacity: 'la transparencia' };
+const COMPARE_LABELS: Record<string, string> = {
+  'background-color': 'el color de fondo', opacity: 'la transparencia', transform: 'la transformación', color: 'el color del texto',
+  'border-top-width': 'el grosor del borde', 'border-top-style': 'el estilo del borde', 'border-top-color': 'el color del borde',
+  'border-bottom-width': 'el grosor del borde de abajo', 'border-bottom-style': 'el estilo del borde de abajo', 'border-bottom-color': 'el color del borde de abajo',
+  'border-left-width': 'el grosor del borde izquierdo', 'border-left-style': 'el estilo del borde izquierdo', 'border-left-color': 'el color del borde izquierdo',
+  'border-top-left-radius': 'el redondeo de las esquinas', 'background-image': 'la imagen de fondo', 'background-repeat': 'la repetición del fondo',
+  'background-position': 'la posición del fondo', 'background-size': 'el tamaño del fondo', 'font-family': 'la familia de letra', 'font-size': 'el tamaño de letra',
+  'font-weight': 'el grosor de la letra', 'font-style': 'el estilo de la letra', 'text-align': 'la alineación del texto', 'text-decoration-line': 'el subrayado',
+  'text-transform': 'las mayúsculas', 'line-height': 'el interlineado', 'letter-spacing': 'el espaciado entre letras', 'box-shadow': 'la sombra',
+  'list-style-type': 'la viñeta de la lista', 'z-index': 'la capa', position: 'el tipo de posición', float: 'la flotación', display: 'el tipo de caja',
+};
 const TAUNTS = ['¡JA! ¿Eso es todo lo que sabes?', '¡Mis vientos se ríen de tus runas!', '¡Fallaste! El cielo es mío.', '¡Otra vez! ¡Me encanta verte fallar!', '¡Tu plano se lo lleva el huracán!'];
 
 export function freshLive(level: Level): LiveChallenge {
   return {
-    boardWidth: level.anchos[0] ?? 400,
+    vista: 0,
     stageScale: 1,
     usedHelp: false,
     celebrated: false,
@@ -183,23 +204,30 @@ export function stripComments(t: string): string {
   return t.replace(/\/\*[\s\S]*?(\*\/|$)/g, ' ');
 }
 
-export function convertMedia(txt: string): MediaConversion {
-  const key = String(txt || '');
+const deviceKey = (view: BoardView): string => `${view.medio}|${view.esquema}|${view.puntero}|${view.calma ? 1 : 0}`;
+
+export function convertMedia(txt: string, view: BoardView): MediaConversion {
+  const key = `${deviceKey(view)}|${String(txt || '')}`;
   const hit = cacheMedia.get(key);
   if (hit) return hit;
-  const result = convertMediaCore(key);
-  if (cacheMedia.size > 400) cacheMedia.clear();
+  const result = convertMediaCore(String(txt || ''), view);
+  if (cacheMedia.size > 600) cacheMedia.clear();
   cacheMedia.set(key, result);
   return result;
 }
 
-function convertMediaCore(txt: string): MediaConversion {
+function deviceAnswers(feature: string, value: string | undefined, view: BoardView): boolean {
+  if (feature === 'hover' || feature === 'any-hover') return value === 'none' ? view.puntero === 'coarse' : view.puntero === 'fine';
+  if (feature === 'pointer' || feature === 'any-pointer') return value === undefined ? true : value === view.puntero;
+  if (feature === 'prefers-color-scheme') return value === undefined ? true : value === view.esquema;
+  return value === 'no-preference' ? !view.calma : view.calma;
+}
+
+function convertMediaCore(txt: string, view: BoardView): MediaConversion {
   let t = stripComments(txt).replace(/\s+/g, ' ').trim();
   if (!t) return { vacia: true };
   t = t.replace(/^@media\s*/i, '').replace(/\s*\{.*$/, '').trim();
-  t = t.replace(/^(only\s+)?(screen|all)\b\s*(and\b\s*)?/i, '').trim();
   if (!t) return { err: 'Falta la condición entre paréntesis, por ejemplo <code>(max-width: 400px)</code>.' };
-  if (!t.startsWith('(') && !/^not\s*\(/i.test(t)) return { err: `La condición va entre paréntesis: <code>(${escapeHtml(t.slice(0, 40))})</code>.` };
   let mq = 'not all';
   try {
     const sheet = new CSSStyleSheet();
@@ -209,11 +237,43 @@ function convertMediaCore(txt: string): MediaConversion {
   } catch {
     mq = 'not all';
   }
-  if (!mq || mq === 'not all') return { err: `«${escapeHtml(t.slice(0, 50))}» no es una condición válida. Revisa los paréntesis, los dos puntos y las unidades.` };
-  const words = (t.replace(/-?\d*\.?\d+[a-z%]*/gi, ' ').match(/[a-z][a-z-]*/gi) || []).map((word) => word.toLowerCase()).filter((word) => !['and', 'or', 'not', 'only'].includes(word));
-  const odd = words.find((word) => !MQ_OK.has(word));
-  if (odd) return { err: `En el cielo solo se pregunta por el ancho (<code>width</code>, <code>min-width</code> o <code>max-width</code>); <code>${escapeHtml(odd)}</code> no vale aquí.` };
-  const cq = t.split(/,(?![^(]*\))/).map((part) => part.trim()).join(' or ');
+  const invalid = { err: `«${escapeHtml(t.slice(0, 50))}» no es una condición válida. Revisa los paréntesis, los dos puntos y las unidades.` };
+  const parts: string[] = [];
+  for (const piece of t.split(/,(?![^(]*\))/)) {
+    let rest = piece.trim();
+    let typed: boolean | null = null;
+    let negated = false;
+    if (!rest.startsWith('(') && !/^not\s*\(/i.test(rest)) {
+      const lead = /^(?:(not|only)\s+)?([a-z-]+)\b\s*(.*)$/i.exec(rest);
+      const type = lead?.[2]?.toLowerCase() ?? '';
+      if (!lead || !MEDIA_TYPES.has(type)) {
+        return { err: SIZE_FEATURES.has(type) || DEVICE_FEATURES.has(type)
+          ? `La condición va entre paréntesis: <code>(${escapeHtml(rest.slice(0, 40))})</code>.`
+          : `«${escapeHtml((type || rest).slice(0, 30))}» no es un tipo de medio. Los que se usan son <code>screen</code>, <code>print</code> y <code>all</code>.` };
+      }
+      negated = lead[1]?.toLowerCase() === 'not';
+      typed = type === 'all' || type === view.medio;
+      rest = (lead[3] ?? '').trim();
+      if (rest) {
+        if (!/^and\s/i.test(rest)) return { err: 'Después del tipo de medio, las condiciones se unen con <code>and</code>: <code>screen and (min-width: 500px)</code>.' };
+        rest = rest.replace(/^and\s+/i, '');
+      }
+    }
+    if (!mq || mq === 'not all') return invalid;
+    const features = [...rest.matchAll(/\(\s*([a-z-]+)\s*[:<>=)]|[<>=]\s*([a-z-]+)\s*[<>=)]/gi)].map((match) => (match[1] ?? match[2] ?? '').toLowerCase());
+    const odd = features.find((name) => !SIZE_FEATURES.has(name) && !DEVICE_FEATURES.has(name));
+    if (odd) return { err: `Aquí el tablero hace de pantalla, y <code>${escapeHtml(odd)}</code> no es algo que sepa responder.` };
+    const sized = rest.replace(/\(\s*([a-z-]+)\s*(?::\s*([a-z-]+)\s*)?\)/gi, (whole: string, name: string, value: string | undefined) => {
+      const feature = name.toLowerCase();
+      return DEVICE_FEATURES.has(feature) ? (deviceAnswers(feature, value?.toLowerCase(), view) ? ALWAYS : NEVER) : whole;
+    });
+    if (typed === null) { parts.push(sized); continue; }
+    const medium = typed ? ALWAYS : NEVER;
+    const query = sized ? `${medium} and ${/\sor\s/i.test(sized) ? `(${sized})` : sized}` : medium;
+    parts.push(negated ? `not (${query})` : query);
+  }
+  if (!mq || mq === 'not all') return invalid;
+  const cq = parts.length > 1 ? parts.map((part) => `(${part})`).join(' or ') : parts[0] ?? '';
   try {
     const sheet = new CSSStyleSheet();
     sheet.replaceSync(`@container ${cq} {}`);
@@ -224,11 +284,43 @@ function convertMediaCore(txt: string): MediaConversion {
   return { cq };
 }
 
-const scopeSelector = (layer: string, selector: string) => selector.split(/,(?![^(]*\))/).map((part) => `${layer} ${part.trim().replace(/:hover\b/g, layer === '#player-layer' ? ':is(:hover,.sim-hover)' : '.sim-hover')}`).join(',');
+const splitList = (value: string) => String(value).split(/,(?![^(]*\))/).map((part) => part.trim());
 
-export function layerCss(level: Level, layers: readonly string[], bodies: readonly string[], conditions: readonly (string | null | undefined)[]): string {
+/**
+ * Keeps a lesson selector inside its layer. `:root` is the board (the element everything hangs from,
+ * and one a container query can still reach), an id is matched through `data-id` (the same piece is
+ * drawn in several layers) and the states can be switched on by a class.
+ */
+function scopeSelector(layer: string, selector: string): string {
+  const live = layer === '#player-layer';
+  const state = (name: string) => (live ? `:is(:${name},.sim-${name})` : `.sim-${name}`);
+  return splitList(selector).map((part) => {
+    const text = part
+      .replace(/#([a-zA-Z_][\w-]*)/g, ':is(#$1,[data-id="$1"])')
+      .replace(/:hover\b/g, state('hover'))
+      .replace(/:active\b/g, state('active'))
+      .replace(/:focus\b(?!-)/g, state('focus'));
+    return text.startsWith(':root') ? `${layer} .tablero${text.slice(5)}` : `${layer} ${text}`;
+  }).join(',');
+}
+
+export function validateSelector(text: string): string | null {
+  const selector = stripComments(text).trim();
+  if (!selector) return null;
+  if (/[{};@]/.test(selector)) return 'El selector no lleva llaves ni punto y coma: solo dice <b>a quién</b> se aplica la regla.';
+  try {
+    document.createDocumentFragment().querySelector(selector);
+  } catch {
+    return `«${escapeHtml(selector.slice(0, 50))}» no es un selector válido.`;
+  }
+  return null;
+}
+
+export function layerCss(level: Level, layers: readonly string[], bodies: readonly string[], conditions: readonly (string | null | undefined)[], selectors?: readonly (string | null)[]): string {
   return level.b.map((rule, index) => {
-    const block = `${layers.map((layer) => scopeSelector(layer, rule.s)).join(',')}{${rule.f}\n${bodies[index] ?? ''}}`;
+    const selector = selectors && rule.sel !== undefined ? selectors[index] : rule.s;
+    if (!selector) return '';
+    const block = `${layers.map((layer) => scopeSelector(layer, selector)).join(',')}{${rule.f}\n${bodies[index] ?? ''}}`;
     if (rule.g < 0) return block;
     const condition = conditions[rule.g];
     return condition ? `@container ${condition}{${block}}` : '';
@@ -239,26 +331,38 @@ function boardOf(root: ParentNode): HTMLElement | null {
   return root.querySelector('.tablero');
 }
 
+const SIMULATED = ['sim-hover', 'sim-active', 'sim-focus'] as const;
+
 export function setBoardState(roots: readonly ParentNode[], on: boolean): void {
   for (const root of roots) {
     const board = boardOf(root);
     if (!board) continue;
     board.classList.toggle('activo', on);
-    board.classList.toggle('sim-hover', on);
-    root.querySelectorAll('.pieza').forEach((piece) => piece.classList.toggle('sim-hover', on));
+    for (const name of SIMULATED) {
+      board.classList.toggle(name, on);
+      root.querySelectorAll('.pieza').forEach((piece) => piece.classList.toggle(name, on));
+    }
   }
 }
 
-export function placeBoard(roots: BoardRoots, level: Level, width: number): void {
+export function activeView(level: Level, live: LiveChallenge): BoardView {
+  const view = level.vistas[live.vista] ?? level.vistas[0];
+  if (!view) throw new Error(`Level without views: ${level.id}`);
+  return view;
+}
+
+export function placeBoard(roots: BoardRoots, level: Level, view: BoardView): void {
   const maxW = Math.max(...level.anchos);
-  const x = canvasGutter + (maxW - width) / 2;
+  const x = canvasGutter + (maxW - view.w) / 2;
   const layers = [...roots.canvas.querySelectorAll<HTMLElement>('.board-layer')];
   for (const el of [roots.floor, roots.sand, ...layers]) {
     el.style.left = `${x}px`;
     el.style.top = `${canvasGutter}px`;
-    el.style.width = `${width}px`;
-    el.style.height = `${level.h}px`;
+    el.style.width = `${view.w}px`;
+    el.style.height = `${view.h}px`;
   }
+  roots.canvas.dataset.medio = view.medio;
+  roots.canvas.dataset.esquema = view.esquema;
 }
 
 function normalizeCurve(f: string): string {
@@ -278,9 +382,7 @@ function normalizeCurve(f: string): string {
   return f;
 }
 
-const splitList = (value: string) => String(value).split(/,(?![^(]*\))/).map((part) => part.trim());
-
-function readTransitions(el: Element): TransitionMap {
+function readTransitions(el: Element, shadows: boolean): TransitionMap {
   const style = getComputedStyle(el);
   const props = splitList(style.transitionProperty);
   const durations = splitList(style.transitionDuration).map(parseFloat);
@@ -288,7 +390,7 @@ function readTransitions(el: Element): TransitionMap {
   const curves = splitList(style.transitionTimingFunction);
   const map: TransitionMap = new Map();
   props.forEach((prop, index) => {
-    if (prop === 'none' || prop === 'box-shadow' || prop === 'filter') return;
+    if (prop === 'none' || prop === 'filter' || (prop === 'box-shadow' && !shadows)) return;
     const duration = durations[index % durations.length] || 0;
     const delay = delays[index % delays.length] || 0;
     map.delete(prop);
@@ -313,7 +415,10 @@ function diffTransition(name: string, player: TransitionMap, target: TransitionM
   return null;
 }
 
-const pieceName = (piece: RuntimePiece) => `«${piece.e || piece.k || piece.t}»`;
+/** A font list means the same with or without quotes, in any case. */
+const comparable = (prop: string, value: string): string => (prop === 'font-family' ? value.toLowerCase().replace(/["']/g, '').replace(/\s*,\s*/g, ',').trim() : value);
+
+const pieceName = (piece: RuntimePiece) => `«${piece.id ? `#${piece.id}` : piece.e || piece.k || piece.t}»`;
 
 function measureProbes(level: Level, roots: BoardRoots, scale: number): { oks: boolean[]; msgs: string[]; tableroMal: boolean } {
   const player = roots.probe;
@@ -328,6 +433,7 @@ function measureProbes(level: Level, roots: BoardRoots, scale: number): { oks: b
   let tableroMal = false;
   const tol = 1.5 * scale;
   const note = (message: string | null) => { if (message && !msgs.includes(message)) msgs.push(message); };
+  const shadows = !!level.cmp?.includes('box-shadow');
   for (const on of level.estado ? [false, true] : [false]) {
     player.classList.add('sin-trans');
     target.classList.add('sin-trans');
@@ -346,22 +452,22 @@ function measureProbes(level: Level, roots: BoardRoots, scale: number): { oks: b
         && Math.abs(a.height - b.height) <= tol;
       if (!placed) oks[index] = false;
       for (const prop of level.cmp || []) {
-        if (getComputedStyle(piece).getPropertyValue(prop) !== getComputedStyle(other).getPropertyValue(prop)) {
+        if (comparable(prop, getComputedStyle(piece).getPropertyValue(prop)) !== comparable(prop, getComputedStyle(other).getPropertyValue(prop))) {
           oks[index] = false;
-          note(`${pieceName(spec)}: ${COMPARE_LABELS[prop] || prop} no coincide con el del objetivo${on ? ' al activar' : ''}.`);
+          note(`${pieceName(spec)}: ${COMPARE_LABELS[prop] || `<code>${prop}</code>`} no coincide con el objetivo${on ? ' al activar' : ''}.`);
         }
       }
     });
     if (level.estado) {
       player.classList.remove('sin-trans');
       target.classList.remove('sin-trans');
-      const boardDiff = diffTransition('El tablero', readTransitions(playerBoard), readTransitions(targetBoard));
+      const boardDiff = diffTransition('El tablero', readTransitions(playerBoard, shadows), readTransitions(targetBoard, shadows));
       if (boardDiff) { tableroMal = true; note(boardDiff); }
       playerPieces.forEach((piece, index) => {
         const other = targetPieces[index];
         const spec = level.p[index];
         if (!other || !spec) return;
-        const diff = diffTransition(pieceName(spec), readTransitions(piece), readTransitions(other));
+        const diff = diffTransition(pieceName(spec), readTransitions(piece, shadows), readTransitions(other, shadows));
         if (diff) { oks[index] = false; note(diff); }
       });
     }
@@ -396,6 +502,7 @@ function measureBoard(roots: BoardRoots, scale: number): boolean[] {
 }
 
 export { highlightTokens } from './model';
+import { usesProbes } from './model';
 
 export function parseDeclaration(txt: string): ParsedDeclaration[] {
   const declarations: ParsedDeclaration[] = [];
@@ -487,8 +594,10 @@ function axisTicks(sizes: number[], gap: number, start: number, free: number, mo
   return out;
 }
 
-function buildGuides(level: Level, roots: BoardRoots, boardWidth: number, linesOn: boolean): { drawing: GuideDrawing | null; legend: 'flex' | 'grid' | 'none'; showNotice: boolean } {
+function buildGuides(level: Level, roots: BoardRoots, view: BoardView, linesOn: boolean): { drawing: GuideDrawing | null; legend: 'flex' | 'grid' | 'none'; showNotice: boolean } {
   const maxW = Math.max(...level.anchos);
+  const boardWidth = view.w;
+  const boardHeight = view.h;
   const width = maxW + 2 * canvasGutter;
   const height = level.h + 2 * canvasGutter;
   const empty = { drawing: null as GuideDrawing | null, legend: 'none' as const, showNotice: false };
@@ -501,10 +610,10 @@ function buildGuides(level: Level, roots: BoardRoots, boardWidth: number, linesO
   const flex = /flex/.test(style.display);
   const grid = /grid/.test(style.display);
   if (level.mundo === 'flex' || (isModernLevel(level) && flex)) {
-    return { drawing: flexAxes(style, ox, oy, boardWidth, level), legend: 'flex', showNotice: !flex };
+    return { drawing: flexAxes(style, ox, oy, view, level), legend: 'flex', showNotice: !flex && !level.sinAviso };
   }
   if (isModernLevel(level) && !grid) return { drawing: null, legend: 'none', showNotice: false };
-  if (!grid) return { drawing: null, legend: 'grid', showNotice: true };
+  if (!grid) return { drawing: null, legend: 'grid', showNotice: !level.sinAviso };
   const columns = tracks(style.gridTemplateColumns);
   const rows = tracks(style.gridTemplateRows);
   const probeStyle = getComputedStyle(boardOf(roots.probe) ?? board);
@@ -540,7 +649,7 @@ function buildGuides(level: Level, roots: BoardRoots, boardWidth: number, linesO
     lines.push({ x1: x, y1: y0 - 6, x2: x, y2: y1 + 6, kind: implicit ? 'implicit' : 'main' });
     if (skipColumns && index % 2) return;
     labels.push({ x, y: oy - 21, text: String(index + 1), kind: implicit ? 'implicit' : 'normal', rotate: false });
-    if (!implicit && explicitColumns) labels.push({ x, y: oy + level.h + 21, text: String(index - explicitColumns - 1), kind: 'negative', rotate: false });
+    if (!implicit && explicitColumns) labels.push({ x, y: oy + boardHeight + 21, text: String(index - explicitColumns - 1), kind: 'negative', rotate: false });
   });
   rowLines.forEach(([a, b], index) => {
     const y = ((a ?? 0) + (b ?? 0)) / 2;
@@ -554,16 +663,16 @@ function buildGuides(level: Level, roots: BoardRoots, boardWidth: number, linesO
   return { drawing: { width, height, gaps, lines, labels }, legend: 'grid', showNotice: false };
 }
 
-function flexAxes(style: CSSStyleDeclaration, ox: number, oy: number, boardWidth: number, level: Level): GuideDrawing {
+function flexAxes(style: CSSStyleDeclaration, ox: number, oy: number, view: BoardView, level: Level): GuideDrawing {
   const direction = style.flexDirection;
   const wrap = style.flexWrap;
   const row = direction.startsWith('row');
   const reverse = direction.endsWith('reverse');
   const reverseCross = wrap === 'wrap-reverse';
   const x0 = ox + 4;
-  const x1 = ox + boardWidth - 4;
+  const x1 = ox + view.w - 4;
   const y0 = oy + 4;
-  const y1 = oy + level.h - 4;
+  const y1 = oy + view.h - 4;
   const lines: GuideLine[] = [];
   const labels: GuideLabel[] = [];
   const arrow = (kind: 'axis-main' | 'axis-cross', ax: number, ay: number, bx: number, by: number, text: string, tx: number, ty: number, rotate: boolean) => {
@@ -601,7 +710,7 @@ export function lanternPitch(piece: RuntimePiece): number {
 function playChimes(player: HTMLElement): void {
   const notes = [523.25, 659.25, 783.99, 1046.5, 1318.51];
   [...player.querySelectorAll<HTMLElement>('.pieza')].forEach((piece, index) => {
-    const transitions = readTransitions(piece);
+    const transitions = readTransitions(piece, false);
     const transform = transitions.get('transform') || transitions.get('all');
     sound.tono(notes[index % notes.length] ?? 523.25, transform ? transform.dl : 0, 1.4);
   });
@@ -646,6 +755,7 @@ export function buildVictory(level: Level, live: LiveChallenge): VictoryModel {
   const finalExam = !!(level.examen && examsDone.length === exams.length && regionJustCompleted);
   const bossLeft = level.jefe ? levelsInRegion(level.r).filter((item) => !progress.hechos[item.id]).length : 0;
   const worldEnds: Record<string, string> = {
+    base: '¡Has terminado tu aprendizaje!',
     grid: '¡Has restaurado la cuadrícula!',
     flex: '¡Has dominado el subsuelo!',
     cielo: '¡Has conquistado los cielos!',
@@ -687,6 +797,7 @@ export function buildVictory(level: Level, live: LiveChallenge): VictoryModel {
           : `${exerciseProgress(level.mundo)} de ${EXERCISE_COUNTS[level.mundo]} ejercicios superados`;
   return {
     title,
+    practice: level.practica,
     stars: level.examen ? score : null,
     bodyHtml: body,
     quote: level.fin ?? '',
@@ -717,13 +828,24 @@ export interface BlueprintView {
   readonly pieces: readonly BlueprintPiece[];
 }
 
-export function readBlueprint(level: Level, roots: BoardRoots, live: LiveChallenge): BlueprintView[] {
+const viewCaption = (view: BoardView): string => (/^\d/.test(view.n) ? `Tablero de ${view.n}` : view.n);
+
+function objectiveCssFor(level: Level, view: BoardView): string {
+  return layerCss(level, ['#target-layer', '#outline-layer', '#probe-target'], level.b.map((rule) => rule.sol), level.mg.map((group) => convertMedia(group.sol, view).cq ?? null));
+}
+
+export function readBlueprint(level: Level, roots: BoardRoots, live: LiveChallenge, sheet: HTMLStyleElement | null): BlueprintView[] {
   const layer = isModernLevel(level) ? roots.probeTarget : roots.target;
   const withColor = (level.cmp || []).includes('background-color');
   const views: BlueprintView[] = [];
-  for (const width of level.anchos) {
+  const paint = (view: BoardView) => {
+    const css = objectiveCssFor(level, view);
+    if (sheet && sheet.textContent !== css) sheet.textContent = css;
+  };
+  for (const view of level.vistas) {
     for (const on of level.estado ? [false, true] : [false]) {
-      placeBoard(roots, level, width);
+      paint(view);
+      placeBoard(roots, level, view);
       if (isModernLevel(level)) {
         roots.probeTarget.classList.add('sin-trans');
         setBoardState([roots.probeTarget], on);
@@ -740,14 +862,14 @@ export function readBlueprint(level: Level, roots: BoardRoots, live: LiveChallen
           fixed: !!spec?.fija,
           color: withColor ? getComputedStyle(piece).backgroundColor : '',
           icon: spec?.T.i || spec?.T.o || '',
-          label: spec?.e ?? '',
+          label: spec?.e || spec?.marca || '',
         };
       }) : [];
       const caption = [
-        level.anchos.length > 1 ? `Tablero de ${width}px` : '',
-        level.estado ? (on ? (level.estado === 'hover' ? 'con el cursor' : 'activado') : 'en reposo') : '',
+        level.vistas.length > 1 ? viewCaption(view) : '',
+        level.estado ? (on ? STATE_NAMES[level.estado] : 'en reposo') : '',
       ].filter(Boolean).join(' · ');
-      views.push({ boardW: width, boardH: level.h, caption, pieces });
+      views.push({ boardW: view.w, boardH: view.h, caption, pieces });
     }
   }
   if (isModernLevel(level)) {
@@ -755,15 +877,20 @@ export function readBlueprint(level: Level, roots: BoardRoots, live: LiveChallen
     void roots.probeTarget.offsetWidth;
     roots.probeTarget.classList.remove('sin-trans');
   }
-  placeBoard(roots, level, live.boardWidth);
+  const current = activeView(level, live);
+  paint(current);
+  placeBoard(roots, level, current);
   return views;
 }
+
+const STATE_NAMES: Record<NonNullable<Level['estado']>, string> = { activo: 'activado', hover: 'con el cursor', pulsa: 'pulsado', foco: 'con el foco' };
 
 export function evaluate(
   level: Level,
   roots: BoardRoots,
   texts: readonly string[],
   conditions: readonly string[],
+  selectors: readonly string[],
   live: LiveChallenge,
   linesOn: boolean,
   sheets: { readonly player: HTMLStyleElement | null; readonly objective: HTMLStyleElement | null },
@@ -771,11 +898,18 @@ export function evaluate(
   const errors: string[] = [];
   const sealed = new Set<string>();
   const clean: string[] = [];
+  const current = activeView(level, live);
   const conditionText = level.mg.map((group, index) => (group.fijo ? group.sol : conditions[index] ?? ''));
-  const conditionCss = level.mg.map((group, index) => {
-    const converted = convertMedia(conditionText[index] ?? '');
+  level.mg.forEach((group, index) => {
+    const converted = convertMedia(conditionText[index] ?? '', current);
     if (converted.err && !group.fijo) errors.push(`<code>@media</code> — ${converted.err}`);
-    return converted.cq ?? null;
+  });
+  const written = level.b.map((rule, index) => (rule.sel === undefined ? null : selectors[index] ?? ''));
+  const scoped = written.map((selector) => {
+    if (selector === null) return null;
+    const problem = validateSelector(selector);
+    if (problem) errors.push(problem);
+    return problem ? '' : stripComments(selector).trim();
   });
   let declarations = 0;
   level.b.forEach((rule, index) => {
@@ -793,7 +927,7 @@ export function evaluate(
   });
   const rules: RuleLine[] = (level.req || []).map((rule) => ({
     html: rule.m,
-    ok: rule.re.test(stripComments(rule.cond ? conditionText.join('\n') : rule.b !== undefined ? texts[rule.b] ?? '' : texts.join('\n'))),
+    ok: rule.re.test(stripComments(rule.sel ? written.filter((selector) => selector !== null).join('\n') : rule.cond ? conditionText.join('\n') : rule.b !== undefined ? texts[rule.b] ?? '' : texts.join('\n'))),
     limit: false,
     coins: null,
     spent: 0,
@@ -802,32 +936,55 @@ export function evaluate(
     const spent = declarations * level.bolsa.precio;
     rules.push({ html: `Bolsa: ${level.bolsa.total} ámbar · cada runa, ${level.bolsa.precio} · gastas <b>${spent}</b>`, ok: spent <= level.bolsa.total, limit: true, coins: level.max ?? 0, spent: declarations });
   } else if (level.max) rules.push({ html: `Como máximo ${level.max} declaraci${level.max > 1 ? 'ones' : 'ón'} (llevas ${declarations})`, ok: declarations <= level.max, limit: true, coins: null, spent: 0 });
-  for (const [above, below, text] of level.encima || []) rules.push({ html: text, ok: isAbove(roots.player, above, below), limit: false, coins: null, spent: 0 });
-  progress.codigo[level.id] = level.mg.length ? [...texts, ...level.mg.map((group, index) => (group.fijo ? '' : conditionText[index] ?? ''))] : [...texts];
+  progress.codigo[level.id] = [
+    ...texts,
+    ...level.mg.map((group, index) => (group.fijo ? '' : conditionText[index] ?? '')),
+    ...written.filter((selector) => selector !== null),
+  ];
   saveProgress(false, true);
 
-  const objectiveCss = layerCss(level, ['#target-layer', '#outline-layer', '#probe-target'], level.b.map((rule) => rule.sol), level.mg.map((group) => convertMedia(group.sol).cq ?? null));
-  const playerCss = layerCss(level, ['#player-layer', '#probe'], clean, conditionCss);
-  if (sheets.player) sheets.player.textContent = playerCss;
-  if (sheets.objective) sheets.objective.textContent = objectiveCss;
-  const useProbes = isModernLevel(level) && !!(level.estado || (level.cmp && level.cmp.length));
+  // Views that differ only in size share one sheet; a different medium or preference needs its own.
+  const sheetsByDevice = new Map<string, { player: string; objective: string }>();
+  const cssOf = (view: BoardView) => {
+    const key = deviceKey(view);
+    let css = sheetsByDevice.get(key);
+    if (!css) {
+      css = {
+        player: layerCss(level, ['#player-layer', '#probe'], clean, level.mg.map((_, index) => convertMedia(conditionText[index] ?? '', view).cq ?? null), scoped),
+        objective: objectiveCssFor(level, view),
+      };
+      sheetsByDevice.set(key, css);
+    }
+    return css;
+  };
+  const show = (view: BoardView) => {
+    const css = cssOf(view);
+    if (sheets.player && sheets.player.textContent !== css.player) sheets.player.textContent = css.player;
+    if (sheets.objective && sheets.objective.textContent !== css.objective) sheets.objective.textContent = css.objective;
+    placeBoard(roots, level, view);
+  };
+  show(current);
+  const { player: playerCss, objective: objectiveCss } = cssOf(current);
+  for (const [above, below, text] of level.encima || []) rules.push({ html: text, ok: isAbove(roots.player, above, below), limit: false, coins: null, spent: 0 });
+  const useProbes = usesProbes(level);
   const probeMessages: string[] = [];
-  let boardWrong = false;
-  const perWidth = level.anchos.map((width) => {
-    placeBoard(roots, level, width);
-    if (!useProbes) return measureBoard(roots, live.stageScale);
+  const perWidth = level.vistas.map((view) => {
+    show(view);
+    if (!useProbes) return { oks: measureBoard(roots, live.stageScale), tableroMal: false };
     const probed = measureProbes(level, roots, live.stageScale);
     for (const message of probed.msgs) if (!probeMessages.includes(message)) probeMessages.push(message);
-    if (probed.tableroMal) boardWrong = true;
-    return probed.oks;
+    return probed;
   });
-  placeBoard(roots, level, live.boardWidth);
-  const active = perWidth[level.anchos.indexOf(live.boardWidth)] ?? [];
+  show(current);
+  const activeIndex = level.vistas.indexOf(current);
+  const active = perWidth[activeIndex]?.oks ?? [];
   const movable = level.movibles;
   const allPlaced = (row: readonly boolean[]) => movable.every((index) => row[index]);
   const playerPieces = [...roots.player.querySelectorAll<HTMLElement>('.pieza')];
   const outlinePieces = [...roots.outline.querySelectorAll<HTMLElement>('.pieza')];
-  playerPieces.forEach((piece, index) => piece.classList.toggle('matched', !level.examen && !level.p[index]?.fija && !!active[index]));
+  // A lesson about the piece's own shadow keeps the glow off it: the dashed outline already says "matched".
+  const glow = !level.examen && !level.cmp?.includes('box-shadow');
+  playerPieces.forEach((piece, index) => piece.classList.toggle('matched', glow && !level.p[index]?.fija && !!active[index]));
   outlinePieces.forEach((piece, index) => piece.classList.toggle('matched', !!active[index]));
   const newly = movable.filter((index) => active[index] && live.previousMatches.length && !live.previousMatches[index]);
   if (newly.length && !level.examen) {
@@ -836,18 +993,32 @@ export function evaluate(
     else sound.encaje();
   }
   live.previousMatches = [...active];
-  const geometryOk = perWidth.every(allPlaced) && !boardWrong;
+  const widthOk = perWidth.map(({ oks, tableroMal }) => allPlaced(oks) && !tableroMal);
+  const failedViews = level.vistas.filter((_, index) => !widthOk[index]);
+  const failedWidths = failedViews.map((view) => view.n);
+  const sizesOnly = level.vistas.every((view) => /^\d/.test(view.n));
+  const whereToLook = sizesOnly ? `el tablero a ${failedWidths.join(' y ')}` : failedWidths.map((name) => `«${name}»`).join(' y ');
+  const geometryOk = failedWidths.length === 0;
   const placed = movable.filter((index) => active[index]).length;
   const messages: StatusLine[] = [];
   if (sealed.size) messages.push({ tone: 'error', icon: 'i-candado', html: `${[...sealed].map((prop) => `<code>${prop}</code>`).join(', ')} ${sealed.size > 1 ? 'están selladas' : 'está sellada'} en este ejercicio y no tendrá${sealed.size > 1 ? 'n' : ''} efecto. Usa solo las runas permitidas.` });
   errors.slice(0, 3).forEach((error) => messages.push({ tone: 'error', icon: 'i-aviso', html: error }));
   const rulesOk = rules.every((rule) => rule.ok);
   const cleanSheet = !sealed.size && !errors.length;
+  if (!level.examen && cleanSheet && !geometryOk && declarations > 0) {
+    const slip = (level.despistes ?? []).find((item) => {
+      const element = item.s ? roots.player.querySelector(item.s) : boardOf(roots.player);
+      if (!element) return false;
+      const style = getComputedStyle(element);
+      return Object.entries(item.si).every(([prop, value]) => style.getPropertyValue(prop) === value);
+    });
+    if (slip) messages.push({ tone: 'aviso', icon: 'i-ojo', html: slip.m });
+  }
   const solved = geometryOk && cleanSheet && rulesOk;
-  const guides = buildGuides(level, roots, live.boardWidth, linesOn);
+  const guides = buildGuides(level, roots, current, linesOn);
   let victory: VictoryModel | null = null;
   if (level.examen) {
-    live.exam = { resuelta: solved, enSitio: placed, total: movable.length, fallos: movable.filter((index) => !active[index]), limpio: cleanSheet, reglasOk: rulesOk };
+    live.exam = { resuelta: solved, enSitio: placed, total: movable.length, fallos: movable.filter((index) => !active[index]), vistasFallidas: failedWidths, limpio: cleanSheet, reglasOk: rulesOk };
     if (live.delivery) messages.push(live.delivery);
     if (live.delivery?.tone === 'bien' && !live.celebrated) {
       if (level.musica) playMelody(level); else sound.victoria();
@@ -859,7 +1030,7 @@ export function evaluate(
     if (level.tiempo && live.clock.estado === 'expired' && !solved) messages.push({ tone: 'aviso', icon: 'i-reloj', html: level.tiempoTxt?.[0] ?? 'La tormenta te ha alcanzado. <button type="button" class="text-link" id="p-sacudir">Sacude la arena</button> y vuelve a intentarlo antes de que se acabe el tiempo.' });
     if (!geometryOk && probeMessages.length) probeMessages.slice(0, 2).forEach((message) => messages.push({ tone: 'aviso', icon: level.estado ? 'i-reloj' : 'i-aviso', html: message }));
     if (geometryOk && !solved) messages.push({ tone: 'aviso', icon: 'i-aviso', html: !cleanSheet ? 'Las piezas están en su sitio, pero la tablilla aún tiene runas incorrectas o selladas.' : 'Las piezas están en su sitio, pero falta cumplir las condiciones del objetivo.' });
-    else if (!geometryOk && level.anchos.length > 1 && allPlaced(active)) messages.push({ tone: 'aviso', icon: 'i-aviso', html: 'Con este ancho funciona. Prueba el otro ancho del tablero.' });
+    else if (!geometryOk && widthOk[activeIndex]) messages.push({ tone: 'aviso', icon: 'i-aviso', html: `${sizesOnly ? 'Con este tamaño' : 'Así'} funciona. Revisa ${whereToLook}.` });
     if (solved) messages.push({ tone: 'bien', icon: 'i-hecho', html: `${escapeHtml(level.n)} vuelve a estar en orden.${progress.hechos[level.id]?.m ? ' Ejercicio dominado.' : ''}` });
     if (solved && !live.celebrated) {
       if (live.clock.estado === 'corre') { window.clearInterval(live.clock.id); live.clock = { ...live.clock, estado: 'won' }; }
@@ -871,7 +1042,7 @@ export function evaluate(
   const total = level.tiempo ?? 1;
   const arena = live.clock.estado === 'expired' ? 1 : live.clock.estado === 'corre' ? (1 - live.clock.resta / total) * 0.72 : 0;
   return {
-    playerCss, objectiveCss, matches: active, widthOk: perWidth.map(allPlaced), placed, movable: movable.length,
+    playerCss, objectiveCss, matches: active, widthOk, placed, movable: movable.length,
     rules, messages, solved: solved && !level.examen, showNotice: guides.showNotice, legend: guides.legend,
     guides: guides.drawing, exam: live.exam, victory, arena, clockClass: clockClass(live.clock), clockLabel: clockLabel(live.clock),
   };
@@ -903,7 +1074,7 @@ export function deliverExam(level: Level, roots: BoardRoots, live: LiveChallenge
   live.delivery = {
     tone: 'error',
     icon: 'i-aviso',
-    html: `${level.jefe ? `<b>${escapeHtml(regions[level.r]?.pj ?? '')}:</b> «${taunt}» ` : ''}Entrega ${attempt}: ${exam?.enSitio ?? 0} de ${exam?.total ?? 0} piezas en su sitio${exam && !exam.limpio ? ', y la tablilla tiene runas incorrectas o selladas' : ''}${exam && !exam.reglasOk ? ', y falta cumplir alguna condición' : ''}. Las piezas que parpadean no coinciden con el plano.`,
+    html: `${level.jefe ? `<b>${escapeHtml(regions[level.r]?.pj ?? '')}:</b> «${taunt}» ` : ''}Entrega ${attempt}: ${exam?.enSitio ?? 0} de ${exam?.total ?? 0} piezas en su sitio${level.vistas.length > 1 ? ' en la vista actual' : ''}${exam && !exam.limpio ? ', y la tablilla tiene runas incorrectas o selladas' : ''}${exam && !exam.reglasOk ? ', y falta cumplir alguna condición' : ''}.${level.vistas.length > 1 && exam?.vistasFallidas.length ? ` Revisa ${exam.vistasFallidas.every((name) => /^\d/.test(name)) ? `el tablero a ${exam.vistasFallidas.join(' y ')}` : exam.vistasFallidas.map((name) => `«${name}»`).join(' y ')}.` : ''}${exam?.fallos.length ? ' Las piezas que parpadean no coinciden con el plano.' : ''}`,
   };
   return level.jefe ? 'boss' : null;
 }
@@ -912,10 +1083,18 @@ export function chimeIfNeeded(level: Level, player: HTMLElement, active: boolean
   if (active && level.musica) playChimes(player);
 }
 
-export function solutionTexts(level: Level, field: 'sol' | 'ini'): { texts: string[]; conditions: string[] } {
+export interface TabletTexts {
+  readonly texts: string[];
+  readonly conditions: string[];
+  /** One entry per rule; only rules whose selector is written by the student use theirs. */
+  readonly selectors: string[];
+}
+
+export function solutionTexts(level: Level, field: 'sol' | 'ini'): TabletTexts {
   return {
     texts: level.b.map((rule) => rule[field]),
     conditions: level.mg.map((group) => group[field]),
+    selectors: level.b.map((rule) => (rule.sel === undefined ? '' : field === 'sol' ? rule.s : rule.sel)),
   };
 }
 
@@ -935,13 +1114,16 @@ export function requestFill(id: string, field: 'sol' | 'ini'): void {
   fillSolution?.(id, field);
 }
 
-export function savedTexts(level: Level): { texts: string[]; conditions: string[] } {
+export function savedTexts(level: Level): TabletTexts {
   const saved = progress.codigo[level.id];
+  const read = (position: number, fallback: string) => {
+    const value = saved?.[position];
+    return typeof value === 'string' ? value : fallback;
+  };
+  let next = level.b.length + level.mg.length;
   return {
-    texts: level.b.map((rule, index) => (saved && typeof saved[index] === 'string' ? saved[index] : rule.ini)),
-    conditions: level.mg.map((group, index) => {
-      const value = saved?.[level.b.length + index];
-      return typeof value === 'string' ? value : group.ini;
-    }),
+    texts: level.b.map((rule, index) => read(index, rule.ini)),
+    conditions: level.mg.map((group, index) => read(level.b.length + index, group.ini)),
+    selectors: level.b.map((rule) => (rule.sel === undefined ? '' : read(next++, rule.sel))),
   };
 }

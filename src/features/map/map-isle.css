@@ -1,0 +1,18 @@
+/* ═══ the apprentice's isle ═══ */
+#view-map.is-isle .world{background:url(../../../assets/pergamino.jpg) center/380px,radial-gradient(ellipse 72% 76% at 50% 50%,#6fc0d2,#3f93b6 62%,#2c739c);background-blend-mode:multiply,normal}
+#view-map.is-isle .compass{width:8%}
+#view-map.is-isle .trail path.done,#view-map.is-isle .trail path.upcoming{stroke:#6b2a12}
+
+/* its card on the title screen: a small island in open water */
+.adventure.is-isle .adventure-image{background:radial-gradient(ellipse 9% 12% at 60% 40%,#f6f1e6 0 45%,transparent 50%),radial-gradient(ellipse 30% 34% at 48% 54%,#a9d36e 0 62%,#f3e2ae 64% 76%,#c6f0e6 78% 90%,transparent 92%),linear-gradient(160deg,#5cb3c8,#2f7fa6);border-color:rgba(240,214,150,.6)}
+.adventure.is-isle:hover,.adventure.is-isle:focus-visible{border-color:#f0d696;box-shadow:0 12px 30px rgba(0,0,0,.5),0 0 22px -6px rgba(240,214,150,.8)}
+.adventure.is-isle .adventure-tech{color:#f0d696}
+.adventure.is-isle .adventure-bar i{background:linear-gradient(90deg,#c39a55,#f6e2a8)}
+.adventure.is-isle .adventure-cta{background:rgba(240,214,150,.14);border-color:rgba(240,214,150,.55);color:#fff6dc}
+
+/* five adventures have to fit where four did: on a wide, short screen the four schools pair up */
+@media (min-width:1000px) and (max-height:1080px){
+  .adventure-list{width:min(1120px,calc(100vw - 32px));grid-template-columns:1fr 1fr}
+  .adventure-list>.adventure.is-final,.adventure-list>.button{grid-column:1 / -1;justify-self:center}
+  .adventure-list>.adventure.is-final{width:min(560px,100%)}
+}

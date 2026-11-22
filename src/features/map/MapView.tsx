@@ -1,5 +1,5 @@
 /** Map markup. Clicks are reported; the model decides what they do. */
-import type { RefObject } from 'react';
+import { useLayoutEffect, useRef, type RefObject } from 'react';
 import { MusicButton } from '../../shared/audio/MusicButton';
 import { Rune } from '../../shared/icons/Rune';
 import type { MapHit } from './actions';
@@ -28,6 +28,37 @@ export function MapView({ scene, onHit, onGround, onHome, onToggleIndex, onClose
   readonly scrollRef: RefObject<HTMLDivElement | null>;
 }) {
   const world = scene.world;
+  const speakerRef = useRef<HTMLButtonElement>(null);
+  const bubbleRef = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const bubble = bubbleRef.current;
+    const speaker = speakerRef.current;
+    const map = bubble?.parentElement;
+    const scroll = scrollRef.current;
+    if (!bubble || !speaker || !map || !scroll) return;
+    const sprite = speaker.querySelector('canvas') ?? speaker;
+    const place = () => {
+      const anchor = sprite.getBoundingClientRect();
+      const sheet = map.getBoundingClientRect();
+      const view = scroll.getBoundingClientRect();
+      const x = anchor.left + anchor.width / 2;
+      const leftEdge = Math.max(sheet.left + 12, view.left + 6);
+      const rightEdge = Math.min(sheet.right - 12, view.right - 6);
+      const left = Math.max(leftEdge, Math.min(x - bubble.offsetWidth / 2, rightEdge - bubble.offsetWidth));
+      const above = anchor.top - 10 - bubble.offsetHeight;
+      const below = above < Math.max(sheet.top + 12, view.top + 6);
+      bubble.style.visibility = x < view.left || x > view.right || anchor.bottom < view.top || anchor.top > view.bottom ? 'hidden' : 'visible';
+      bubble.style.left = `${left - sheet.left}px`;
+      bubble.style.top = `${(below ? anchor.bottom + 10 : above) - sheet.top}px`;
+      bubble.style.setProperty('--ax', `${x - left - bubble.clientLeft}px`);
+      bubble.classList.toggle('abajo', below);
+    };
+    place();
+    const observer = new ResizeObserver(place);
+    for (const node of [sprite, bubble, map, scroll]) observer.observe(node);
+    scroll.addEventListener('scroll', place, { passive: true });
+    return () => { observer.disconnect(); scroll.removeEventListener('scroll', place); };
+  }, [scene.joke, scrollRef]);
   return (
     <section id="view-map" className={scene.worldClass}>
       <header className="top-bar">
@@ -56,6 +87,7 @@ export function MapView({ scene, onHit, onGround, onHome, onToggleIndex, onClose
               const map = event.currentTarget.getBoundingClientRect();
               onGround(event.clientX, event.clientY, map.width, map.height, map.left, map.top);
             }}>
+              <Landscape world={world} />
               <Trail world={world} spans={scene.spans} />
               <div className="effects" aria-hidden="true"><Effects world={world} /></div>
               <div className="secret-layer">
@@ -68,8 +100,8 @@ export function MapView({ scene, onHit, onGround, onHome, onToggleIndex, onClose
               </div>
               <div className="fish-layer">
                 {scene.creatures.map((creature) => (
-                  <button key={creature.key} type="button" className={creature.className} data-key={creature.key} style={{ ['--x' as string]: creature.x, ['--y' as string]: creature.y, ['--d' as string]: creature.delay, color: creature.color }} aria-label={creature.label}>
-                    {creature.rune ? <Rune id={creature.rune} /> : null}
+                  <button key={creature.key} ref={scene.joke?.speaker === creature.key ? speakerRef : undefined} type="button" className={creature.className} data-speaking={scene.joke?.speaker === creature.key || undefined} data-key={creature.key} style={{ ['--x' as string]: creature.x, ['--y' as string]: creature.y, ['--d' as string]: creature.delay, color: creature.color }} aria-label={creature.label}>
+                    {creature.rune ? <Rune id={creature.rune} painted /> : null}
                   </button>
                 ))}
               </div>
@@ -99,7 +131,7 @@ export function MapView({ scene, onHit, onGround, onHome, onToggleIndex, onClose
                 {scene.ripples.map((ripple) => <i key={ripple.id} className="onda" style={{ left: ripple.x, top: ripple.y }} />)}
               </div>
               <button className={`compass ${scene.spin ? 'spin' : ''}`} type="button" aria-label="Rosa de los vientos" onAnimationEnd={onSpinDone}><Rune id="rosa" /></button>
-              {scene.joke ? <div className={`chiste ${scene.jokeClass}`} role="status" style={{ ['--x' as string]: scene.joke.x, ['--y' as string]: scene.joke.y, ['--tx' as string]: scene.jokeShift }}><b>{scene.joke.name}</b>{scene.joke.text}</div> : null}
+              {scene.joke ? <div ref={bubbleRef} className="chiste" role="status"><b>{scene.joke.name}</b>{scene.joke.text}</div> : null}
             </div>
           </div>
         </div>
@@ -189,3 +221,4 @@ function RegionCard({ card, onClose, onOpen }: { readonly card: MapScene['card']
     </div>
   );
 }
+import { Landscape } from './Landscape';

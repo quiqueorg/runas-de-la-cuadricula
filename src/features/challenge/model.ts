@@ -3,10 +3,16 @@ import { isModernLevel, levelLabel, levelsInRegion, regionOf, routeOf } from '..
 import type { Level } from '../../core/models';
 import { progress } from '../../core/state';
 import type { ChallengeClock } from './engine';
+import { boardMarkup } from './Pieces';
+
+/** Lessons that compare styles or states are measured on hidden copies of the board. */
+export const usesProbes = (level: Level): boolean => !!(level.estado || level.cmp?.length);
 
 export interface EditorRule {
   readonly index: number;
   readonly selector: string;
+  /** The student writes the selector of this rule. */
+  readonly ownSelector: boolean;
   readonly fixed: string | null;
   readonly editable: boolean;
 }
@@ -32,7 +38,7 @@ export function editorRows(level: Level): readonly EditorRow[] {
   };
   level.b.forEach((rule, index) => {
     if (rule.oculto) return;
-    const item: EditorRule = { index, selector: rule.s, fixed: rule.f || null, editable: !!rule.ed };
+    const item: EditorRule = { index, selector: rule.s, ownSelector: rule.sel !== undefined, fixed: rule.f || null, editable: !!rule.ed };
     if (rule.g < 0) {
       flush();
       rows.push({ kind: 'rule', ...item });
@@ -84,10 +90,18 @@ export interface LessonChrome {
   readonly hintHtml: string;
   readonly runes: readonly string[];
   readonly timed: boolean;
-  readonly widths: readonly number[];
+  readonly views: readonly string[];
+  readonly viewsLabel: string;
   readonly state: { readonly icon: string; readonly pressed: string; readonly idle: string } | null;
   readonly sky: boolean;
   readonly flex: boolean;
+  /** Hidden copies of the board measured without transitions. */
+  readonly probes: boolean;
+  /** The lesson has drawable guides (grid lines or flex axes). */
+  readonly guides: boolean;
+  /** The goal can be looked at on the board itself. */
+  readonly peek: boolean;
+  readonly markup: string | null;
   readonly floor: string;
   readonly boardLabel: string;
   readonly pieceCount: number;
@@ -100,12 +114,13 @@ export function lessonChrome(level: Level, solved: boolean, hit: '' | 'golpe-her
   const phases = level.jefe ? levelsInRegion(level.r) : [];
   const bossLeft = phases.filter((item) => !progress.hechos[item.id]).length;
   const hearts = Math.max(0, 3 - (progress.intentos[level.id] || 0));
-  const sky = isModernLevel(level);
+  const base = level.mundo === 'base';
+  const sky = isModernLevel(level) && !base;
   const flex = level.mundo === 'flex';
   const previous = route[index - 1];
   const next = route[index + 1];
   return {
-    className: ['view', flex ? 'is-flex' : '', sky ? 'is-sky' : '', level.mundo === 'final' ? 'is-final' : '', level.dim ? 'dim' : '', level.jefe ? 'boss' : '', level.examen ? 'exam' : '', level.espejismo ? 'mirage' : '', level.clase ?? '', solved || deliveryWon ? 'solved' : ''].filter(Boolean).join(' '),
+    className: ['view', flex ? 'is-flex' : '', sky ? 'is-sky' : '', base ? 'is-base' : '', level.mundo === 'final' ? 'is-final' : '', level.dim ? 'dim' : '', level.jefe ? 'boss' : '', level.examen ? 'exam' : '', level.espejismo ? 'mirage' : '', level.clase ?? '', solved || deliveryWon ? 'solved' : ''].filter(Boolean).join(' '),
     blow: hit,
     kicker: level.secreto ? 'Lugar secreto' : `${region.n}${level.jefe ? ' · Combate final' : level.examen ? ' · Prueba de aprendizaje' : ''}`,
     step: levelLabel(level.id),
@@ -141,19 +156,27 @@ export function lessonChrome(level: Level, solved: boolean, hit: '' | 'golpe-her
     hintHtml: level.pista ?? '',
     runes: level.ok,
     timed: !!level.tiempo,
-    widths: level.anchos,
-    state: level.estado ? {
-      icon: level.estado === 'hover' ? 'i-cursor' : 'i-rayo',
-      pressed: level.estado === 'hover' ? 'Quitar el cursor' : 'Volver al reposo',
-      idle: level.estado === 'hover' ? 'Pasar el cursor' : 'Activar',
-    } : null,
+    views: level.vistas.length > 1 ? level.vistas.map((view) => view.n) : [],
+    viewsLabel: level.vistas.every((view) => /^\d/.test(view.n)) ? 'Tamaño del tablero' : 'Vista del tablero',
+    state: level.estado ? STATE_BUTTONS[level.estado] : null,
     sky,
     flex,
+    probes: isModernLevel(level) || usesProbes(level),
+    guides: !base,
+    peek: base && !level.examen && !level.espejismo,
+    markup: level.html ? boardMarkup(level) : null,
     floor: level.t || region.t,
     boardLabel: `${level.n}: tablero con ${level.movibles.length} piezas`,
     pieceCount: level.movibles.length,
   };
 }
+
+const STATE_BUTTONS: Record<NonNullable<Level['estado']>, { readonly icon: string; readonly pressed: string; readonly idle: string }> = {
+  activo: { icon: 'i-rayo', pressed: 'Volver al reposo', idle: 'Activar' },
+  hover: { icon: 'i-cursor', pressed: 'Quitar el cursor', idle: 'Pasar el cursor' },
+  pulsa: { icon: 'i-cursor', pressed: 'Soltar', idle: 'Mantener pulsado' },
+  foco: { icon: 'i-cursor', pressed: 'Quitar el foco', idle: 'Dar el foco' },
+};
 
 export function beginClock(clock: ChallengeClock): ChallengeClock {
   return { ...clock, estado: 'corre' };
@@ -199,9 +222,11 @@ export function highlightTokens(txt: string, fixed: boolean, allowed: readonly s
   return tokens;
 }
 
+const BARE_WORDS = new Set(['width', 'height', 'screen', 'print', 'all', 'and', 'or', 'not', '<', '<=', '>', '>=']);
+
 export function runeSnippet(prop: string, media: boolean): { text: string; rewind: number } {
-  if (media && (prop === 'min-width' || prop === 'max-width')) return { text: `(${prop}: )`, rewind: 1 };
-  if (media && prop === 'width') return { text: 'width', rewind: 0 };
-  if (media) return { text: ` ${prop} `, rewind: 0 };
-  return { text: `${prop}: ;`, rewind: 1 };
+  if (!media) return { text: `${prop}: ;`, rewind: 1 };
+  if (prop === 'width' || prop === 'height') return { text: prop, rewind: 0 };
+  if (BARE_WORDS.has(prop)) return { text: ` ${prop} `, rewind: 0 };
+  return { text: `(${prop}: )`, rewind: 1 };
 }

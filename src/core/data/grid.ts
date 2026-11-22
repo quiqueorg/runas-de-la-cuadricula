@@ -16,7 +16,7 @@ export const regions: Region[] = [
 
 //Piece types. a: material that stretches (map areas) · o: token with an icon (objects) · i: icon · f: pieces that may be fixed
 export const pieceTypes: PieceTypeMap = {
-  huerto: { a: 'huerto' }, trigal: { a: 'trigo' }, flores: { a: 'flores' }, orilla: { a: 'flores' }, jardin: { a: 'flores', i: 'flor' },
+  huerto: { a: 'huerto' }, bancal: { a: 'tierra' }, trigal: { a: 'trigo' }, flores: { a: 'flores' }, orilla: { a: 'flores' }, jardin: { a: 'flores', i: 'flor' },
   rio: { a: 'agua' }, acequia: { a: 'agua' }, estanque: { a: 'agua', i: 'pez' }, isla: { a: 'flores', i: 'nenufar' },
   camino: { a: 'camino' }, plaza: { a: 'camino', i: 'pozo' }, casa: { a: 'tejas', i: 'casa' },
   arbol: { a: 'copas' }, arboleda: { a: 'copas' }, pino: { a: 'pinos' }, claro: { a: 'tierra', i: 'hoguera' },
@@ -117,11 +117,20 @@ export const levels: LevelDraft[] = [
     id: '1-7', r: 0, n: 'Las acequias', hito: 'pez', ok: ['grid-template-columns'], c: ['repeat()', 'fr'],
     enc: 'Entre trigal y trigal corre una acequia estrecha de 50px. Empieza por una acequia, y el dibujo se repite dos veces.',
     teo: '<p><code>repeat()</code> también repite <b>patrones</b> de varias pistas.</p><pre>grid-template-columns: repeat(3, 20px 1fr);\n/* 20px 1fr 20px 1fr 20px 1fr */</pre>',
-    obj: 'Acequias de <b>50px</b> alternadas con trigales flexibles, empezando por una acequia. El patrón aparece <b>dos veces</b>.',
+    obj: 'En cada fila, alterna una acequia de <b>50px</b> con un trigal flexible. Usa <code>repeat()</code> para repetir ese par de columnas <b>dos veces por fila</b>.',
     pista: 'El patrón que se repite es <code>50px 1fr</code>.',
     p: ['acequia', 'trigal', 'acequia', 'trigal', 'acequia', 'trigal', 'acequia', 'trigal'],
     b: [{ s: '.tablero', f: 'display: grid;\ngap: 8px;', sol: 'grid-template-columns: repeat(2, 50px 1fr);' }],
     req: [{ re: /repeat\s*\(/, m: 'Usa repeat()' }],
+  },
+  {
+    id: '1-8', r: 0, n: 'Bancales en línea', hito: 'flor', et: false, sinAviso: true, ok: ['display'], c: ['inline-grid'],
+    enc: 'Estos dos bancales pequeños se me ponen uno debajo del otro y cada uno se queda con el prado entero. Son cuadrículas, sí, pero quiero que se comporten como palabras: una al lado de la otra y sin acaparar.',
+    teo: '<p>Un contenedor con <code>display: grid</code> es, por fuera, un <b>bloque</b>: empieza en línea nueva y ocupa todo el ancho. Con <code>display: inline-grid</code> sigue siendo una cuadrícula <b>por dentro</b>, pero por fuera va <b>en línea</b>: ocupa solo lo que miden sus pistas y deja que otros se pongan a su lado.</p><pre>display: inline-grid;</pre><p>Aquí la cuadrícula no es el tablero, sino cada bancal.</p>',
+    obj: 'Los dos bancales, uno junto al otro, cada uno del ancho justo de sus dos columnas.',
+    pista: 'Cambia <code>grid</code> por <code>inline-grid</code> en <code>.bancal</code>.',
+    p: ['bancal', ['flor', 'flor', 'flor', 'flor'], 'bancal', ['seta', 'seta', 'seta', 'seta']],
+    b: [{ s: '.bancal', f: 'grid-template-columns: 56px 56px;\ngap: 6px;\nmargin: 6px;\nvertical-align: top;', ini: 'display: grid;', sol: 'display: inline-grid;' }],
   },
 
   //Region 2 · Bosque de los Huecos

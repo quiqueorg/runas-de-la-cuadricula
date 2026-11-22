@@ -29,7 +29,7 @@ export function HomeView({ cards, shake, soundOn, onSelect, onNewGame, onToggleS
       <div className="game-header">
         <Rune id="emblema" className="emblem" title="Runas de la Cuadrícula" />
         <h1 className="logo"><span className="l1">Runas de la</span><span className="l2">Cuadrícula</span></h1>
-        <p className="tagline">Tres aventuras para dominar el CSS: Grid en la superficie, Flexbox en las profundidades y, en los cielos, media queries, variables y transiciones</p>
+        <p className="tagline">Aprende CSS escribiéndolo: los fundamentos en la isla, Grid en la superficie, Flexbox en las profundidades y, en los cielos, media queries, variables y transiciones</p>
       </div>
       <nav className="main-menu adventure-list" aria-label="Elige aventura">
         {cards.map((card) => (
@@ -49,7 +49,7 @@ export function HomeView({ cards, shake, soundOn, onSelect, onNewGame, onToggleS
       <footer className="home-footer">
         <span className="progress-label" />
         <MusicButton />
-        <button className="button icon-only" type="button" aria-pressed={soundOn} aria-label="Efectos de sonido" onClick={onToggleSound}>
+        <button id="sound-toggle" className="button icon-only" type="button" aria-pressed={soundOn} aria-label="Efectos de sonido" onClick={onToggleSound}>
           <Rune id="i-sonido" className="icon-on" />
           <Rune id="i-mudo" className="icon-off" />
         </button>

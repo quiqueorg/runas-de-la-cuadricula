@@ -3,6 +3,7 @@ import type { VictoryModel } from '../features/challenge/engine';
 import type { SecretNotice } from '../features/map';
 import { Rune } from '../shared/icons/Rune';
 import { RichText } from '../shared/rich-text/RichText';
+import { ColumnPractice } from './ColumnPractice';
 
 export type AppDialog =
   | { readonly kind: 'new-game'; readonly text: string }
@@ -58,6 +59,7 @@ export function Dialogs({ dialog, onClose, onReset, onExplore, onMap, onNext }: 
         {model.quote ? <p className="dv-fin"><Rune id={model.portrait} className="portrait" /><span>«{model.quote}»</span></p> : null}
         <p className="dv-hito"><Rune id={model.landmarkIcon} /><span>{model.landmark}</span></p>
         <p className="dv-prog">{model.progressText}</p>
+        {model.practice === 'huecos-en-columna' && <ColumnPractice />}
         <div className="dialog-actions">
           <button className="button" type="button" onClick={onClose}>Seguir aquí</button>
           <button className="button" type="button" onClick={onMap}>Mapa</button>

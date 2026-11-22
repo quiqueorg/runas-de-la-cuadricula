@@ -3,7 +3,7 @@
 #probe-target{visibility:hidden;pointer-events:none}
 #probe.sin-trans *,#probe-target.sin-trans *,#probe.sin-trans .tablero,#probe-target.sin-trans .tablero{transition:none!important}
 /* the board acts as the viewport: @media resolves against the layer */
-#view-challenge.is-sky .board-layer{container-type:inline-size}
+#view-challenge.is-sky .board-layer{container-type:size}
 :where(#view-challenge.dim .board-layer .tablero > .pieza:not(.cartel)){width:var(--dw,64px);height:var(--dh,64px)}
 :where(#view-challenge.dim .pieza .pieza){width:44px;height:44px}
 :where(#view-challenge.is-sky .board-layer .tablero > .pieza.contenedor){width:auto;height:auto}

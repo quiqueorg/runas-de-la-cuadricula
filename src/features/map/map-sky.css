@@ -1,13 +1,26 @@
 /* ═══ sky map ═══ */
-#view-map.is-sky .map-stage{background:radial-gradient(ellipse 80% 70% at 50% 40%,rgba(160,210,255,.45),transparent 70%),linear-gradient(180deg,#5a8ec8,#2e5a90);animation:none}
-#view-map.is-sky .world{background-image:url(../../../assets/mapa-cielo.jpg)}
+#view-map.is-sky .map-stage{background:radial-gradient(ellipse at 50% 36%,#778995,#3b505e 70%,#2a3d48);animation:none}
+#view-map.is-sky .world{background-image:linear-gradient(125deg,#ccbb9e60,#8396a740 52%,#667b8f55),url(../../../assets/mapa-cielo.jpg);background-blend-mode:color,normal}
+/* The source coordinate is the cap; the axle sits six source pixels lower. */
+#view-map.is-sky .fx-aspas{width:1.85cqi;margin-top:.25cqi;animation-duration:10s}
+#view-map.is-sky .cloud-veil i{
+  background:
+    radial-gradient(ellipse 38% 40% at 28% 60%,#eef0ec 5%,#d6dfe5e8 56%,transparent),
+    radial-gradient(ellipse 45% 52% at 57% 47%,#f6f3e9 6%,#d7e0e8ee 52%,transparent),
+    radial-gradient(ellipse 35% 30% at 76% 66%,#cad4dfeb 25%,transparent);
+}
+.fx-rios.sky-streams path{stroke:rgba(225,252,255,.68);stroke-width:1;stroke-dasharray:2 7;vector-effect:none;animation:sky-current 1.6s linear infinite}
+.sky-streams path+path{animation-delay:-.7s}
+@keyframes sky-current{to{stroke-dashoffset:-9}}
+@media (prefers-reduced-motion:reduce){.fx-rios.sky-streams path{animation:none}}
 #view-map.is-sky .compass{left:auto;top:auto;right:2.4%;bottom:3.4%;width:7.5%}
 #view-map.is-sky .trail path.done,#view-map.is-sky .trail path.upcoming{stroke:#7a3412}
 .trail path.flight{stroke:#fff;stroke-width:3;stroke-dasharray:1 10;opacity:.95;filter:drop-shadow(0 0 2px rgba(40,90,180,.9));animation:marcha 1.4s linear infinite}
 .volador{position:relative;display:block;width:100%;overflow:visible}
 .volador canvas{position:absolute;display:block}
-.volador .ala{transform-origin:50% 100%;animation:aleteo-v .38s ease-in-out infinite alternate}
-@keyframes aleteo-v{to{transform:scaleY(-.55)}}
+.volador .ala{transform-origin:50% 92%;animation:aleteo-v 1s ease-in-out infinite}
+.vuelo-dragon .ala{animation-duration:1.55s}
+@keyframes aleteo-v{0%,18%,100%{transform:rotate(-3deg) scaleY(.92)}48%{transform:rotate(5deg) scaleY(.18)}}
 #view-map.is-sky .bicho .rune{filter:drop-shadow(0 2px 1px rgba(20,40,80,.45))}
 .fx-vortice{width:34cqi;aspect-ratio:1/.82;translate:-50% -50%;border-radius:50%;pointer-events:none;-webkit-mask:radial-gradient(closest-side,transparent 14%,#000 30%,#000 62%,transparent 100%);mask:radial-gradient(closest-side,transparent 14%,#000 30%,#000 62%,transparent 100%)}
 .fx-vortice b{position:absolute;inset:0;border-radius:50%;background:repeating-conic-gradient(from 0deg,rgba(40,30,80,.26) 0 14deg,transparent 22deg 40deg,rgba(220,210,255,.14) 46deg 50deg,transparent 56deg 72deg);filter:blur(5px);animation:gira 46s linear infinite reverse}
@@ -17,14 +30,11 @@
 .fx-relampago path{fill:#fffbe8;stroke:#c8b8ff;stroke-width:1.4;filter:drop-shadow(0 0 4px #d8c8ff) drop-shadow(0 0 10px #a890ff)}
 @keyframes relampago-m{0%,90%,100%{opacity:0}91%{opacity:1}92.5%{opacity:.2}94%{opacity:1}96%{opacity:0}}
 .fx-ruta{left:0!important;top:0!important;width:100%;height:100%;overflow:visible}
-.fx-ruta .dir{filter:drop-shadow(14px 26px 4px rgba(20,40,80,.22))}
-.fx-globo-c{width:calc(2.4cqi * var(--e,1));translate:-50% -50%;animation:globo-c 9s ease-in-out infinite alternate;animation-delay:var(--d)}
-.fx-globo-c .rune{display:block;width:100%;filter:drop-shadow(.6cqi 1.6cqi .3cqi rgba(20,40,80,.22))}
-.fx-globo-c b{position:absolute;left:50%;top:92%;width:1px;height:2.6cqi;background:rgba(60,40,30,.6);transform-origin:top}
-.fx-globo-c.v2 b{display:none}
-.fx-globo-c.v2{animation-name:globo-libre;animation-duration:70s;animation-direction:normal;animation-iteration-count:infinite}
-@keyframes globo-c{to{transform:translate(.4cqi,-1cqi) rotate(3deg)}}
-@keyframes globo-libre{0%{transform:translate(0,0)}25%{transform:translate(6cqi,-3cqi)}50%{transform:translate(14cqi,-1cqi)}75%{transform:translate(8cqi,2cqi)}100%{transform:translate(0,0)}}
+.dir{filter:drop-shadow(.3cqi .5cqi .16cqi rgba(20,40,80,.2))}
+/* The painted tail is on the right; the map crossing runs east. */
+.dir .rune{display:block;scale:-1 1;animation:airship-drift 6s ease-in-out infinite alternate}
+@keyframes airship-drift{from{translate:0 -.12cqi;rotate:-1deg}to{translate:0 .12cqi;rotate:1deg}}
+@media (prefers-reduced-motion:reduce){.dir .rune,.volador .ala{animation:none}}
 .fx-molinillo{width:1.5cqi;translate:-50% -50%;overflow:visible}
 .fx-molinillo .rune{display:block;width:100%;height:auto;transform-origin:50% 41.67%;animation:gira var(--dur,2s) linear infinite;animation-delay:var(--d)}
 .fx-campana{width:2.3cqi;translate:-50% -10%;transform-origin:50% 8%;animation:campaneo 2.4s ease-in-out infinite;animation-delay:var(--d)}
@@ -48,4 +58,5 @@
 .flyer{position:absolute;z-index:3;width:5.2cqi;filter:drop-shadow(10px 22px 3px rgba(20,40,80,.25))}
 .flyer .rune{width:100%;height:auto}
 .dir,.vag{z-index:3;width:3.6cqi}
+.dir{width:4.5cqi;margin-top:-1.2cqi}
 .dir .rune,.vag .rune{width:100%;height:auto}

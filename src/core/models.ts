@@ -1,10 +1,10 @@
 /** Domain models. Lesson selectors and the save record keep their stored names. */
 
-export type WorldId = 'grid' | 'flex' | 'cielo' | 'final';
+export type WorldId = 'base' | 'grid' | 'flex' | 'cielo' | 'final';
 
 export type ViewName = 'home' | 'map' | 'challenge';
 
-export type BoardState = 'activo' | 'hover';
+export type BoardState = 'activo' | 'hover' | 'pulsa' | 'foco';
 
 export type PieceSpec = string | readonly PieceSpec[];
 
@@ -13,7 +13,24 @@ export interface PieceType {
   readonly o?: string;
   readonly i?: string;
   readonly cartel?: boolean;
+  /** Real element name. The type is then not a class: the tag identifies the piece. */
+  readonly tag?: string;
+  /** The piece is its text, written straight inside the element. */
+  readonly texto?: boolean;
 }
+
+/** One way of looking at the board: its size and what the device reports. */
+export interface BoardView {
+  readonly w: number;
+  readonly h: number;
+  readonly n: string;
+  readonly medio: 'screen' | 'print';
+  readonly esquema: 'light' | 'dark';
+  readonly puntero: 'fine' | 'coarse';
+  readonly calma: boolean;
+}
+
+export type BoardViewDraft = Partial<BoardView>;
 
 export type PieceTypeMap = Record<string, PieceType>;
 
@@ -31,6 +48,8 @@ export interface BoardRule {
   oculto?: boolean;
   m?: string | MediaDraft;
   g: number;
+  /** Starting text of a selector the student writes; `s` is then the solution. */
+  sel?: string;
 }
 
 export interface BoardRuleDraft {
@@ -42,6 +61,7 @@ export interface BoardRuleDraft {
   readonly oculto?: boolean;
   readonly m?: string | MediaDraft;
   g?: number;
+  readonly sel?: string;
 }
 
 export interface MediaGroup {
@@ -68,6 +88,15 @@ export interface RuleCheck {
   readonly m: string;
   readonly b?: number;
   readonly cond?: boolean;
+  /** Test the selectors the student wrote instead of the declarations. */
+  readonly sel?: boolean;
+}
+
+/** A recognisable wrong turn: when every listed property computes to its value, say what to look at. */
+export interface Misstep {
+  readonly s?: string;
+  readonly si: Readonly<Record<string, string>>;
+  readonly m: string;
 }
 
 export interface RuntimePiece {
@@ -78,6 +107,9 @@ export interface RuntimePiece {
   readonly padre: number;
   T: PieceType;
   readonly e: string;
+  readonly id: string;
+  /** How the piece reads in the markup (`p.nota#aviso`), shown on pieces that are real elements. */
+  marca: string;
   cont?: boolean;
 }
 
@@ -91,12 +123,16 @@ export interface LevelDraft {
   readonly teo?: string;
   readonly obj?: string;
   readonly pista?: string;
+  readonly pistasPrevias?: readonly string[];
+  readonly practica?: 'huecos-en-columna';
+  readonly despistes?: readonly Misstep[];
   readonly nota?: string;
   p: PieceSpec[];
   b: BoardRuleDraft[];
   w?: number;
   h?: number;
   anchos?: number[];
+  vistas?: readonly BoardViewDraft[];
   et?: boolean;
   etFijas?: boolean;
   readonly esp?: string;
@@ -122,6 +158,10 @@ export interface LevelDraft {
   readonly bolsaTxt?: string;
   readonly encima?: readonly (readonly [string, string, string])[];
   readonly req?: readonly RuleCheck[];
+  /** Show the board's markup next to the theory. */
+  readonly html?: boolean;
+  /** The board itself is not the container being taught, so do not warn that it is not one. */
+  readonly sinAviso?: boolean;
   mundo?: WorldId;
   i?: number;
   mg?: MediaGroup[];
@@ -130,12 +170,13 @@ export interface LevelDraft {
   max?: number;
 }
 
-export interface Level extends Omit<LevelDraft, 'p' | 'b' | 'mundo' | 'i' | 'w' | 'h' | 'anchos' | 'ok' | 'hito'> {
+export interface Level extends Omit<LevelDraft, 'p' | 'b' | 'mundo' | 'i' | 'w' | 'h' | 'anchos' | 'vistas' | 'ok' | 'hito'> {
   mundo: WorldId;
   i: number;
   w: number;
   h: number;
   anchos: number[];
+  vistas: BoardView[];
   b: BoardRule[];
   p: RuntimePiece[];
   mg: MediaGroup[];
@@ -206,6 +247,6 @@ export interface Session {
 }
 
 export function isWorldId(value: string): value is WorldId {
-  return value === 'grid' || value === 'flex' || value === 'cielo' || value === 'final';
+  return value === 'base' || value === 'grid' || value === 'flex' || value === 'cielo' || value === 'final';
 }
 

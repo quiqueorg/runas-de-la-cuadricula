@@ -1,8 +1,14 @@
 /* ───────── map ───────── */
 .mapa-layout{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(330px,1fr);gap:24px;align-items:start;max-width:1480px;margin:0 auto;padding:22px max(2vw,12px) 48px}
 .marco-mundo{position:sticky;top:84px;padding:9px;border-radius:var(--radius-md);background:linear-gradient(135deg,#6a4a2a,#3c2814 55%,#5a3d22);box-shadow:inset 0 0 0 1px rgba(255,220,160,.35),inset 0 0 0 4px rgba(0,0,0,.35),0 22px 40px -14px rgba(0,0,0,.85)}
-.world{position:relative;aspect-ratio:16/11;border-radius:4px;overflow:hidden;background:#c9b98a url(../../../assets/mapa.jpg) center/cover;container-type:inline-size;box-shadow:inset 0 0 30px rgba(60,35,10,.55)}
-.trail{position:absolute;inset:0;width:100%;height:100%}
+.world{position:relative;aspect-ratio:16/11;border-radius:4px;overflow:hidden;background:#c9b98a url(../../../assets/mapa-textura.jpg) center/cover;container-type:inline-size;box-shadow:inset 0 0 30px rgba(60,35,10,.55)}
+.trail{position:absolute;inset:0;width:100%;height:100%;content-visibility:auto;contain-intrinsic-size:auto 300px}
+.fx-rios{content-visibility:auto;contain-intrinsic-size:auto 300px}
+.landscape-ink{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.ink-grid{background:radial-gradient(ellipse 24% 25% at 26% 22%,#ffe1a22d,transparent),radial-gradient(ellipse 19% 18% at 44% 79%,#27554730,transparent)}
+.ink-flex{background:radial-gradient(ellipse 15% 21% at 84% 47%,#a3c4ed32,transparent),radial-gradient(ellipse 19% 12% at 75% 78%,#ef994a35,transparent),radial-gradient(ellipse 15% 16% at 41% 14%,#9acac029,transparent)}
+.ink-cielo{background:radial-gradient(ellipse 25% 29% at 42% 19%,#55447932,transparent),linear-gradient(123deg,#ffe3ab24,transparent 45%,#5263aa17)}
+.ink-final{background:radial-gradient(ellipse 24% 22% at 50% 50%,#bc69b52e,transparent),radial-gradient(ellipse 20% 25% at 18% 28%,#62aeab20,transparent)}
 .trail path{fill:none;stroke:#5a3a1e;stroke-width:3;stroke-dasharray:2 9;stroke-linecap:round;vector-effect:non-scaling-stroke;opacity:.8}
 .trail path.done{stroke:var(--accent-shadow);stroke-dasharray:none;stroke-width:3.5;opacity:.95}
 .compass{position:absolute;right:2.5%;bottom:3%;width:13%;height:auto;opacity:.85}

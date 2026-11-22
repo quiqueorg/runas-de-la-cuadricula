@@ -27,16 +27,17 @@ export function routeSample(points: readonly (readonly number[])[], elapsed: num
   const span = Math.max(duration, 0.001);
   let cycle = (elapsed / span) % 1;
   let opacity = 1;
-  if (mode === 'ping') cycle = cycle < 0.5 ? cycle * 2 : (1 - cycle) * 2;
+  if (mode === 'ping') cycle = (1 - Math.cos(cycle * 2 * Math.PI)) / 2;
   else if (mode === 'flight') {
-    const travel = cycle <= 0.8 ? cycle / 0.8 : 1;
-    if (cycle < 0.06) opacity = cycle / 0.06;
-    else if (cycle > 0.8) opacity = Math.max(0, 1 - (cycle - 0.8) / 0.2);
-    cycle = travel;
+    const fade = Math.min(1, cycle / 0.08, (1 - cycle) / 0.14);
+    opacity = fade * fade * (3 - 2 * fade);
   }
   if (points.length < 2) return { x: points[0]?.[0] ?? 0, y: points[0]?.[1] ?? 0, opacity };
-  const cursor = cycle * (points.length - 1);
-  const index = Math.min(points.length - 2, Math.floor(cursor));
+  // Some traced routes repeat the landing point; don't spend a beat hovering there.
+  let last = points.length - 1;
+  while (last > 1 && points[last]?.[0] === points[last - 1]?.[0] && points[last]?.[1] === points[last - 1]?.[1]) last--;
+  const cursor = cycle * last;
+  const index = Math.min(last - 1, Math.floor(cursor));
   const local = cursor - index;
   const from = points[index] ?? [0, 0];
   const to = points[index + 1] ?? from;
@@ -69,13 +70,12 @@ function creatures(world: WorldId): { key: string; x: number; y: number }[] {
   });
 }
 
-function jokeFor(key: string, cursors: Readonly<Record<string, number>>, world: WorldId): { joke: Joke; cursors: Record<string, number>; effect: MapEffect } | null {
+function jokeFor(key: string, cursors: Readonly<Record<string, number>>): { joke: Joke; cursors: Record<string, number>; effect: MapEffect } | null {
   const person = personOf(key);
   if (!person) return null;
   const lines = person.ch;
   const cursor = ((cursors[key] ?? -1) + 1) % lines.length;
-  const spot = creatures(world).find((item) => item.key === key);
-  const joke = { name: person.n, text: lines[cursor] ?? '', x: spot?.x ?? 0.5, y: spot?.y ?? 0.5 };
+  const joke = { speaker: key, name: person.n, text: lines[cursor] ?? '' };
   const effect: MapEffect = 'cur' in person && person.cur
     ? { type: 'sound', name: 'clic' }
     : 'sp' in person && person.sp
@@ -111,13 +111,13 @@ export function reduceMap(ui: MapUi, action: MapAction, world: WorldId): { ui: M
     return { ui: { ...ui, tags }, effect: { type: 'sound', name: 'clic' } };
   }
   if (action.type === 'greet') {
-    const told = jokeFor(action.key, ui.cursors, world);
+    const told = jokeFor(action.key, ui.cursors);
     if (!told) return { ui, effect: { type: 'none' } };
-    return { ui: { ...ui, joke: told.joke, cursors: told.cursors }, effect: told.effect };
+    return { ui: { ...ui, joke: told.joke, cursors: told.cursors }, effect: { type: 'none' } };
   }
   const hit = action.hit;
   if (hit.kind === 'inhabitant') {
-    const told = jokeFor(hit.key, ui.cursors, world);
+    const told = jokeFor(hit.key, ui.cursors);
     if (!told) return { ui, effect: { type: 'none' } };
     return { ui: { ...ui, joke: told.joke, cursors: told.cursors }, effect: told.effect };
   }
@@ -160,8 +160,6 @@ export interface MapScene {
   readonly indexOpen: boolean;
   readonly spin: boolean;
   readonly joke: Joke | null;
-  readonly jokeClass: string;
-  readonly jokeShift: string;
   readonly ripples: MapUi['ripples'];
   readonly spans: readonly TrailSpan[];
   readonly secrets: readonly { id: string; className: string; x: number; y: number; w: number; ar: string; label: string; name: string | null }[];
@@ -241,16 +239,14 @@ export function mapScene(world: WorldId, ui: MapUi): MapScene {
   const joke = ui.joke;
   return {
     world,
-    worldClass: `view ${world === 'flex' ? 'is-underground' : ''} ${world === 'cielo' ? 'is-sky' : ''} ${world === 'final' ? 'is-final' : ''}`,
+    worldClass: `view ${world === 'flex' ? 'is-underground' : ''} ${world === 'cielo' ? 'is-sky' : ''} ${world === 'final' ? 'is-final' : ''} ${world === 'base' ? 'is-isle' : ''}`,
     title: worldMeta[world].mapa,
     subtitle: world === 'final'
       ? `Combate final · fase ${Math.min(examProgress() + 1, EXAM_COUNTS.final)} de ${EXAM_COUNTS.final}${examProgress() === EXAM_COUNTS.final ? ' · ¡derrotado!' : ''}`
-      : `${exerciseProgress()} de ${EXERCISE_COUNTS[world]} ejercicios · ${world === 'cielo' ? 'combate final' : 'prueba'} ${examProgress()} de ${EXAM_COUNTS[world]} · secretos ${found} de ${secrets.length}`,
+      : `${exerciseProgress()} de ${EXERCISE_COUNTS[world]} ejercicios · ${world === 'cielo' ? 'combate final' : 'prueba'} ${examProgress()} de ${EXAM_COUNTS[world]}${secrets.length ? ` · secretos ${found} de ${secrets.length}` : ''}`,
     indexOpen: ui.indexOpen,
     spin: ui.spin,
     joke,
-    jokeClass: joke && joke.y < 0.24 ? 'abajo' : '',
-    jokeShift: joke ? (joke.x > 0.78 ? 'calc(-100% + 2.2cqi)' : joke.x < 0.22 ? '-2.2cqi' : '-50%') : '-50%',
     ripples: ui.ripples,
     spans: onMap.filter((region) => isDiscovered(region.ri)).flatMap((region) => trailSpans(region, visible, cleared, regionComplete(region.ri))),
     secrets: secrets.flatMap((level) => {

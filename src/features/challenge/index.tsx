@@ -1,17 +1,19 @@
 ﻿/** Lesson composition: measure the board, reduce actions, hand the view a model. */
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { canvasGutter, isModernLevel, levelKind, levelLabel, regionOf, worldMeta } from '../../core/catalog';
-import type { Level } from '../../core/models';
+import { BASE_OFFSET, canvasGutter, isModernLevel, levelKind, levelLabel, regionOf, worldMeta } from '../../core/catalog';
+import type { BoardView, Level } from '../../core/models';
 import { navigate } from '../../core/navigation';
 import { session } from '../../core/session';
 import { progress, saveProgress } from '../../core/state';
 import { useGame } from '../../core/useGame';
 import { music, sound } from '../../shared/audio/audio';
 import { registerSymbols } from '../../shared/icons/registry';
+import { isleSymbols } from '../../shared/icons/isleSymbols';
 import { SYMBOLS } from '../../shared/icons/symbols';
 import { ChallengeView } from './ChallengeView';
 import {
   CONDITION_TOKENS,
+  activeView,
   chimeIfNeeded,
   deliverExam,
   evaluate,
@@ -19,6 +21,7 @@ import {
   readBlueprint,
   registerFill,
   savedTexts,
+  setBoardState,
   solutionTexts,
   type BlueprintView,
   type Evaluation,
@@ -27,6 +30,7 @@ import {
 import { advanceClock, beginClock, editorRows, lessonChrome, restartClock, runeSnippet } from './model';
 
 registerSymbols(SYMBOLS);
+registerSymbols(isleSymbols(BASE_OFFSET));
 
 export { requestFill } from './engine';
 
@@ -71,7 +75,10 @@ export function Challenge({ level, onVictory }: ChallengeProps) {
   const lastArea = useRef<HTMLTextAreaElement | null>(null);
   const [texts, setTexts] = useState(() => savedTexts(level).texts);
   const [conditions, setConditions] = useState(() => savedTexts(level).conditions);
+  const [selectors, setSelectors] = useState(() => savedTexts(level).selectors);
+  const [peeking, setPeeking] = useState(false);
   const [hintOpen, setHintOpen] = useState(false);
+  const [hintStep, setHintStep] = useState(0);
   const [linesOn, setLinesOn] = useState(progress.lineas !== false);
   const [active, setActive] = useState(false);
   const [running, setRunning] = useState(false);
@@ -89,7 +96,10 @@ export function Challenge({ level, onVictory }: ChallengeProps) {
     seen.current = '';
     setTexts(saved.texts);
     setConditions(saved.conditions);
+    setSelectors(saved.selectors);
+    setPeeking(false);
     setHintOpen(false);
+    setHintStep(0);
     setActive(false);
     setRunning(false);
     setView(null);
@@ -110,6 +120,7 @@ export function Challenge({ level, onVictory }: ChallengeProps) {
       const filled = solutionTexts(level, field);
       setTexts(filled.texts);
       setConditions(filled.conditions);
+      setSelectors(filled.selectors);
     });
   }, [level]);
 
@@ -156,7 +167,7 @@ export function Challenge({ level, onVictory }: ChallengeProps) {
       canvas.style.setProperty('--dh', `${level.dim[1]}px`);
     }
     canvas.style.setProperty('--arena', '0');
-    const next = evaluate(level, board, texts, conditions, live.current, linesOn, {
+    const next = evaluate(level, board, texts, conditions, selectors, live.current, linesOn, {
       player: playerStyle.current,
       objective: objectiveStyle.current,
     });
@@ -165,9 +176,9 @@ export function Challenge({ level, onVictory }: ChallengeProps) {
     if (key !== seen.current) {
       seen.current = key;
       setView(next);
-      if (level.examen) setPlans(readBlueprint(level, board, live.current));
+      if (level.examen) setPlans(readBlueprint(level, board, live.current, objectiveStyle.current));
     }
-    if (next.victory) setSparks(burst(level, live.current.boardWidth));
+    if (next.victory) setSparks(burst(level, activeView(level, live.current)));
     roots.current?.querySelectorAll('textarea').forEach((area) => {
       area.style.height = 'auto';
       area.style.height = `${area.scrollHeight}px`;
@@ -175,7 +186,7 @@ export function Challenge({ level, onVictory }: ChallengeProps) {
     return () => {
       if (!live.current.shown) live.current.celebrated = false;
     };
-  }, [level, texts, conditions, linesOn, active, tick, running]);
+  }, [level, texts, conditions, selectors, linesOn, active, tick, running]);
 
   useEffect(() => {
     if (!view?.victory) return;
@@ -221,7 +232,7 @@ export function Challenge({ level, onVictory }: ChallengeProps) {
       write(target, snippet.text, snippet.rewind);
       return;
     }
-    if (area.dataset.m !== undefined) area = areas.find((item) => item.dataset.b !== undefined) ?? area;
+    if (area.dataset.m !== undefined || area.dataset.s !== undefined) area = areas.find((item) => item.dataset.b !== undefined) ?? area;
     const start = area.selectionStart ?? area.value.length;
     const line = area.value.lastIndexOf('\n', start - 1) + 1;
     const prefix = area.value.slice(line, start).trim() ? '\n' : '';
@@ -236,6 +247,7 @@ export function Challenge({ level, onVictory }: ChallengeProps) {
     const next = area.value.slice(0, start) + text + area.value.slice(end);
     const cursor = start + text.length - rewind;
     if (area.dataset.m !== undefined) setConditions((current) => current.map((value, index) => (index === Number(area.dataset.m) ? next : value)));
+    else if (area.dataset.s !== undefined) setSelectors((current) => current.map((value, index) => (index === Number(area.dataset.s) ? next : value)));
     else setTexts((current) => current.map((value, index) => (index === Number(area.dataset.b) ? next : value)));
     requestAnimationFrame(() => area.setSelectionRange(cursor, cursor));
   };
@@ -268,11 +280,7 @@ export function Challenge({ level, onVictory }: ChallengeProps) {
     const target = targetRef.current;
     const outline = outlineRef.current;
     if (player && target && outline) {
-      for (const root of [player, target, outline]) {
-        root.querySelector('.tablero')?.classList.toggle('activo', next);
-        root.querySelector('.tablero')?.classList.toggle('sim-hover', next);
-        root.querySelectorAll('.pieza').forEach((piece) => piece.classList.toggle('sim-hover', next));
-      }
+      setBoardState([player, target, outline], next);
       chimeIfNeeded(level, player, next);
     }
   };
@@ -287,10 +295,14 @@ export function Challenge({ level, onVictory }: ChallengeProps) {
       linesOn={linesOn}
       active={active}
       hintOpen={hintOpen}
+      hintStep={hintStep}
+      onNextHint={() => setHintStep((step) => Math.min(step + 1, level.pistasPrevias?.length ?? 0))}
       texts={texts}
       conditions={conditions}
+      selectors={selectors}
       rows={rows}
-      boardWidth={live.current.boardWidth}
+      viewIndex={live.current.vista}
+      peeking={peeking}
       rootsRef={roots}
       objectiveStyleRef={objectiveStyle}
       playerStyleRef={playerStyle}
@@ -306,15 +318,20 @@ export function Challenge({ level, onVictory }: ChallengeProps) {
       outlineRef={outlineRef}
       onNavigate={navigate}
       onLines={(on) => { progress.lineas = on; saveProgress(); setLinesOn(on); }}
-      onWidth={(width) => { live.current.boardWidth = width; sound.clic(); setTick((value) => value + 1); }}
+      onViewChange={(index) => { live.current.vista = index; sound.clic(); setTick((value) => value + 1); }}
+      onPeek={(on) => { sound.clic(); setPeeking(on); }}
       onToggleState={toggleState}
       onSubmit={submit}
       onToggleHint={() => { setHintOpen((open) => !open); if (!hintOpen) { live.current.usedHelp = true; sound.clic(); } }}
-      onReset={() => { sound.clic(); const reset = solutionTexts(level, 'ini'); setTexts(reset.texts); setConditions(reset.conditions); live.current.celebrated = false; live.current.previousMatches = []; }}
-      onShowSolution={() => { live.current.usedHelp = true; const solved = solutionTexts(level, 'sol'); setTexts(solved.texts); setConditions(solved.conditions); }}
+      onReset={() => { sound.clic(); const reset = solutionTexts(level, 'ini'); setTexts(reset.texts); setConditions(reset.conditions); setSelectors(reset.selectors); setHintOpen(false); setHintStep(0); live.current.celebrated = false; live.current.previousMatches = []; }}
+      onShowSolution={() => { live.current.usedHelp = true; const solved = solutionTexts(level, 'sol'); setTexts(solved.texts); setConditions(solved.conditions); setSelectors(solved.selectors); }}
       onInsertRune={insertRune}
       onEditRule={edit}
       onEditCondition={(index, value) => setConditions((current) => current.map((item, itemIndex) => (itemIndex === index ? value : item)))}
+      onEditSelector={(index, value) => {
+        if (live.current.clock.estado === 'espera' && level.tiempo) { live.current.clock = beginClock(live.current.clock); setRunning(true); }
+        setSelectors((current) => current.map((item, itemIndex) => (itemIndex === index ? value : item)));
+      }}
       onFocusArea={(area) => { lastArea.current = area; }}
       onTab={(area) => write(area, '  ', 0)}
       onShake={() => { if (!level.tiempo) return; live.current.clock = restartClock(live.current.clock, level.tiempo); setRunning(true); setTick((value) => value + 1); }}
@@ -322,13 +339,13 @@ export function Challenge({ level, onVictory }: ChallengeProps) {
   );
 }
 
-function burst(level: Level, boardWidth: number): { x: number; y: number; delay: number; scale: number }[] {
+function burst(level: Level, view: BoardView): { x: number; y: number; delay: number; scale: number }[] {
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return [];
   const maxW = Math.max(...level.anchos);
-  const x0 = canvasGutter + (maxW - boardWidth) / 2;
+  const x0 = canvasGutter + (maxW - view.w) / 2;
   return Array.from({ length: 22 }, () => ({
-    x: x0 + Math.random() * boardWidth,
-    y: canvasGutter + Math.random() * level.h,
+    x: x0 + Math.random() * view.w,
+    y: canvasGutter + Math.random() * view.h,
     delay: Math.random() * 0.5,
     scale: 0.6 + Math.random(),
   }));

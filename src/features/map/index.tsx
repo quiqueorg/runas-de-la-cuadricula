@@ -6,12 +6,15 @@ import { progress, saveProgress } from '../../core/state';
 import { useGame } from '../../core/useGame';
 import { music, sound } from '../../shared/audio/audio';
 import { registerSymbols } from '../../shared/icons/registry';
+import { isleSymbols } from '../../shared/icons/isleSymbols';
 import { SYMBOLS } from '../../shared/icons/symbols';
+import { BASE_OFFSET } from '../../core/catalog';
 import { initialMapUi, type MapAction, type MapHit, type SecretNotice } from './actions';
 import { MapView } from './MapView';
 import { armSpin, greetKeys, mapScene, mapTheme, reduceMap, regionsToMark, ripplePercent } from './model';
 
 registerSymbols(SYMBOLS);
+registerSymbols(isleSymbols(BASE_OFFSET));
 
 export type { SecretNotice };
 
@@ -78,7 +81,7 @@ export function MapViewScreen({ onSecret }: { readonly onSecret: (secret: Secret
       greeted.current = true;
       const keys = greetKeys(world);
       const key = keys[Math.floor(Math.random() * keys.length)];
-      if (key) apply({ type: 'greet', key });
+      if (key && !uiRef.current.joke) apply({ type: 'greet', key });
     }, 4500);
     return () => window.clearTimeout(timer);
   }, [world]);

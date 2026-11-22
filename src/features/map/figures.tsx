@@ -120,8 +120,8 @@ function place(part: Frame, whole: Frame): CSSProperties {
   };
 }
 
-const GRIFFIN_WING = 'M22 18c-6-14-2-20 6-22-1 8 3 12 10 14z';
-const DRAGON_WING = 'M34 18c-4-14 8-20 20-16-6 2-8 6-6 12z';
+const GRIFFIN_WING = 'M23 19C18 13 14 4 15 -4Q19 -2 23 3L21 -6Q27 -2 30 6L30 0Q34 5 36 12Z';
+const DRAGON_WING = 'M34 20Q31 5 42 -3L56 0Q50 3 52 9Q46 7 46 14Q40 11 34 20Z';
 
 const GRIFFIN_BODY: readonly Mark[] = [
   { t: 'path', d: 'M11 23c-5-1-8 2-8 5', ink: ink(null, '#c8883a', 2.2, 'round') },
@@ -164,8 +164,14 @@ const GRIFFIN_FRAME = centered(26, 24, GRIFFIN_BODY, GRIFFIN_WING);
 const DRAGON_FRAME = centered(34, 24, DRAGON_BODY, DRAGON_WING);
 const GRIFFIN_WING_FRAME = boundsOf(GRIFFIN_WING, 2);
 const DRAGON_WING_FRAME = boundsOf(DRAGON_WING, 2);
-const GRIFFIN_WING_MARK: readonly Mark[] = [{ t: 'path', d: GRIFFIN_WING, ink: ink('#efe4d0', '#211912', 1.6, 'butt', 'round') }];
-const DRAGON_WING_MARK: readonly Mark[] = [{ t: 'path', d: DRAGON_WING, ink: ink('#7ad0a0', '#211912', 1.6, 'butt', 'round') }];
+const GRIFFIN_WING_MARK: readonly Mark[] = [
+  { t: 'path', d: GRIFFIN_WING, ink: ink('#f3e1b9', '#473832', 1.6, 'butt', 'round') },
+  { t: 'path', d: 'M23 18Q21 14 20 8L25 13 26 8 30 12 32 9 35 12Z', ink: ink('#bd9569', null, 0) },
+];
+const DRAGON_WING_MARK: readonly Mark[] = [
+  { t: 'path', d: DRAGON_WING, ink: ink('#92b899', '#39463e', 1.6, 'butt', 'round') },
+  { t: 'path', d: 'M34 19Q37 6 42 -2L51 8Q44 4 42 1L46 13 41 5Z', ink: ink('#598676', null, 0) },
+];
 
 const BIRD = ['M2 12q4-5 8 0q4-5 8 0', 'M22 4q3-4 6 0q3-4 6 0', 'M30 20q3-4 6 0q3-4 6 0'] as const;
 const BAT = [
@@ -181,9 +187,13 @@ const BAT_WINGS: readonly Mark[][] = BAT.map((d) => [{ t: 'path', d, ink: BAT_IN
 const BIRD_FRAMES = BIRD.map((d) => boundsOf(d, BIRD_INK.width));
 const BAT_FRAMES = BAT.map((d) => boundsOf(d, BAT_INK.width));
 
-const CLOTH_PATH = 'M1 1.5h14l-4 3.5 4 3.5H1z';
+const CLOTH_PATH = 'M1 2Q5 0 9 2Q13 4 18 2L14 6 17 10Q13 12 9 10Q5 8 1 10Z';
 const POLE_MARKS: readonly Mark[] = [{ t: 'path', d: 'M1 15V1', ink: ink(null, '#3a2a20', 1.6) }];
-const CLOTH_MARKS: readonly Mark[] = [{ t: 'path', d: CLOTH_PATH, ink: ink('#c9463a', '#3a2a20', 1) }];
+const CLOTH_MARKS: readonly Mark[] = [
+  { t: 'path', d: CLOTH_PATH, ink: ink('#af5045', '#463432', 1) },
+  { t: 'path', d: 'M2 3Q6 1 10 3L9 8Q6 6 2 8Z', ink: ink('#dc8566', null, 0) },
+  { t: 'path', d: 'M6 3L8 5 6 7 4 5Z', ink: ink('#ffe4a1', null, 0) },
+];
 const FLAG_FRAME: Frame = { x: 0, y: 0, w: 20, h: 16 };
 const CLOTH_FRAME = boundsOf(CLOTH_PATH, 1.2);
 

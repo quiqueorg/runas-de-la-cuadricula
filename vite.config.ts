@@ -11,9 +11,4 @@ export default defineConfig({
   base: siteBase(),
   plugins: [react()],
   server: { port: 5173 },
-  css: {
-    modules: {
-      generateScopedName: '[local]',
-    },
-  },
 });

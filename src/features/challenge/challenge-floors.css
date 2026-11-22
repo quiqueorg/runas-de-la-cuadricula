@@ -36,7 +36,7 @@
 .fx-portal b{position:absolute;inset:0;border-radius:50%;border:.22cqi dashed var(--c);opacity:.75;animation:gira 30s linear infinite;animation-delay:var(--d)}
 .fx-portal b+b{inset:-7%;border-style:dotted;animation-direction:reverse;animation-duration:44s;opacity:.55}
 .fx-portal::after{content:'';position:absolute;inset:-4%;border-radius:50%;box-shadow:0 0 3cqi var(--c),inset 0 0 2cqi var(--c);opacity:.35;animation:latido-r 3.4s ease-in-out infinite;animation-delay:var(--d)}
-.fx-fragmento{width:1.1cqi;aspect-ratio:1;translate:-50% -50%;background:color-mix(in srgb,var(--c) 45%,#120a1c);border:1px solid var(--c);box-shadow:0 0 .7cqi var(--c);animation:fragmento 9s ease-in-out infinite;animation-delay:var(--d)}
+.fx-fragmento{width:1.1cqi;aspect-ratio:.72;translate:-50% -50%;clip-path:polygon(42% 0,95% 30%,76% 82%,36% 100%,4% 65%,12% 21%);background:conic-gradient(from 35deg at 42% 37%,var(--c) 0deg 111deg,color-mix(in srgb,var(--c) 48%,#39263f) 112deg 206deg,var(--c) 207deg 290deg,#fff1d4 291deg);animation:fragmento 9s ease-in-out infinite;animation-delay:var(--d)}
 @keyframes fragmento{0%,100%{transform:translate(0,0) rotate(0)}50%{transform:translate(calc((0.5 - var(--x)) * 7cqi),calc((0.5 - var(--y)) * 7cqi)) rotate(var(--g))}}
 body[data-mundo=final]:not([data-view=home]) .backdrop-scene{background-image:url(../../../assets/mapa-final.jpg)}
 .floor.t-vacio{background-image:url(../../../assets/t-vacio.jpg)}

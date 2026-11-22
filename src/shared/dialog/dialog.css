@@ -4,3 +4,10 @@
 .dialog-card h3{font-size:27px;color:var(--text-bright);margin-bottom:8px}
 .dialog-card p{margin:0 0 10px;color:var(--text-muted)}
 .dialog-actions{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:16px}
+.dialog-card:has(.column-practice[open]){max-height:90dvh;overflow:auto}
+.column-practice summary{cursor:pointer}
+.column-practice[open] summary,.column-practice form{margin-bottom:8px}
+.practice-board{height:150px;width:66px;margin:8px auto;display:flex;flex-direction:column;align-items:center;outline:1px solid currentColor}
+.practice-board>*{width:24px;height:24px}
+.column-practice input{width:14ch;font:inherit}
+.column-practice form{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center}

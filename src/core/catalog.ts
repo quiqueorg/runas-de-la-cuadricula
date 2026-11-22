@@ -1,6 +1,7 @@
 /** Assembles every adventure into one catalog and exposes progress queries. */
 import type {
   BoardRule,
+  BoardView,
   Level,
   LevelDraft,
   MediaDraft,
@@ -15,12 +16,16 @@ import type {
 } from './models';
 import { session } from './session';
 import { progress } from './state';
+import { baseLevels, basePieceTypes, baseRegions } from './data/base';
 import { finaleLevels, finalePieceTypes, finaleRegions } from './data/finale';
 import { flexLevels, flexPieceTypes, flexRegions } from './data/flex';
-import { levels as gridLevels, pieceTypes, regions } from './data/grid';
+import { levels as gridLevels, pieceTypes as gridPieceTypes, regions as gridRegions } from './data/grid';
 import { skyLevels, skyPieceTypes, skyRegions } from './data/sky';
 
 type FilterGroup = readonly [string, readonly string[]];
+
+const regions = [...gridRegions];
+const pieceTypes: PieceTypeMap = { ...gridPieceTypes };
 
 function stampRegions(list: Region[], world: WorldId): void {
   list.forEach((region, index) => {
@@ -42,6 +47,16 @@ function flattenPieces(list: readonly PieceSpec[], parent: number, out: { s: str
   });
 }
 
+const DEVICE = { medio: 'screen', esquema: 'light', puntero: 'fine', calma: false } as const;
+
+/** Widths alone name a view by its width; anything else needs its own label. */
+function viewsOf(draft: LevelDraft, width: number, height: number): BoardView[] {
+  if (!draft.vistas?.length) return (draft.anchos ?? [width]).map((w) => ({ ...DEVICE, w, h: height, n: `${w}px` }));
+  const sized = draft.vistas.map((view) => ({ ...DEVICE, ...view, w: view.w ?? width, h: view.h ?? height }));
+  const plain = sized.every((view) => view.h === sized[0]?.h) && new Set(sized.map((view) => view.w)).size === sized.length;
+  return sized.map((view) => ({ ...view, n: view.n ?? (plain ? `${view.w}px` : `${view.w}×${view.h}`) }));
+}
+
 function normalize(draft: LevelDraft, index: number): Level {
   const rules: BoardRule[] = draft.b.map((rule) => ({
     s: rule.s,
@@ -52,10 +67,12 @@ function normalize(draft: LevelDraft, index: number): Level {
     oculto: rule.oculto,
     m: rule.m,
     g: -1,
+    sel: rule.sel,
   }));
   const width = draft.w ?? 400;
-  const height = draft.h ?? 400;
-  const widths = draft.anchos ?? [width];
+  const views = viewsOf(draft, width, draft.h ?? 400);
+  const height = Math.max(...views.map((view) => view.h));
+  const widths = views.map((view) => view.w);
   const modern = draft.mundo === 'cielo' || draft.mundo === 'final';
   const size = draft.dim === undefined && modern ? [64, 64] as const : draft.dim;
   const groups: MediaGroup[] = [];
@@ -76,13 +93,20 @@ function normalize(draft: LevelDraft, index: number): Level {
   const selectors = new Set(rules.map((rule) => rule.s));
   const flat: { s: string; padre: number }[] = [];
   flattenPieces(draft.p as PieceSpec[], -1, flat);
+  // A piece is written `type@class.class#id:text`; a leading # pins it to the board.
   const pieces: RuntimePiece[] = flat.map(({ s, padre }) => {
     const fixed = s.startsWith('#');
-    const colon = s.indexOf(':');
-    const text = colon >= 0 ? s.slice(colon + 1) : '';
-    const [type = '', variant = ''] = (fixed ? s.slice(1) : s).split(':')[0]?.split('@') ?? [];
+    const body = fixed ? s.slice(1) : s;
+    const colon = body.indexOf(':');
+    const text = colon >= 0 ? body.slice(colon + 1) : '';
+    const [names = '', id = ''] = (colon >= 0 ? body.slice(0, colon) : body).split('#');
+    const [type = '', dotted = ''] = names.split('@');
+    const variant = dotted.replace(/\./g, ' ');
     const className = variant || type;
     const known = pieceTypes[type];
+    // Real elements and the isle's pieces show how they read in the markup instead of a class label.
+    const element = !!known?.tag || draft.mundo === 'base';
+    const labelled = draft.et !== false && !(fixed && draft.etFijas === false);
     return {
       t: type,
       k: variant,
@@ -90,7 +114,9 @@ function normalize(draft: LevelDraft, index: number): Level {
       txt: text,
       padre,
       T: known ?? { o: type },
-      e: draft.et !== false && !(fixed && draft.etFijas === false) && selectors.has('.' + className) ? className : '',
+      e: !element && labelled && selectors.has('.' + className) ? className : '',
+      id,
+      marca: element && labelled ? `${known?.tag ?? ''}${variant ? `.${variant.replace(/ /g, '.')}` : known?.tag ? '' : `.${type}`}${id ? `#${id}` : ''}` : '',
     };
   });
   pieces.forEach((piece) => {
@@ -117,6 +143,7 @@ function normalize(draft: LevelDraft, index: number): Level {
     w: width,
     h: height,
     anchos: widths,
+    vistas: views,
     dim: size,
     b: rules,
     p: pieces,
@@ -126,12 +153,12 @@ function normalize(draft: LevelDraft, index: number): Level {
     movibles: movable,
     hito: mark,
     ok: draft.ok ?? [],
-    tags: [
+    tags: [...new Set([
       ...(draft.examen ? ['prueba de aprendizaje'] : []),
       ...(draft.esp ? [draft.esp] : []),
       ...CSS_PROPS.filter((property) => used.has(property)),
       ...(draft.c ?? []),
-    ],
+    ])],
   };
 }
 
@@ -148,19 +175,26 @@ export const FINALE_OFFSET = regions.length;
 stampRegions(finaleRegions, 'final');
 finaleRegions.forEach((region) => regions.push(region));
 mergePieceTypes(finalePieceTypes);
+// The apprentice's isle opens the menu but is appended here, so earlier region numbers stay put.
+export const BASE_OFFSET = regions.length;
+stampRegions(baseRegions, 'base');
+baseRegions.forEach((region) => regions.push(region));
+mergePieceTypes(basePieceTypes);
 
 const assembled: LevelDraft[] = [
   ...gridLevels.map((level) => ({ ...level, mundo: 'grid' as const })),
   ...flexLevels.map((level) => ({ ...level, mundo: 'flex' as const, r: level.r + FLEX_OFFSET })),
   ...skyLevels.map((level) => ({ ...level, mundo: 'cielo' as const, r: level.r + SKY_OFFSET })),
   ...finaleLevels.map((level) => ({ ...level, mundo: 'final' as const, r: level.r + FINALE_OFFSET })),
+  ...baseLevels.map((level) => ({ ...level, mundo: 'base' as const, r: level.r + BASE_OFFSET })),
 ];
 
 export { pieceTypes, regions };
 
-export const isModernLevel = (level: Level): boolean => level.mundo === 'cielo' || level.mundo === 'final';
+export const isModernLevel = (level: Level): boolean => level.mundo === 'cielo' || level.mundo === 'final' || level.mundo === 'base';
 
 export const worldMeta: Record<WorldId, WorldCopy> = {
+  base: { n: 'La Isla del Aprendiz', mapa: 'Mapa de la isla', tec: 'Fundamentos de CSS' },
   grid: { n: 'Las Ruinas de la Cuadrícula', mapa: 'Mapa de las ruinas', tec: 'CSS Grid' },
   flex: { n: 'El Subsuelo Flexible', mapa: 'Mapa del subsuelo', tec: 'Flexbox' },
   cielo: { n: 'Los Cielos Cambiantes', mapa: 'Mapa de los cielos', tec: 'Media queries, variables y transiciones' },
@@ -168,7 +202,16 @@ export const worldMeta: Record<WorldId, WorldCopy> = {
 };
 
 export const ADVENTURES = ['grid', 'flex', 'cielo'] as const satisfies readonly WorldId[];
-export const WORLD_IDS: readonly WorldId[] = ['grid', 'flex', 'cielo', 'final'];
+export const WORLD_IDS: readonly WorldId[] = ['base', 'grid', 'flex', 'cielo', 'final'];
+
+export const BASE_GROUPS = [
+  ['Tipo de ejercicio', ['prueba de aprendizaje', 'contra reloj', 'regateo', 'a oscuras', 'escribe el selector']],
+  ['La caja', ['width', 'height', 'max-width', 'min-height', 'padding', 'padding-left', 'padding-top', 'margin', 'margin-top', 'margin-bottom', 'margin-left', 'margin-right', 'border', 'border-width', 'border-style', 'border-color', 'border-bottom', 'border-left', 'border-radius', 'box-sizing']],
+  ['Color y fondo', ['color', 'background-color', 'background-image', 'background-repeat', 'background-position', 'background-size']],
+  ['Texto', ['font-family', 'font-size', 'font-weight', 'font-style', 'font', 'text-align', 'text-decoration', 'text-transform', 'line-height', 'letter-spacing']],
+  ['Flujo y posición', ['display', 'float', 'clear', 'position', 'top', 'right', 'bottom', 'left', 'z-index']],
+  ['Conceptos', ['regla', 'comentarios', 'tipo', 'clase', 'id', 'universal', 'lista de selectores', 'descendiente', 'hijo', ':first-child', ':last-child', ':nth-child()', ':not()', 'cascada', 'especificidad', 'px', '%', 'em', 'rem', 'colores', 'hex', 'rgb()', 'hsl()', 'shorthand', 'modelo de caja', 'margin auto', 'bloque y en línea', 'reset', 'página base']],
+] as const satisfies readonly FilterGroup[];
 
 export const GRID_GROUPS = [
   ['Tipo de ejercicio', ['prueba de aprendizaje', 'secreto', 'contra reloj', 'sin huellas', 'regateo', 'musical', 'minijuego']],
@@ -177,7 +220,7 @@ export const GRID_GROUPS = [
   ['Alineación', ['justify-items', 'align-items', 'place-items', 'justify-self', 'align-self', 'place-self', 'justify-content', 'align-content', 'place-content']],
   ['Cuadrícula implícita', ['grid-auto-rows', 'grid-auto-columns', 'grid-auto-flow', 'grid']],
   ['Orden y capas', ['order', 'z-index']],
-  ['Conceptos', ['fr', 'auto', 'repeat()', 'minmax()', 'span', 'líneas negativas', 'líneas con nombre', 'auto-fill', 'auto-fit', 'dense', 'max-content', 'min-content', 'fit-content()', 'minmax(0, 1fr)', 'shorthand']],
+  ['Conceptos', ['fr', 'auto', 'repeat()', 'minmax()', 'inline-grid', 'span', 'líneas negativas', 'líneas con nombre', 'auto-fill', 'auto-fit', 'dense', 'max-content', 'min-content', 'fit-content()', 'minmax(0, 1fr)', 'shorthand']],
 ] as const satisfies readonly FilterGroup[];
 
 export const FLEX_GROUPS = [
@@ -185,16 +228,17 @@ export const FLEX_GROUPS = [
   ['Contenedor', ['display', 'flex-direction', 'flex-wrap', 'flex-flow', 'gap', 'row-gap', 'column-gap']],
   ['Alineación', ['justify-content', 'align-items', 'align-content', 'align-self', 'margin', 'margin-left', 'margin-right', 'margin-top', 'margin-bottom']],
   ['Tamaño flexible', ['flex-grow', 'flex-shrink', 'flex-basis', 'flex', 'width', 'max-width', 'min-width']],
+  ['Listas', ['list-style', 'padding']],
   ['Orden', ['order']],
-  ['Conceptos', ['eje principal', 'eje cruzado', 'espacio libre', 'reverse', 'baseline', 'margin auto', 'anidación', 'shorthand']],
+  ['Conceptos', ['eje principal', 'eje cruzado', 'espacio libre', 'reverse', 'baseline', 'margin auto', 'anidación', '%', 'navegación', 'shorthand']],
 ] as const satisfies readonly FilterGroup[];
 
 export const SKY_GROUPS = [
   ['Tipo de ejercicio', ['prueba de aprendizaje', 'secreto', 'contra reloj', 'a oscuras', 'regateo', 'musical']],
   ['Diseño que se adapta', ['flex-direction', 'justify-content', 'align-items', 'order', 'display', 'grid-template-columns', 'grid-template-areas', 'grid-template-rows']],
   ['Tamaños', ['width', 'height', 'gap', 'padding']],
-  ['Transiciones', ['transition', 'transition-property', 'transition-duration', 'transition-timing-function', 'transition-delay', 'transform']],
-  ['Conceptos', ['@media', 'max-width', 'min-width', 'and', 'rango', 'mobile first', 'custom properties', 'var()', 'herencia', 'fallback', 'colores', 'calc()', 'anidación', ':hover', 'timing-function', 'transition-delay', 'varias', 'shorthand', 'steps()', 'cubic-bezier()']],
+  ['Transiciones', ['transition', 'transition-property', 'transition-duration', 'transition-timing-function', 'transition-delay', 'transform', 'opacity', 'box-shadow']],
+  ['Conceptos', ['@media', 'max-width', 'min-width', 'and', 'or', 'not', 'rango', 'mobile first', 'min-height', 'orientation', 'aspect-ratio', 'screen', 'print', 'hover', 'pointer', 'custom properties', 'var()', ':root', 'herencia', 'fallback', 'colores', 'prefers-color-scheme', 'calc()', 'anidación', ':hover', ':active', ':focus', 'timing-function', 'transition-delay', 'varias', 'shorthand', 'rendimiento', 'prefers-reduced-motion', 'steps()', 'cubic-bezier()']],
 ] as const satisfies readonly FilterGroup[];
 
 export const FINALE_GROUPS = [
@@ -205,6 +249,7 @@ export const FINALE_GROUPS = [
 ] as const satisfies readonly FilterGroup[];
 
 export const GROUPS_BY_WORLD: Record<WorldId, readonly FilterGroup[]> = {
+  base: BASE_GROUPS,
   grid: GRID_GROUPS,
   flex: FLEX_GROUPS,
   cielo: SKY_GROUPS,
@@ -232,7 +277,7 @@ export const levelsById: Record<string, Level> = Object.fromEntries(levels.map((
 export function levelLabel(id: string): string {
   return id[0] === 'x'
     ? 'Fase ' + id.split('-')[1]
-    : ('fc'.includes(id[0] ?? '') ? id.slice(1).replace(/^\d+/, (digits) => String(+digits + 1)) : id).replace('-', '·');
+    : ('fcb'.includes(id[0] ?? '') ? id.slice(1).replace(/^\d+/, (digits) => String(+digits + 1)) : id).replace('-', '·');
 }
 
 export const levelKind = (level: Level): string => (level.examen ? 'Prueba' : 'Ejercicio');
@@ -240,7 +285,7 @@ export const isExercise = (level: Level): boolean => !level.examen && !level.sec
 export const levelsInWorld = (world: WorldId): Level[] => levels.filter((level) => level.mundo === world);
 
 function byWorld<T>(read: (world: WorldId) => T): Record<WorldId, T> {
-  return { grid: read('grid'), flex: read('flex'), cielo: read('cielo'), final: read('final') };
+  return { base: read('base'), grid: read('grid'), flex: read('flex'), cielo: read('cielo'), final: read('final') };
 }
 
 export const routes: Record<WorldId, Level[]> = byWorld((world) => levelsInWorld(world).filter((level) => !level.secreto));

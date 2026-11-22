@@ -74,23 +74,59 @@ export function paintSpout(ctx: CanvasRenderingContext2D): void {
 }
 
 export function paintFish(ctx: CanvasRenderingContext2D): void {
-  const path = cachedPath('M2 6c4-5 11-5 15 0-4 5-11 5-15 0Zm15 0 6-4v8Z');
-  ctx.fillStyle = '#f08a3c';
-  ctx.strokeStyle = '#5a2a14';
-  ctx.lineWidth = 1;
+  miniature(ctx, 'M1 6Q6 1 10 2L13 .8 14 3Q17 4 18 5L23 2 22 6 23 10 18 7Q9 14 1 7Z', '#d68854');
+  miniature(ctx, 'M4 7Q10 9 16 6Q10 12 4 7Z', '#f7d79a', false);
+  miniature(ctx, 'M6 4.3a.95 .95 0 1 0 .01 0Z', '#382a28', false);
+}
+
+function miniature(ctx: CanvasRenderingContext2D, d: string, fill: string, outline = true): void {
+  const path = cachedPath(d);
+  ctx.fillStyle = fill;
   ctx.fill(path);
+  if (!outline) return;
+  ctx.strokeStyle = '#443436';
+  ctx.lineWidth = 1.3;
+  ctx.lineJoin = 'round';
   ctx.stroke(path);
+}
+
+export function paintAirship(ctx: CanvasRenderingContext2D): void {
+  miniature(ctx, 'M38 16L55 5 52 18 58 24 40 22Z', '#aa5447');
+  miniature(ctx, 'M5 18C8 5 32 2 46 13Q53 18 45 23C32 32 9 30 5 18Z', '#ddbb80');
+  miniature(ctx, 'M7 19Q23 25 47 18Q38 28 22 27Q12 26 7 19Z', '#a77752', false);
+  miniature(ctx, 'M12 14Q22 6 36 10Q24 10 13 16Z', '#ffebba', false);
+  ctx.strokeStyle = '#7f5944';
+  ctx.lineWidth = 1.2;
+  ctx.stroke(cachedPath('M20 8Q16 18 21 27L23 32M34 9Q38 18 33 26L31 32'));
+  miniature(ctx, 'M18 31Q27 33 36 30L33 36Q26 39 21 36Z', '#795448');
+  miniature(ctx, 'M22 32H32L31 34H23Z', '#ffd580', false);
+}
+
+export function paintMinecart(ctx: CanvasRenderingContext2D): void {
+  miniature(ctx, 'M4 7L8 3 13 4 16 1 21 3 24 7Z', '#758582');
+  miniature(ctx, 'M12 6L16 1 18 5Z', '#bed4bc', false);
+  miniature(ctx, 'M2 6H26L22 15H6Z', '#996442');
+  miniature(ctx, 'M3 6H25L24.5 8H3.5Z', '#e0bc7c', false);
+  miniature(ctx, 'M7 10H22L21 13H8Z', '#745346', false);
+  for (const x of [8, 20]) {
+    ctx.beginPath();
+    ctx.arc(x, 16, 2.8, 0, Math.PI * 2);
+    ctx.fillStyle = '#473935';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x - .4, 15.6, 1, 0, Math.PI * 2);
+    ctx.fillStyle = '#c6ac80';
+    ctx.fill();
+  }
 }
 
 export function paintBlades(ctx: CanvasRenderingContext2D): void {
   ctx.translate(20, 20);
-  const path = cachedPath('M0 0L-2.4-18 2.4-18.6ZM0 0 18-2.4 18.6 2.4ZM0 0 2.4 18-2.4 18.6ZM0 0-18 2.4-18.6-2.4Z');
-  ctx.fillStyle = '#f4ecd8';
-  ctx.strokeStyle = '#3a2a20';
-  ctx.lineWidth = 1;
-  ctx.lineJoin = 'round';
-  ctx.fill(path);
-  ctx.stroke(path);
+  for (let arm = 0; arm < 4; arm++) {
+    miniature(ctx, 'M0 0L-2 -18 3 -18 4 -7 1 -5Z', '#ddc99b');
+    miniature(ctx, 'M0 -17H2L2.8 -8 1 -7Z', '#fbefd1', false);
+    ctx.rotate(Math.PI / 2);
+  }
   ctx.beginPath();
   ctx.arc(0, 0, 2.4, 0, Math.PI * 2);
   ctx.fillStyle = '#7a5230';
@@ -155,7 +191,7 @@ export function paintFlows(ctx: CanvasRenderingContext2D, paths: readonly FlowPa
 
 function trailInk(world: WorldId, kind: TrailKind): { stroke: string; width: number; dash: readonly number[]; alpha: number; speed: number } {
   if (kind === 'flight') return { stroke: '#fff', width: 3, dash: [1, 10], alpha: 0.95, speed: 9.5 / 1.4 };
-  const stroke = world === 'flex' ? '#ffcf6a' : world === 'cielo' ? '#7a3412' : '#8a2e14';
+  const stroke = world === 'flex' ? '#ffcf6a' : world === 'cielo' ? '#7a3412' : world === 'base' ? '#6b2a12' : '#8a2e14';
   if (kind === 'upcoming') return { stroke, width: 2.6, dash: [0.5, 9], alpha: 0.55, speed: 9.5 / 1.1 };
   return { stroke, width: 3.4, dash: [0.5, 8], alpha: 0.9, speed: 0 };
 }

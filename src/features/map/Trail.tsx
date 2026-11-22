@@ -2,6 +2,7 @@
 import { useEffect, useLayoutEffect, useRef } from 'react';
 import type { WorldId } from '../../core/models';
 import { trackMotion } from '../../shared/canvas/motion';
+import { observeRenderVisibility } from '../../shared/canvas/visibility';
 import type { TrailSpan } from './geometry';
 import { paintTrailCanvas } from './paint';
 
@@ -20,11 +21,12 @@ export function Trail({ world, spans }: { readonly world: WorldId; readonly span
     if (!canvas) return;
     const started = performance.now();
     let moving = false;
+    let visible = true;
     let stop = () => {};
     const paint = (now: number) => paintTrailCanvas(canvas, worldRef.current, spansRef.current, (now - started) / 1000);
     syncRef.current = (now: number) => {
       paint(now);
-      const next = spansRef.current.some((span) => span.kind !== 'done');
+      const next = visible && spansRef.current.some((span) => span.kind !== 'done');
       if (next && !moving) {
         moving = true;
         stop = trackMotion((frame) => syncRef.current(frame));
@@ -35,10 +37,15 @@ export function Trail({ world, spans }: { readonly world: WorldId; readonly span
       }
     };
     syncRef.current(performance.now());
+    const stopVisibility = observeRenderVisibility(canvas, (isVisible) => {
+      visible = isVisible;
+      syncRef.current(performance.now());
+    });
     const observer = new ResizeObserver(() => syncRef.current(performance.now()));
     observer.observe(canvas);
     return () => {
       stop();
+      stopVisibility();
       observer.disconnect();
     };
   }, []);

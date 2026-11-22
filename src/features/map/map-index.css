@@ -138,10 +138,16 @@
 .fx-chorro circle{fill:#eef9fb}
 @keyframes chorro{0%,62%{transform:scale(.2,0);opacity:0}66%{opacity:1}74%{transform:scale(1,1);opacity:1}92%{transform:scale(1.15,1.05);opacity:0}100%{opacity:0}}
 .fx-pez{width:1.5cqi;translate:-50% -50%}
-.fx-pez .rune{display:block;width:100%;fill:#f08a3c;stroke:#5a2a14;stroke-width:1;opacity:0;animation:salto 8.7s ease-in-out infinite;animation-delay:var(--d)}
-.fx-pez::after{content:'';position:absolute;left:50%;top:60%;width:2.2cqi;aspect-ratio:2.4;translate:-50% -50%;border-radius:50%;border:.14cqi solid rgba(240,255,255,.9);opacity:0;animation:salpica 8.7s ease-out infinite;animation-delay:var(--d)}
-@keyframes salto{0%,80%{transform:translate(-1.4cqi,.3cqi) rotate(-55deg);opacity:0}82%{opacity:1}88%{transform:translate(0,-1.5cqi) rotate(0)}94%{transform:translate(1.4cqi,.3cqi) rotate(55deg);opacity:1}96%,100%{opacity:0}}
-@keyframes salpica{0%,93%{transform:scale(.2);opacity:0}95%{opacity:1}100%{transform:scale(1.6);opacity:0}}
+.fx-pez .rune{display:block;width:100%;fill:#f08a3c;stroke:#5a2a14;stroke-width:1;opacity:0;animation:salto 8.7s linear infinite;animation-delay:var(--d)}
+.fx-pez::after{content:'';position:absolute;left:calc(50% - 1.4cqi);top:calc(50% + .3cqi);width:2.2cqi;aspect-ratio:2.4;translate:-50% -50%;border-radius:50%;border:.14cqi solid rgba(240,255,255,.9);opacity:0;animation:fish-ripple 8.7s ease-out infinite;animation-delay:var(--d)}
+@keyframes salto{
+  0%,80%{transform:translate(1.4cqi,.3cqi) rotate(55deg);opacity:0}
+  83%{transform:translate(.8cqi,-.85cqi) rotate(40deg);opacity:1}
+  87%{transform:translate(0,-1.35cqi) rotate(0)}
+  91%{transform:translate(-.8cqi,-.85cqi) rotate(-40deg);opacity:1}
+  94%,100%{transform:translate(-1.4cqi,.3cqi) rotate(-55deg);opacity:0}
+}
+@keyframes fish-ripple{0%,93%{transform:scale(.2);opacity:0}95%{opacity:.85}100%{transform:scale(1.5);opacity:0}}
 .fx-runa{width:9.6cqi;aspect-ratio:1.42;translate:-50% -50%;border-radius:50%;border:.22cqi solid rgba(140,255,236,.75);box-shadow:0 0 1.4cqi rgba(120,250,230,.6),inset 0 0 1.2cqi rgba(120,250,230,.5);mix-blend-mode:screen;animation:latido-r 3.6s ease-in-out infinite}
 @keyframes latido-r{50%{opacity:.35;transform:scale(1.06)}}
 .fx-brillo{width:1.3cqi;aspect-ratio:1;translate:-50% -50%;background:radial-gradient(circle,#fff 0 8%,transparent 30%),linear-gradient(90deg,transparent 46%,rgba(255,255,255,.95) 50%,transparent 54%),linear-gradient(0deg,transparent 46%,rgba(255,255,255,.95) 50%,transparent 54%);transform:scale(0);animation:brilla 6.2s ease-in-out infinite;animation-delay:var(--d)}
@@ -163,6 +169,14 @@
 .passing-cloud.v2{background-image:url(../../../assets/nube-2.webp)}.passing-cloud.v3{background-image:url(../../../assets/nube-3.webp)}
 .passing-cloud b{position:absolute;left:10%;top:150%;width:90%;height:60%;border-radius:50%;background:radial-gradient(closest-side,rgba(18,34,40,.26),transparent);filter:blur(4px)}
 @keyframes paso{from{transform:translateX(-16cqi)}to{transform:translateX(104cqi)}}
+.passing-cloud.far{opacity:.42;filter:blur(.09cqi)}
+.passing-cloud.near{opacity:.72}
+.passing-cloud.near b{top:180%;left:23%}
+.ash-drift{animation:ash-drift 8s linear infinite;opacity:0}
+@keyframes ash-drift{0%{opacity:0;transform:translate(0,-1px) scale(.25)}18%{opacity:.64}65%{opacity:.38}100%{opacity:0;transform:translate(32px,-27px) scale(1.65,.95)}}
+.lava-current{animation:lava-current 5s linear infinite}
+@keyframes lava-current{to{stroke-dashoffset:-21}}
+@media(prefers-reduced-motion:reduce){.ash-drift,.lava-current,.passing-cloud{animation:none}.ash-drift:last-child{opacity:.3;transform:translate(2px,-2px) scale(.6)}.passing-cloud{left:18%}.passing-cloud.near{left:72%}}
 .trail{z-index:2}
 .secret-layer{z-index:3}
 .marker-layer{z-index:4}
@@ -254,9 +268,10 @@
 .chiste.chisme b{color:#9a3a6a}
 @media (prefers-reduced-motion:reduce){.bicho .rune{animation:none!important}}
 @keyframes pompa{0%{transform:translateY(0);opacity:0}12%{opacity:1}100%{transform:translateY(-2.8cqi);opacity:0}}
-.chiste{position:absolute;z-index:7;left:calc(var(--x)*100%);top:calc(var(--y)*100%);transform:translate(var(--tx,-50%),calc(-100% - 2.4cqi));width:max-content;max-width:min(300px,32cqi);padding:8px 13px 10px;border-radius:var(--radius-lg);background:#fffdf4;color:#2a2018;border:2px solid #3a2a20;box-shadow:0 8px 18px rgba(0,0,0,.35);font:clamp(13px,1.25cqi,15.5px)/1.4 var(--font-body);text-align:left;pointer-events:none;animation:aparece-chiste .3s cubic-bezier(.2,1.4,.4,1)}
+.inhabitant[data-speaking] .rune{animation-play-state:paused}
+.inhabitant[data-speaking].a-asoma .rune{animation:none}
+.chiste{position:absolute;z-index:7;width:max-content;max-width:min(300px,32cqi);padding:8px 13px 10px;border-radius:var(--radius-lg);background:#fffdf4;color:#2a2018;border:2px solid #3a2a20;box-shadow:0 8px 18px rgba(0,0,0,.35);font:clamp(13px,1.25cqi,15.5px)/1.4 var(--font-body);text-align:left;pointer-events:none;animation:aparece-chiste .2s ease-out}
 .chiste b{display:block;margin-bottom:2px;font:600 1.02em var(--font-display);color:var(--accent-shadow)}
 .chiste::after{content:'';position:absolute;left:var(--ax,50%);bottom:-8px;width:13px;height:13px;margin-left:-7px;background:#fffdf4;border:2px solid #3a2a20;border-top:0;border-left:0;transform:rotate(45deg)}
-.chiste.abajo{transform:translate(var(--tx,-50%),2.4cqi)}
 .chiste.abajo::after{bottom:auto;top:-8px;transform:rotate(225deg)}
-@keyframes aparece-chiste{from{opacity:0;scale:.7}}
+@keyframes aparece-chiste{from{opacity:0}}

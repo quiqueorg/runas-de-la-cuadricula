@@ -35,11 +35,8 @@ function labelColor(kind: LabelKind, gold: string, accent: string): string {
   return '#f6efdd';
 }
 
-export function paintGuides(canvas: HTMLCanvasElement, drawing: GuideDrawing): void {
-  const ctx = paintLayout(canvas, drawing.width, drawing.height);
-  if (!ctx) return;
+export function paintGuideGeometry(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, drawing: GuideDrawing): void {
   const style = getComputedStyle(canvas);
-  const gold = style.getPropertyValue('--gold').trim() || '#dcc38a';
   const accent = style.getPropertyValue('--accent').trim() || '#72f2e0';
   const stripes = stripePattern(ctx);
   if (stripes) {
@@ -72,6 +69,15 @@ export function paintGuides(canvas: HTMLCanvasElement, drawing: GuideDrawing): v
     }
   }
   ctx.setLineDash([]);
+}
+
+export function paintGuides(canvas: HTMLCanvasElement, drawing: GuideDrawing): void {
+  const ctx = paintLayout(canvas, drawing.width, drawing.height);
+  if (!ctx) return;
+  const style = getComputedStyle(canvas);
+  const gold = style.getPropertyValue('--gold').trim() || '#dcc38a';
+  const accent = style.getPropertyValue('--accent').trim() || '#72f2e0';
+  paintGuideGeometry(ctx, canvas, drawing);
   ctx.lineJoin = 'round';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
@@ -88,6 +94,32 @@ export function paintGuides(canvas: HTMLCanvasElement, drawing: GuideDrawing): v
     ctx.fillText(label.text, 0, 0);
     ctx.restore();
   }
+}
+
+export function paintPlanIcons(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, view: BlueprintView): void {
+  const pad = 6;
+  const boxW = view.boardW + pad * 2;
+  const boxH = view.boardH + pad * 2;
+  if (canvas.width < 1 || canvas.height < 1) return;
+  const scale = Math.min(canvas.width / boxW, canvas.height / boxH);
+  const color = getComputedStyle(canvas).color;
+  ctx.save();
+  ctx.translate((canvas.width - boxW * scale) / 2, (canvas.height - boxH * scale) / 2);
+  ctx.scale(scale, scale);
+  ctx.translate(pad, pad);
+  for (const piece of view.pieces) {
+    if (!piece.w && !piece.h) continue;
+    const size = Math.min(30, piece.w * 0.6, piece.h * 0.5);
+    if (piece.icon && size > 1) {
+      const cx = piece.x + piece.w / 2;
+      const cy = piece.y + piece.h / 2;
+      ctx.save();
+      ctx.translate(cx - size / 2, cy - size / 2 - (piece.label ? 7 : 0));
+      drawSymbol(ctx, `i-${piece.icon}`, size, size, color);
+      ctx.restore();
+    }
+  }
+  ctx.restore();
 }
 
 export function paintPlan(canvas: HTMLCanvasElement, view: BlueprintView): void {

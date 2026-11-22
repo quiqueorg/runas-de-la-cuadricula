@@ -13,9 +13,9 @@ const cheeks = (color = '#ff9a8a'): DrawOp[] => [
 ];
 const smile = (d = 'M28 38q4 3 8 0', width = 1.7): DrawOp => ({ t: 'path', d, paint: { fill: 'none', stroke: INK, strokeWidth: width, lineCap: 'round' } });
 
-function portrait(index: number, sky: string, clothes: string, skin: string, ops: readonly DrawOp[]): SymbolArt {
+function portrait(id: string, sky: string, clothes: string, skin: string, ops: readonly DrawOp[]): SymbolArt {
   return {
-    id: `pj-${index}`, x: 0, y: 0, w: 64, h: 64,
+    id, x: 0, y: 0, w: 64, h: 64,
     ops: [
       { t: 'circle', cx: 32, cy: 32, r: 31, paint: { fill: sky } },
       { t: 'path', d: 'M9 64c2-12 11-18 23-18s21 6 23 18z', paint: { fill: clothes } },
@@ -25,11 +25,106 @@ function portrait(index: number, sky: string, clothes: string, skin: string, ops
   };
 }
 
+const OUTLINE = '#211912';
+const stroke = (width = 2): { stroke: string; strokeWidth: number; lineJoin: CanvasLineJoin } => ({ stroke: OUTLINE, strokeWidth: width, lineJoin: 'round' });
+
+/** The secret places, as they look when the map gives them away. */
+const HIDEOUTS: readonly SymbolArt[] = [
+  {
+    id: 'dib-botella', x: 0, y: 0, w: 80, h: 100,
+    ops: [
+      { t: 'ellipse', cx: 40, cy: 86, rx: 36, ry: 10, paint: { fill: '#5e94ac', opacity: 0.45 } },
+      { t: 'path', d: 'M8 86q6-4 12 0t12 0M48 90q6-4 12 0t12 0', paint: { fill: 'none', stroke: '#e8f8fa', strokeWidth: 2, lineCap: 'round' } },
+      {
+        t: 'g', transform: 'rotate(-18 40 52)', paint: {}, ops: [
+          { t: 'path', d: 'M26 36h28v36q0 10-14 10t-14-10Z', paint: { fill: '#9fd8b8', fillOpacity: 0.85, ...stroke(2.2) } },
+          { t: 'path', d: 'M34 20h12v16H34Z', paint: { fill: '#9fd8b8', ...stroke(2.2) } },
+          { t: 'path', d: 'M33 11h14v9H33Z', paint: { fill: '#a8743f', ...stroke(2) } },
+          { t: 'rect', x: 31, y: 43, w: 18, h: 26, rx: 2, paint: { fill: '#fff6dc', stroke: '#6a4a24', strokeWidth: 1.4 } },
+          { t: 'path', d: 'M35 50h10M35 56h10M35 62h6', paint: { fill: 'none', stroke: '#8a2e14', strokeWidth: 1.6, lineCap: 'round' } },
+          { t: 'path', d: 'M30 40v26', paint: { fill: 'none', stroke: '#ffffff', strokeWidth: 2.4, lineCap: 'round', opacity: 0.6 } },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'dib-gemelas', x: 0, y: 0, w: 120, h: 90,
+    ops: [
+      { t: 'ellipse', cx: 60, cy: 74, rx: 56, ry: 12, paint: { fill: '#5e94ac', opacity: 0.45 } },
+      { t: 'ellipse', cx: 60, cy: 70, rx: 46, ry: 12, paint: { fill: '#ecd59a', stroke: '#6a4a24', strokeWidth: 2 } },
+      { t: 'ellipse', cx: 60, cy: 66, rx: 37, ry: 8, paint: { fill: '#a6d16c', stroke: '#4f7d38', strokeWidth: 1.6 } },
+      ...[0, 38].flatMap((dx): DrawOp[] => [
+        { t: 'path', d: `M${24 + dx} 42h34v24h-34Z`, paint: { fill: '#f1e6cc', ...stroke() } },
+        { t: 'path', d: `M${20 + dx} 42l21-18 21 18Z`, paint: { fill: '#b0563a', ...stroke() } },
+        { t: 'path', d: `M${37 + dx} 66V52h8v14Z`, paint: { fill: '#6b4a2c', ...stroke(1.4) } },
+        { t: 'rect', x: (dx ? 86 : 28), y: 48, w: 6, h: 6, paint: { fill: '#bfe6f4', stroke: OUTLINE, strokeWidth: 1.2 } },
+      ]),
+    ],
+  },
+  {
+    id: 'dib-fantasma', x: 0, y: 0, w: 140, h: 100,
+    ops: [
+      { t: 'ellipse', cx: 70, cy: 72, rx: 62, ry: 22, paint: { fill: '#eef4f6', opacity: 0.7 } },
+      { t: 'ellipse', cx: 40, cy: 54, rx: 30, ry: 14, paint: { fill: '#f6fafb', opacity: 0.55 } },
+      { t: 'ellipse', cx: 104, cy: 58, rx: 28, ry: 13, paint: { fill: '#f6fafb', opacity: 0.5 } },
+      {
+        t: 'g', paint: { opacity: 0.78 }, ops: [
+          { t: 'path', d: 'M36 68h68l-10 16H46Z', paint: { fill: '#b9d6de', stroke: '#3f6474', strokeWidth: 2.2, lineJoin: 'round' } },
+          { t: 'path', d: 'M60 68V20M84 68V30', paint: { fill: 'none', stroke: '#3f6474', strokeWidth: 2.4, lineCap: 'round' } },
+          { t: 'path', d: 'M60 24 42 58l18 4Z', paint: { fill: '#eaf4f6', stroke: '#3f6474', strokeWidth: 1.8, lineJoin: 'round' } },
+          { t: 'path', d: 'M60 26l16 26-16 8Z', paint: { fill: '#eaf4f6', stroke: '#3f6474', strokeWidth: 1.8, lineJoin: 'round' } },
+          { t: 'path', d: 'M84 34l14 22-14 6Z', paint: { fill: '#eaf4f6', stroke: '#3f6474', strokeWidth: 1.8, lineJoin: 'round' } },
+          { t: 'path', d: 'M60 20l11 3-11 3Z', paint: { fill: '#3f6474' } },
+          { t: 'path', d: 'M50 50l3 6M68 42l2 8M90 46l2 6', paint: { fill: 'none', stroke: '#3f6474', strokeWidth: 1.2, lineCap: 'round' } },
+        ],
+      },
+      { t: 'ellipse', cx: 70, cy: 88, rx: 54, ry: 10, paint: { fill: '#f6fafb', opacity: 0.75 } },
+    ],
+  },
+];
+
 /** `first` is the index of the isle's first region in the catalog. */
 export function isleSymbols(first: number): readonly SymbolArt[] {
   return [
+    ...HIDEOUTS,
+    // Tilde, the castaway poet
+    portrait('pj-bs1', '#6fb8c8', '#d8c8a0', '#d89a6a', [
+      { t: 'path', d: 'M20 36c0 12 5 20 12 20s12-8 12-20c-3 3-7 4-12 4s-9-1-12-4z', paint: { fill: '#8a5a2a', stroke: INK, strokeWidth: 1.2 } },
+      { t: 'path', d: 'M18 31c-2-8 2-15 8-17-2 3-2 5-1 7 2-5 6-8 12-8-2 2-3 4-2 6 3-3 7-3 10 0s4 8 3 12c-2-5-6-8-15-8s-13 3-15 8z', paint: { fill: '#8a5a2a' } },
+      ...eyes(32),
+      { t: 'path', d: 'M29 43q3 2 6 0', paint: { fill: 'none', stroke: '#3a2010', strokeWidth: 1.5, lineCap: 'round' } },
+      { t: 'rect', x: 47, y: 42, w: 7.5, h: 14, rx: 2, paint: { fill: '#9fd8b8', stroke: INK, strokeWidth: 1 } },
+      { t: 'rect', x: 48.8, y: 37.5, w: 4, h: 4.5, paint: { fill: '#a8743f', stroke: INK, strokeWidth: 0.8 } },
+      { t: 'rect', x: 48.6, y: 45, w: 4.4, h: 7, paint: { fill: '#fff6dc' } },
+    ]),
+    // Doña Contigua, who only watches next door
+    portrait('pj-bs2', '#e8b0c0', '#6a4a8a', '#f2ccae', [
+      { t: 'path', d: 'M24 46l8 6 8-6', paint: { fill: '#f4f2ec' } },
+      { t: 'path', d: 'M18 31c0-10 6-17 14-17s14 7 14 17c-3-6-8-9-14-9s-11 3-14 9z', paint: { fill: '#d8d0d8', stroke: '#6a6070', strokeWidth: 1.4 } },
+      { t: 'circle', cx: 22, cy: 17.5, r: 3.2, paint: { fill: '#f58ab0', stroke: INK, strokeWidth: 0.9 } },
+      { t: 'circle', cx: 32, cy: 13, r: 3.2, paint: { fill: '#f58ab0', stroke: INK, strokeWidth: 0.9 } },
+      { t: 'circle', cx: 42, cy: 17.5, r: 3.2, paint: { fill: '#f58ab0', stroke: INK, strokeWidth: 0.9 } },
+      { t: 'circle', cx: 27, cy: 32.5, r: 4.2, paint: { fill: '#2a2a3a', stroke: '#f2d27a', strokeWidth: 1.2 } },
+      { t: 'circle', cx: 37, cy: 32.5, r: 4.2, paint: { fill: '#2a2a3a', stroke: '#f2d27a', strokeWidth: 1.2 } },
+      { t: 'circle', cx: 25.8, cy: 31.2, r: 1, paint: { fill: '#ffffff' } },
+      { t: 'circle', cx: 35.8, cy: 31.2, r: 1, paint: { fill: '#ffffff' } },
+      ...cheeks('#f0a0a0'),
+      smile('M29 40.5q3 2 6 0', 1.5),
+    ]),
+    // Capitán Bruma, who is barely there
+    portrait('pj-bs3', '#2f4a5a', '#8fb0bc', '#cfe6ec', [
+      { t: 'path', d: 'M10 25c7-3 14-4 22-4s15 1 22 4c-5 3-13 4-22 4s-17-1-22-4z', paint: { fill: '#3f6474', stroke: '#1c3440', strokeWidth: 1.6 } },
+      { t: 'path', d: 'M20 22c1-7 5-11 12-11s11 4 12 11z', paint: { fill: '#4f7888', stroke: '#1c3440', strokeWidth: 1.6 } },
+      { t: 'circle', cx: 32, cy: 16.5, r: 2.4, paint: { fill: '#eaf4f6' } },
+      { t: 'circle', cx: 27, cy: 34, r: 2.6, paint: { fill: '#1c3440' } },
+      { t: 'circle', cx: 37, cy: 34, r: 2.6, paint: { fill: '#1c3440' } },
+      { t: 'circle', cx: 27.6, cy: 33.4, r: 0.8, paint: { fill: '#bff6ff' } },
+      { t: 'circle', cx: 37.6, cy: 33.4, r: 0.8, paint: { fill: '#bff6ff' } },
+      { t: 'path', d: 'M28 41q4 2 8 0', paint: { fill: 'none', stroke: '#1c3440', strokeWidth: 1.5, lineCap: 'round' } },
+      { t: 'path', d: 'M9 60q4-4 8 0t8 0 8 0 8 0 8 0 6 0', paint: { fill: 'none', stroke: '#2f4a5a', strokeWidth: 3, lineCap: 'round' } },
+    ]),
     // Maese Cálamo, the old scribe
-    portrait(first, '#6f9fc4', '#7a5a3a', '#f0c49a', [
+    portrait(`pj-${first}`, '#6f9fc4', '#7a5a3a', '#f0c49a', [
       { t: 'path', d: 'M26 46l6 7 6-7', paint: { fill: '#e8dcc0' } },
       { t: 'path', d: 'M19 31c-2-6 0-11 3-13M45 31c2-6 0-11-3-13', paint: { fill: 'none', stroke: '#f4f2ec', strokeWidth: 4, lineCap: 'round' } },
       { t: 'path', d: 'M20 36c0 10 5 17 12 17s12-7 12-17c-3 3-7 4-12 4s-9-1-12-4z', paint: { fill: '#f4f2ec', stroke: INK, strokeWidth: 1.2 } },
@@ -42,7 +137,7 @@ export function isleSymbols(first: number): readonly SymbolArt[] {
       { t: 'path', d: 'M47 23l6-12', paint: { stroke: INK, strokeWidth: 0.8 } },
     ]),
     // Hilera, the drill sergeant
-    portrait(first + 1, '#8fbf5a', '#b03a30', '#e8b48c', [
+    portrait(`pj-${first + 1}`, '#8fbf5a', '#b03a30', '#e8b48c', [
       { t: 'path', d: 'M12 53h10M42 53h10', paint: { stroke: '#f2d27a', strokeWidth: 3, lineCap: 'round' } },
       { t: 'circle', cx: 32, cy: 53, r: 1.7, paint: { fill: '#f2d27a' } },
       { t: 'circle', cx: 32, cy: 59.5, r: 1.7, paint: { fill: '#f2d27a' } },
@@ -55,7 +150,7 @@ export function isleSymbols(first: number): readonly SymbolArt[] {
       { t: 'ellipse', cx: 32, cy: 40, rx: 3.6, ry: 2.8, paint: { fill: '#5a1a1a', stroke: INK, strokeWidth: 1 } },
     ]),
     // Bermellón, the master dyer
-    portrait(first + 2, '#e8a04a', '#f1e6cc', '#f0c49a', [
+    portrait(`pj-${first + 2}`, '#e8a04a', '#f1e6cc', '#f0c49a', [
       { t: 'circle', cx: 22, cy: 56, r: 2.6, paint: { fill: '#d8483a' } },
       { t: 'circle', cx: 41, cy: 58, r: 2.1, paint: { fill: '#3a7ad8' } },
       { t: 'circle', cx: 31, cy: 60, r: 1.9, paint: { fill: '#3aa85a' } },
@@ -68,7 +163,7 @@ export function isleSymbols(first: number): readonly SymbolArt[] {
       smile('M29 41.5q3 2 6 0', 1.4),
     ]),
     // Doña Serifa, the printer
-    portrait(first + 3, '#b9a0d8', '#3a3048', '#f2ccae', [
+    portrait(`pj-${first + 3}`, '#b9a0d8', '#3a3048', '#f2ccae', [
       { t: 'path', d: 'M25 46h14l-2 6.5h-10z', paint: { fill: '#f4f2ec' } },
       { t: 'circle', cx: 32, cy: 50, r: 1.8, paint: { fill: '#f2d27a' } },
       { t: 'circle', cx: 32, cy: 11.5, r: 5.2, paint: { fill: '#c8c8d0', stroke: '#5a5a68', strokeWidth: 1.4 } },
@@ -83,7 +178,7 @@ export function isleSymbols(first: number): readonly SymbolArt[] {
       smile('M29 39.5q3 1.6 6 0', 1.5),
     ]),
     // Tara, the stevedore
-    portrait(first + 4, '#4fa8a0', '#c88a4a', '#c8875a', [
+    portrait(`pj-${first + 4}`, '#4fa8a0', '#c88a4a', '#c8875a', [
       { t: 'path', d: 'M22 47l4 17M42 47l-4 17', paint: { stroke: '#7a4a22', strokeWidth: 3 } },
       { t: 'path', d: 'M18 28c1-9 7-14 14-14s13 5 14 14c-9-3-19-3-28 0z', paint: { fill: '#d8483a', stroke: '#5a1a14', strokeWidth: 1.6 } },
       { t: 'path', d: 'M45 27l6-3-1 6z', paint: { fill: '#d8483a', stroke: '#5a1a14', strokeWidth: 1.2, lineJoin: 'round' } },
@@ -98,7 +193,7 @@ export function isleSymbols(first: number): readonly SymbolArt[] {
       smile('M27 38.5q5 4 10 0', 1.8),
     ]),
     // Remo, the boatman
-    portrait(first + 5, '#8ac8e8', '#3a6a8a', '#e8b890', [
+    portrait(`pj-${first + 5}`, '#8ac8e8', '#3a6a8a', '#e8b890', [
       { t: 'path', d: 'M15 56h34M12.5 61h39', paint: { stroke: '#e8f0f4', strokeWidth: 1.6, opacity: 0.7 } },
       { t: 'path', d: 'M21 37c2 8 6 11 11 11s9-3 11-11c-3 3-7 4-11 4s-8-1-11-4z', paint: { fill: '#8a6a4a', opacity: 0.5 } },
       { t: 'ellipse', cx: 32, cy: 23, rx: 22, ry: 5.5, paint: { fill: '#e8c76c', stroke: '#7a5a26', strokeWidth: 1.6 } },
@@ -110,7 +205,7 @@ export function isleSymbols(first: number): readonly SymbolArt[] {
       { t: 'path', d: 'M35 39.4l9 4', paint: { stroke: '#dcb653', strokeWidth: 1.6, lineCap: 'round' } },
     ]),
     // Fanal, the lighthouse keeper
-    portrait(first + 6, '#2f4a7a', '#f2c230', '#f0c49a', [
+    portrait(`pj-${first + 6}`, '#2f4a7a', '#f2c230', '#f0c49a', [
       { t: 'circle', cx: 12, cy: 15, r: 1, paint: { fill: '#fff6c8' } },
       { t: 'circle', cx: 52, cy: 19, r: 1.2, paint: { fill: '#fff6c8' } },
       { t: 'circle', cx: 47, cy: 8, r: 0.8, paint: { fill: '#fff6c8' } },
@@ -126,7 +221,7 @@ export function isleSymbols(first: number): readonly SymbolArt[] {
       { t: 'path', d: 'M50 42.5q2-4 4 0', paint: { fill: 'none', stroke: '#7a5a10', strokeWidth: 1 } },
     ]),
     // Maestra Rúbrica, the examiner
-    portrait(first + 7, '#8a3a4a', '#1e1e2a', '#e8bc98', [
+    portrait(`pj-${first + 7}`, '#8a3a4a', '#1e1e2a', '#e8bc98', [
       { t: 'path', d: 'M26 46l6 8 6-8', paint: { fill: '#f4f2ec' } },
       { t: 'path', d: 'M19 33c-1-8 4-15 13-15s14 7 13 15c-2-5-6-8-13-8s-11 3-13 8z', paint: { fill: '#5a3a2a' } },
       { t: 'path', d: 'M22 20v5c6 3 14 3 20 0v-5', paint: { fill: '#2a2a3a', stroke: '#0a0a12', strokeWidth: 1.2 } },

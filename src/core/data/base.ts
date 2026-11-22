@@ -9,6 +9,8 @@ import type { BoardRuleDraft, LevelDraft, PieceTypeMap, Region } from '../models
 //  New blocks:  sel → the student writes the selector (s is the solution)
 //               html → the board's markup is shown beside the theory
 //               cmp → computed styles that must also match (colour, border, font…)
+//  Each region closes on a lesson with a twist (against the tide, in the dark, a tune, a bargain),
+//  and three places off the trail teach what the syllabus leaves out.
 // ═══════════════════════════════════════════════════════════════
 export const baseRegions: Region[] = [
   { n: 'El Embarcadero', sub: 'Reglas y selectores', x: 0.2, y: 0.76, t: 'embarcadero', pj: 'Maese Cálamo', rol: 'el viejo escriba' },
@@ -19,6 +21,7 @@ export const baseRegions: Region[] = [
   { n: 'El Canal', sub: 'Bloques, líneas y flotadores', x: 0.8, y: 0.6, t: 'canal', pj: 'Remo', rol: 'el barquero' },
   { n: 'El Faro', sub: 'Posición y página base', x: 0.62, y: 0.8, t: 'farola', pj: 'Fanal', rol: 'la farera' },
   { n: 'El Aula Magna', sub: 'Prueba de aprendizaje', x: 0.5, y: 0.5, t: 'aula', pj: 'Maestra Rúbrica', rol: 'la examinadora', examen: true },
+  { n: 'Lugares secretos', sub: 'Escondidos en la costa', t: 'embarcadero', secreto: true },
 ];
 
 // tag: the piece is that element, and its type is not a class · texto: it is its own text
@@ -42,12 +45,13 @@ const pick = (s: string, f: string, sel = ''): BoardRuleDraft => ({ s, sel, f, e
 const GAP = hidden('.pieza', 'margin-bottom: 6px;');
 const inRow = (selector: string): BoardRuleDraft => hidden(selector, 'display: inline-block;\nvertical-align: top;\nmargin: 6px;');
 const BORDER_BOX = hidden('*', 'box-sizing: border-box;');
-const SIGNS = hidden('.tablilla', 'width: 64px;');
+const LAMPS = hidden('.farol', 'width: 64px;');
+const refill = (action: string): string => `<button type="button" class="text-link" id="p-sacudir">${action}</button>`;
 const CUARTEL = ['p:Vendedor de pipas', 'section@cuartel', ['p:Recluta Uno', 'p:Recluta Dos', 'div@banquillo', ['p:Recluta castigado']], 'p:Visitante despistado'];
 const FILA = ['ul@fila', ['li:Ana', 'li:Blas', 'li:Cleo', 'li:Dimas', 'li:Eva', 'li:Fidel']];
 
 // The landmark each region leaves on the map when a lesson is cleared.
-const LANDMARKS = ['ancla', 'escudo', 'pocion', 'libro', 'cofre', 'barca', 'faro', 'sello'];
+const LANDMARKS = ['ancla', 'escudo', 'pocion', 'libro', 'cofre', 'barca', 'faro', 'sello', 'llave'];
 
 const lessons: LevelDraft[] = [
   //Region 0 · EL EMBARCADERO
@@ -134,6 +138,16 @@ const lessons: LevelDraft[] = [
     pista: 'Por orden: <code>h2</code>, <code>.aviso</code> y <code>#capitana</code>.',
     p: ['h2:Tablón del muelle', 'p@aviso:Marea alta a mediodía', 'p@aviso#capitana:Zarpa la Capitana', 'p:Se busca gato marinero', 'p@aviso:No alimentar a las gaviotas'],
     b: [pick('h2', GOLD), pick('.aviso', 'background-color: lightblue;'), pick('#capitana', 'width: 220px;'), GAP],
+  },
+  {
+    id: 'b0-10', r: 0, n: 'Antes de que suba la marea', esp: 'contra reloj', tiempo: 75, clase: 'marea', html: true, w: 440, h: 270, ok: [], cmp: BG, c: ['tipo', 'clase', 'id'],
+    tiempoTxt: [`¡La marea ha cubierto el muelle! ${refill('Achica el agua')} y vuelve a intentarlo.`, 'Marcado, aunque con los pies mojados. Repítelo a tiempo y sin pistas para dominarlo.'],
+    enc: 'Y ahora deprisa, que sube la marea y el manifiesto está sin marcar. El título, dorado. La carga, azul claro. Y la loza, que es frágil, más estrecha, para que nadie le ponga nada encima. ¡Los pies, criatura, los pies!',
+    teo: '<p><b>Contra reloj:</b> la marea sube en cuanto empiezas a escribir. Son los tres selectores de siempre: el <b>tipo</b> se escribe tal cual, la <b>clase</b> lleva un punto delante y el <b>id</b>, una almohadilla.</p>',
+    obj: 'El título <code>h2</code>, dorado. Todo lo que lleve la clase <code>carga</code>, azul claro. Y el elemento con <code>id="fragil"</code>, de 200px de ancho.',
+    pista: 'Por orden: <code>h2</code>, <code>.carga</code> y <code>#fragil</code>.',
+    p: ['h2:Manifiesto de carga', 'p@carga:Barriles de tinta', 'p@carga#fragil:Loza fina', 'p:Pasajeros', 'p@carga:Fardos de lana'],
+    b: [pick('h2', GOLD), pick('.carga', 'background-color: lightblue;'), pick('#fragil', 'width: 200px;'), GAP],
     fin: 'Ya sabes dirigirte a cada cosa por su nombre. Sube al Patio: la sargenta Hilera te enseñará a dar órdenes más finas. Tápate los oídos.',
   },
   //Region 1 · EL PATIO DE LAS FILAS
@@ -206,9 +220,20 @@ const lessons: LevelDraft[] = [
     enc: '¡Última lección! Mi orden está escrita ARRIBA y las otras dos, debajo. Tendría que perder… ¡pero una orden con nombre propio pesa más que cien órdenes generales! ¡Que la veterana mida trescientos!',
     teo: '<p>Antes que el orden, cuenta el <b>peso</b> del selector, su <b>especificidad</b>:</p><ul><li>un <b>id</b> pesa más que cualquier número de clases;</li><li>una <b>clase</b> (o una pseudo-clase) pesa más que cualquier número de tipos;</li><li>un <b>tipo</b> es lo que menos pesa.</li></ul><p>Solo cuando dos selectores <b>pesan igual</b> decide el orden. Aquí tu regla va la primera: con un selector de tipo perdería; con uno más pesado, gana.</p>',
     obj: 'La veterana mide <b>300px</b>; la otra recluta, 200px; el visitante, 120px. Solo puedes escribir el selector de la primera regla.',
+    pistasPrevias: ['Tu regla está escrita la primera: a igualdad de peso, perdería contra las de abajo. Necesitas un selector que pese más que una clase.'],
     pista: 'El id pesa más que la clase y que el tipo: <code>#veterana</code>',
     p: ['p@recluta#veterana:Veterana', 'p@recluta:Recluta', 'p:Visitante'],
     b: [pick('#veterana', 'width: 300px;'), fixed('.recluta', 'width: 200px;'), fixed('p', 'width: 120px;'), GAP],
+  },
+  {
+    id: 'b1-9', r: 1, n: 'Revista nocturna', esp: 'a oscuras', espejismo: true, clase: 'oscuras', html: true, w: 440, h: 440, ok: [], cmp: BG, c: ['hijo', ':last-child'],
+    enc: '¡Revista nocturna! ¡Y SIN FAROLES, que gastan aceite! Te lo digo de viva voz: los que forman directamente en el cuartel, de dorado. Y el último de la fila de guardia, un paso al frente. ¡Si no ves, CUENTA!',
+    teo: '<p><b>A oscuras:</b> la silueta solo asoma a ratos. Tienes el HTML debajo: léelo como un plano. <code>&gt;</code> para los hijos directos y <code>:last-child</code> para el último de sus hermanos.</p>',
+    obj: 'Los párrafos que son <b>hijos directos</b> de <code>.cuartel</code>, dorados. El <b>último</b> <code>li</code> de la fila, 60px a la derecha.',
+    pistasPrevias: ['El castigado está dentro del banquillo, y el banquillo dentro del cuartel: es un nieto. Y al último de la fila no hace falta contarlo.'],
+    pista: '<code>.cuartel &gt; p</code> y <code>li:last-child</code>',
+    p: ['section@cuartel', ['p:Recluta Uno', 'p:Recluta Dos', 'div@banquillo', ['p:Recluta castigado']], 'ul@fila', ['li:Ana', 'li:Blas', 'li:Cleo']],
+    b: [pick('.cuartel > p', GOLD), pick('li:last-child', 'margin-left: 60px;'), GAP],
     fin: '¡DESCANSEN! Ya sabes a quién mandas y qué orden gana. ¡Ahora al Taller de Tintas, a aprender qué se puede mandar! ¡Y no manches el uniforme!',
   },
   //Region 2 · EL TALLER DE TINTAS
@@ -276,6 +301,16 @@ const lessons: LevelDraft[] = [
     pista: 'Pañuelo: <code>background-repeat: no-repeat;</code>, <code>background-position: center;</code> y <code>background-size: 60px;</code>. Mantel: lo mismo con <code>background-size: cover;</code>',
     p: ['tela@panuelo', 'tela@mantel'],
     b: [inRow('.tela'), fixed('.tela', `background-image: url(${seal});`), { s: '.panuelo', sol: 'background-repeat: no-repeat;\nbackground-position: center;\nbackground-size: 60px;' }, { s: '.mantel', sol: 'background-repeat: no-repeat;\nbackground-position: center;\nbackground-size: cover;' }],
+  },
+  {
+    id: 'b2-8', r: 2, n: 'Pedido de palacio', esp: 'contra reloj', tiempo: 80, clase: 'tinta', dim: [84, 110], w: 420, h: 190, ok: ['background-color', 'border', 'border-width', 'border-style', 'border-color', 'border-radius'], cmp: [...BG, ...BORDER], c: ['colores', 'shorthand'],
+    tiempoTxt: [`¡La tinta ha hervido! ${refill('Aparta el caldero')} y vuelve a intentarlo.`, 'Entregado, aunque con la tinta algo pasada. Repítelo a tiempo y sin pistas para dominarlo.'],
+    enc: '¡Un pedido de palacio y la tinta ya está en el fuego! Si hierve, se echa a perder. La capa, carmesí con ribete dorado. El escudo, azul acero y redondo. La faja, dorada. ¡Corre, criatura, que yo remuevo!',
+    teo: '<p><b>Contra reloj:</b> la tinta sube en cuanto empiezas a escribir. Recuerda el atajo del borde —<b>grosor, estilo y color</b>— y que <code>border-radius: 50%</code> redondea la caja entera.</p>',
+    obj: '<code>.capa</code>: fondo <code>crimson</code> y borde de 4px, continuo, <code>gold</code>. <code>.escudo</code>: fondo <code>steelblue</code> y esquinas al 50%. <code>.faja</code>: fondo <code>gold</code>.',
+    pista: '<code>background-color: crimson;</code> y <code>border: 4px solid gold;</code> · <code>background-color: steelblue;</code> y <code>border-radius: 50%;</code> · <code>background-color: gold;</code>',
+    p: ['tela@capa', 'tela@escudo', 'tela@faja'],
+    b: [inRow('.tela'), { s: '.capa', sol: 'background-color: crimson;\nborder: 4px solid gold;' }, { s: '.escudo', sol: 'background-color: steelblue;\nborder-radius: 50%;' }, { s: '.faja', sol: 'background-color: gold;' }],
     fin: '¡Magnífico! Casi tan bueno como yo a tu edad. Llévale estas tintas a Doña Serifa, la de la Imprenta. Y dile que la Garamond está sobrevalorada. No, mejor no se lo digas.',
   },
   //Region 3 · LA IMPRENTA
@@ -315,6 +350,24 @@ const lessons: LevelDraft[] = [
     pista: '<code>font: italic bold 20px/1.5 Georgia, serif;</code>',
     p: ['p@pregon:Se hace saber que la imprenta cierra los domingos, los lunes y cuando llueve.'],
     b: [{ s: '.pregon', sol: 'font: italic bold 20px/1.5 Georgia, serif;' }],
+  },
+  {
+    id: 'b3-5', r: 3, n: 'De padres a hijos', html: true, w: 460, h: 250, ok: ['color', 'font-family'], cmp: ['color', 'font-family'], c: ['herencia'],
+    enc: 'No pienso componer la misma letra renglón por renglón. Diga la letra y el color una sola vez, en la página, y que los renglones los hereden. Para eso tienen madre.',
+    teo: '<p>Algunas propiedades se <b>heredan</b>: si se las das a un elemento, sus descendientes las reciben sin que escribas nada más. Son, sobre todo, las del <b>texto</b>: <code>color</code>, <code>font-family</code>, <code>font-size</code>, <code>line-height</code>, <code>text-align</code>…</p><p>Las de la <b>caja</b> no se heredan: <code>width</code>, <code>margin</code>, <code>padding</code>, <code>border</code> o el fondo se quedan en quien las recibe.</p><p>Por eso la letra de una web se define una sola vez, arriba del todo.</p>',
+    obj: 'Todo el texto de la página, de color <code>teal</code> y en <code>Georgia, serif</code>, escribiendo solo en <code>.pagina</code>.',
+    pista: '<code>color: teal;</code> y <code>font-family: Georgia, serif;</code>',
+    p: ['div@pagina', ['h2:Fe de erratas', 'p:Donde dice «marte», debe decir «martes».', 'p:Donde dice «la errata», no debe decir nada.']],
+    b: [{ s: '.pagina', sol: 'color: teal;\nfont-family: Georgia, serif;' }, GAP],
+  },
+  {
+    id: 'b3-6', r: 3, n: 'El índice', html: true, w: 440, h: 460, ok: ['list-style', 'list-style-type', 'padding', 'padding-left'], cmp: ['list-style-type'], c: ['listas'],
+    enc: 'Y por último, las listas, que son media imprenta. El índice, con cuadraditos. Los pasos, numerados a la romana, que da empaque. Y los anuncios sueltos, sin viñeta ni sangría: limpios.',
+    teo: '<p>Una lista <code>ul</code> pone una <b>viñeta</b> delante de cada elemento; una <code>ol</code>, un <b>número</b>. <code>list-style</code> elige cuál:</p><ul><li><code>disc</code>, <code>circle</code>, <code>square</code>: punto, aro o cuadrado.</li><li><code>decimal</code>, <code>upper-roman</code>, <code>lower-alpha</code>: 1, I, a…</li><li><code>none</code>: ninguna.</li></ul><p>La viñeta vive en la <b>sangría</b> de la lista, que es un <code>padding-left</code>: con <code>padding-left: 0</code> la lista se pega al borde.</p>',
+    obj: '<code>.indice</code>: viñetas cuadradas (<code>square</code>). <code>.pasos</code>: números romanos en mayúscula (<code>upper-roman</code>). <code>.sueltos</code>: sin viñeta y sin sangría.',
+    pista: '<code>list-style: square;</code> · <code>list-style: upper-roman;</code> · <code>list-style: none;</code> y <code>padding-left: 0;</code>',
+    p: ['ul@indice', ['li:Portada', 'li:Sucesos'], 'ol@pasos', ['li:Entintar', 'li:Prensar'], 'ul@sueltos', ['li:Se vende prensa', 'li:Se busca corrector']],
+    b: [hidden('ul, ol', 'padding-left: 34px;\nmargin-bottom: 6px;'), hidden('li', 'overflow: visible;\nmargin-bottom: 4px;'), { s: '.indice', sol: 'list-style: square;' }, { s: '.pasos', sol: 'list-style: upper-roman;' }, { s: '.sueltos', sol: 'list-style: none;\npadding-left: 0;' }],
     fin: 'Correcto. Sobrio. Legible. Puede irse. En el Almacén, Tara le enseñará que cada letra, cada palabra y cada párrafo viven dentro de una caja. Límpiese los zapatos al salir.',
   },
   //Region 4 · EL ALMACÉN DE CAJAS
@@ -332,6 +385,7 @@ const lessons: LevelDraft[] = [
     enc: 'El hueco de la estantería mide doscientos cuarenta justos. La caja lleva quince de paja y cinco de tabla por cada lado. ¿Cuánto tiene que medir el hueco de dentro? Las cuentas, de cabeza, que aquí no hay ábaco.',
     teo: '<p>Lo que una caja <b>ocupa</b> de lado a lado es la suma de todo:</p><pre>ancho total = width\n            + padding izquierdo + padding derecho\n            + borde izquierdo + borde derecho</pre><p>Con 15px de relleno y 5px de borde <b>a cada lado</b>, la caja ocupa 40px más de lo que diga <code>width</code>.</p>',
     obj: 'La caja debe ocupar <b>240px en total</b>, contando el relleno (15px) y el borde (5px). Calcula su <code>width</code>.',
+    pistasPrevias: ['El relleno y el borde cuentan dos veces: una por la izquierda y otra por la derecha. Réstaselos a los 240px.'],
     pista: '240 − 15 − 15 − 5 − 5 = 200: <code>width: 200px;</code>',
     p: ['caja:Cristalería'],
     b: [{ s: '.caja', f: 'padding: 15px;\nborder: 5px solid sienna;', sol: 'width: 200px;' }],
@@ -371,6 +425,25 @@ const lessons: LevelDraft[] = [
     pista: '<code>max-width: 400px;</code> y <code>margin: 0 auto;</code>',
     p: ['caja:Velas y aparejos'],
     b: [{ s: '.caja', sol: 'max-width: 400px;\nmargin: 0 auto;' }],
+  },
+  {
+    id: 'b4-7', r: 4, n: 'La partitura', esp: 'musical', musica: true, w: 440, h: 230, ok: ['margin-top'], c: ['modelo de caja'],
+    enc: 'Mira lo que había al fondo del almacén: las campanas del viejo carillón. Suenan según lo altas que cuelguen. Las agudas, arriba del todo; las medias, a cuarenta; las graves, a ochenta. Cuélgalas bien y te toco algo.',
+    teo: '<p><code>margin-top</code> empuja una caja <b>hacia abajo</b>, separándola de lo que tiene encima. Con márgenes distintos, unas cajas iguales quedan a alturas distintas, como las notas en un pentagrama.</p><p><b>Nivel musical:</b> cada campana suena al llegar a su altura. Cuando estén todas, oirás la melodía entera.</p>',
+    obj: 'Las campanas <code>.medio</code>, <b>40px</b> más abajo. Las <code>.bajo</code>, <b>80px</b> más abajo. Las <code>.alto</code> se quedan arriba.',
+    pista: '<code>margin-top: 40px;</code> en <code>.medio</code> y <code>margin-top: 80px;</code> en <code>.bajo</code>.',
+    p: ['campana@bajo', 'campana@medio', 'campana@alto', 'campana@medio', 'campana@alto'],
+    b: [hidden('.campana', 'display: inline-block;\nvertical-align: top;\nwidth: 52px;\nmargin: 0 4px;'), fixed('.alto', 'margin-top: 0;'), { s: '.medio', sol: 'margin-top: 40px;' }, { s: '.bajo', sol: 'margin-top: 80px;' }],
+    fin: '¡Eso es! Hacía años que nadie las afinaba. En el almacén, hasta la música va en cajas.',
+  },
+  {
+    id: 'b4-8', r: 4, n: 'La caja que rebosa', w: 440, h: 270, ok: ['overflow', 'overflow-x', 'overflow-y'], cmp: ['overflow-y'], c: ['modelo de caja'],
+    enc: 'Y lo último: el manifiesto no cabe en su caja y se me sale por abajo, encima de la de al lado. Lo que no quepa, que no se vea. Y el rollo de pedidos, que es largo de verdad, que se pueda bajar a leerlo.',
+    teo: '<p>Cuando el contenido es más grande que su caja, por defecto <b>se sale</b> y se pinta por encima de lo que haya. <code>overflow</code> decide qué hacer con lo que sobra:</p><ul><li><code>visible</code> (de fábrica): se sale.</li><li><code>hidden</code>: se recorta y no se ve.</li><li><code>auto</code>: aparece una barra para <b>desplazarse</b>, solo si hace falta.</li><li><code>scroll</code>: la barra está siempre.</li></ul>',
+    obj: 'En <code>.manifiesto</code>, lo que no cabe se recorta. En <code>.rollo</code>, aparece una barra de desplazamiento cuando hace falta.',
+    pista: '<code>overflow: hidden;</code> en <code>.manifiesto</code> y <code>overflow: auto;</code> en <code>.rollo</code>.',
+    p: ['caja@manifiesto:Doce barriles de tinta, nueve fardos de lana, tres cajas de loza, un ancla de repuesto y un gato que no figura en ningún papel.', 'caja@rollo:Pedido uno: tinta. Pedido dos: más tinta. Pedido tres: papel para apuntar los pedidos. Pedido cuatro: otro rollo, que este se acaba.'],
+    b: [hidden('.caja', 'overflow: visible;\nmargin-bottom: 44px;'), fixed('.caja', 'width: 240px;\nheight: 44px;'), { s: '.manifiesto', sol: 'overflow: hidden;' }, { s: '.rollo', sol: 'overflow: auto;' }],
     fin: '¡Así se estiba! Ya sabes lo que mide una caja por dentro y por fuera. Ahora baja al Canal: Remo te enseñará cómo se colocan unas junto a otras. Dile que me debe dos cuerdas.',
   },
   //Region 5 · EL CANAL
@@ -390,6 +463,7 @@ const lessons: LevelDraft[] = [
     obj: 'Las tres barcas, en la misma línea.',
     pista: '<code>display: inline;</code>',
     p: ['p@barca:Lenta', 'p@barca:Tercera', 'p@barca:Sardina'],
+    despistes: [{ s: '.barca', si: { display: 'inline-block' }, m: 'Con <code>inline-block</code> también van en fila, pero siguen siendo cajas con medidas. Aquí deben fluir como palabras: <code>inline</code>.' }],
     b: [{ s: '.barca', sol: 'display: inline;' }],
   },
   {
@@ -427,6 +501,16 @@ const lessons: LevelDraft[] = [
     pista: '<code>clear: both;</code>',
     p: ['div@barca:Sal', 'div@barca:Lana', 'div@barca:Tinta', 'div@muelle:Muelle de carga'],
     b: [fixed('.barca', 'float: left;\nwidth: 70px;\nmargin: 0 8px 8px 0;'), { s: '.muelle', sol: 'clear: both;' }],
+  },
+  {
+    id: 'b5-7', r: 5, n: 'Antes de que cierren la esclusa', esp: 'contra reloj', tiempo: 70, clase: 'marea', html: true, w: 460, h: 200, ok: ['display', 'width', 'height'], c: ['bloque y en línea'],
+    tiempoTxt: [`Han cerrado la esclusa… ${refill('Pide que la abran')} y vuelve a intentarlo.`, 'Has pasado, aunque el esclusero ha tenido que esperarte. Repítelo a tiempo y sin pistas para dominarlo.'],
+    enc: 'Ay… van a cerrar la esclusa y yo con las barcazas sin colocar. Por una vez hay prisa. Las tres en fila, de noventa de ancho. Y la del ron… esa que no la vean, que no tiene papeles.',
+    teo: '<p><b>Contra reloj:</b> el agua sube en cuanto empiezas a escribir. <code>inline-block</code> pone las cajas en fila y les deja tener medidas; <code>display: none</code> las quita de en medio sin dejar hueco.</p>',
+    obj: 'Las barcazas, en la misma línea y de <b>90px</b> de ancho. La del ron (<code>.pirata</code>), fuera: las otras dos ocupan su sitio.',
+    pista: 'En <code>.barcaza</code>: <code>display: inline-block;</code> y <code>width: 90px;</code>. En <code>.pirata</code>: <code>display: none;</code>',
+    p: ['div@barcaza:Sal', 'div@barcaza.pirata:Ron', 'div@barcaza:Lana', 'div@muelle:Muelle de la esclusa'],
+    b: [{ s: '.barcaza', sol: 'display: inline-block;\nwidth: 90px;' }, { s: '.pirata', sol: 'display: none;' }],
     fin: 'Eso es… Unas cosas fluyen, otras flotan y otras se apartan. Como en la vida. Sube al Faro, que Fanal sabe poner cada cosa en su sitio exacto. Y no corras.',
   },
   //Region 6 · EL FARO
@@ -436,8 +520,8 @@ const lessons: LevelDraft[] = [
     teo: '<p>De fábrica, todo elemento tiene <code>position: static</code>: está donde le toca en el flujo y no se puede mover.</p><p><code>position: relative</code> lo deja <b>en su sitio</b> —los demás no se enteran y le guardan el hueco—, pero permite <b>desplazarlo</b> desde ahí con <code>top</code>, <code>right</code>, <code>bottom</code> y <code>left</code>.</p><pre>position: relative;\nleft: 60px;   /* 60px desde su borde izquierdo */\ntop: -10px;   /* 10px hacia arriba */</pre>',
     obj: 'La segunda señal, <b>60px</b> a la derecha y <b>10px</b> hacia arriba de donde está. Las otras no se mueven.',
     pista: '<code>position: relative;</code>, <code>left: 60px;</code> y <code>top: -10px;</code>',
-    p: ['tablilla', 'tablilla@segunda', 'tablilla'],
-    b: [SIGNS, { s: '.segunda', sol: 'position: relative;\nleft: 60px;\ntop: -10px;' }, GAP],
+    p: ['farol', 'farol@segunda', 'farol'],
+    b: [LAMPS, { s: '.segunda', sol: 'position: relative;\nleft: 60px;\ntop: -10px;' }, GAP],
   },
   {
     id: 'b6-2', r: 6, n: 'Fuera de la fila', w: 440, h: 310, ok: POSITION, c: [],
@@ -445,8 +529,9 @@ const lessons: LevelDraft[] = [
     teo: '<p><code>position: absolute</code> <b>saca</b> el elemento del flujo: los demás se colocan como si no existiera. Después lo sitúas con <code>top</code>, <code>right</code>, <code>bottom</code> y <code>left</code>, que ahora miden la distancia a los <b>bordes de su contenedor</b>.</p><pre>position: absolute;\ntop: 20px;\nright: 20px;</pre><p>«A 20px del borde de arriba y a 20px del borde derecho».</p>',
     obj: 'La linterna, a <b>20px</b> del borde superior y a <b>20px</b> del borde derecho del tablero. Las otras señales suben a ocupar su hueco.',
     pista: '<code>position: absolute;</code>, <code>top: 20px;</code> y <code>right: 20px;</code>',
-    p: ['tablilla', 'tablilla@linterna', 'tablilla'],
-    b: [SIGNS, { s: '.linterna', sol: 'position: absolute;\ntop: 20px;\nright: 20px;' }, GAP],
+    p: ['farol', 'farol@linterna', 'farol'],
+    despistes: [{ s: '.linterna', si: { position: 'relative' }, m: 'Con <code>relative</code> la linterna se mueve, pero sigue ocupando su hueco en la fila: las otras no suben. Para sacarla del todo hace falta <code>absolute</code>.' }],
+    b: [LAMPS, { s: '.linterna', sol: 'position: absolute;\ntop: 20px;\nright: 20px;' }, GAP],
   },
   {
     id: 'b6-3', r: 6, n: 'El ancla de la posición', html: true, w: 440, h: 300, ok: POSITION, c: [],
@@ -454,7 +539,8 @@ const lessons: LevelDraft[] = [
     teo: '<p>Un elemento <code>absolute</code> se coloca respecto a su <b>antepasado posicionado</b> más cercano: el primero que no sea <code>static</code>. Si no hay ninguno, usa la página entera.</p><p>Por eso, el truco de siempre: dar <code>position: relative</code> al <b>contenedor</b> —sin moverlo— para que sirva de <b>ancla</b> a lo que lleva dentro.</p><pre>.torre { position: relative; }\n.luz   { position: absolute; right: 0; bottom: 0; }</pre>',
     obj: 'La luz, pegada a la esquina inferior derecha <b>de la torre</b>.',
     pista: '<code>position: relative;</code> en <code>.torre</code>. En <code>.luz</code>: <code>position: absolute;</code>, <code>right: 0;</code> y <code>bottom: 0;</code>',
-    p: ['div@torre', ['tablilla@luz']],
+    p: ['div@torre', ['farol@luz']],
+    despistes: [{ s: '.torre', si: { position: 'static' }, m: 'La torre aún no es un ancla: mientras sea <code>static</code>, lo que lleve dentro con <code>absolute</code> se coloca respecto al tablero.' }],
     b: [{ s: '.torre', f: 'width: 220px;\nheight: 200px;', sol: 'position: relative;' }, { s: '.luz', f: 'width: 56px;', sol: 'position: absolute;\nright: 0;\nbottom: 0;' }],
   },
   {
@@ -463,7 +549,7 @@ const lessons: LevelDraft[] = [
     teo: '<p><code>position: fixed</code> ancla el elemento a la <b>ventana del navegador</b>: no le importa quién lo contiene y <b>no se mueve aunque la página se desplace</b>. Así se hacen las barras que siempre están arriba y los botones que te siguen.</p><p>Aquí, el tablero hace de ventana. Fíjate en que la torre tiene <code>position: relative</code> y aun así el aviso la ignora.</p>',
     obj: 'El aviso, fijo a <b>10px</b> del borde superior y a <b>10px</b> del borde izquierdo de la ventana (el tablero), aunque esté dentro de la torre.',
     pista: '<code>position: fixed;</code>, <code>top: 10px;</code> y <code>left: 10px;</code>',
-    p: ['div@torre', ['tablilla@aviso']],
+    p: ['div@torre', ['bandera@aviso']],
     b: [fixed('.torre', 'position: relative;\nwidth: 200px;\nheight: 180px;\nmargin: 60px 0 0 160px;'), { s: '.aviso', f: 'width: 56px;', sol: 'position: fixed;\ntop: 10px;\nleft: 10px;' }],
   },
   {
@@ -480,18 +566,40 @@ const lessons: LevelDraft[] = [
     enc: 'Una página tiene cabecera, contenido y pie, como un faro tiene linterna, torre y base. Pero mira: la mía se queda encogida arriba. La quiero de arriba abajo de la ventana.',
     teo: '<p>La estructura de casi todas las páginas es <code>header</code>, <code>main</code> y <code>footer</code>. Sin más, cada uno mide <b>lo que ocupa su contenido</b>.</p><p>Una altura en <code>%</code> solo funciona si <b>el contenedor tiene una altura definida</b>. Por eso las páginas empiezan con <code>html, body { height: 100%; }</code>: así el 100% tiene de dónde medir.</p><p>Aquí la <code>.pagina</code> hace de <code>body</code>. En cuanto mida el 100% del tablero, el <code>main</code> —que ya pide «todo menos la cabecera y el pie»— podrá estirarse.</p>',
     obj: 'La página ocupa todo el alto del tablero, y el contenido se estira entre la cabecera y el pie.',
+    pistasPrevias: ['El <code>main</code> ya pide «el 100% menos 90px»… pero ¿el 100% de qué? Su contenedor, <code>.pagina</code>, todavía no tiene una altura definida.'],
     pista: '<code>height: 100%;</code> en <code>.pagina</code>.',
     p: ['div@pagina', ['header:Cabecera', 'main:Contenido', 'footer:Pie']],
     b: [BORDER_BOX, { s: '.pagina', sol: 'height: 100%;' }, fixed('header', 'height: 50px;'), fixed('main', 'height: calc(100% - 90px);'), fixed('footer', 'height: 40px;')],
   },
   {
     id: 'b6-7', r: 6, n: 'La página base', html: true, et: false, anchos: [340, 620], h: 360, ok: ['margin', 'padding', 'box-sizing', 'height', 'max-width', 'width'], c: ['página base', 'reset', 'margin auto'],
-    enc: 'Última noche en el faro. Junta todo lo que sabes: solar limpio, página de arriba abajo, y una columna que no se estire más de la cuenta y quede en el centro. Esa es la página con la que empieza todo lo demás.',
+    enc: 'Ahora, lo que importa de verdad. Junta todo lo que sabes: solar limpio, página de arriba abajo, y una columna que no se estire más de la cuenta y quede en el centro. Esa es la página con la que empieza todo lo demás.',
     teo: '<p>La <b>página base</b> son tres ideas juntas:</p><ul><li>un <b>reinicio universal</b>: sin márgenes ni rellenos, y <code>border-box</code>;</li><li><b>altura del 100%</b>, para que la página llene la ventana;</li><li>una columna con <b>ancho máximo</b> y <code>margin: 0 auto</code>, que se adapta en pantallas pequeñas y queda centrada en las grandes.</li></ul><p>Todo lo que construyas en el continente irá dentro de una página así.</p>',
     obj: 'Reinicio universal. La página ocupa el 100% del alto, no pasa de <b>420px</b> de ancho y queda centrada: prueba los dos tamaños.',
+    pistasPrevias: ['Son tres ideas y ya las has usado todas: reinicio en <code>*</code>, altura del 100% y una columna con tope de ancho y márgenes automáticos.'],
     pista: 'En <code>*</code>: <code>margin: 0;</code>, <code>padding: 0;</code> y <code>box-sizing: border-box;</code>. En <code>.pagina</code>: <code>height: 100%;</code>, <code>max-width: 420px;</code> y <code>margin: 0 auto;</code>',
     p: ['div@pagina', ['header:Cabecera', 'main:Contenido', 'footer:Pie']],
     b: [{ s: '*', sol: 'margin: 0;\npadding: 0;\nbox-sizing: border-box;' }, { s: '.pagina', sol: 'height: 100%;\nmax-width: 420px;\nmargin: 0 auto;' }, fixed('header', 'height: 50px;'), fixed('main', 'height: calc(100% - 90px);'), fixed('footer', 'height: 40px;')],
+  },
+  {
+    id: 'b6-8', r: 6, n: 'Quién tapa a quién', w: 440, h: 290, ok: ['z-index'], c: ['capas'],
+    enc: 'Tengo tres banderas de señales en el mismo mástil y se tapan unas a otras. Manda la que queda encima. Hoy toca la roja delante, la dorada detrás y la azul al fondo, y no pienso descolgarlas para cambiarlas de orden.',
+    teo: '<p>Cuando varios elementos posicionados se <b>solapan</b>, queda encima el que va <b>más tarde en el HTML</b>. <code>z-index</code> cambia ese orden: es un número, y gana el <b>mayor</b>.</p><pre>z-index: 2;</pre><p>Solo funciona en elementos <b>posicionados</b> (con un <code>position</code> distinto de <code>static</code>). Piensa en él como la altura de cada hoja en un montón.</p>',
+    obj: 'La bandera roja, por encima de la dorada; y la dorada, por encima de la azul.',
+    pista: '<code>z-index: 2;</code> en <code>.roja</code> y <code>z-index: 1;</code> en <code>.dorada</code>.',
+    p: ['tela@roja', 'tela@dorada', 'tela@azul'],
+    encima: [['roja', 'dorada', 'La roja queda por encima de la dorada'], ['dorada', 'azul', 'La dorada queda por encima de la azul']],
+    b: [fixed('.tela', 'position: absolute;\nwidth: 150px;\nheight: 100px;'), { s: '.roja', f: 'left: 50px;\ntop: 30px;\nbackground-color: tomato;', sol: 'z-index: 2;' }, { s: '.dorada', f: 'left: 130px;\ntop: 80px;\nbackground-color: gold;', sol: 'z-index: 1;' }, { s: '.azul', f: 'left: 210px;\ntop: 130px;\nbackground-color: steelblue;' }],
+  },
+  {
+    id: 'b6-9', r: 6, n: 'La noche del faro', esp: 'a oscuras', espejismo: true, clase: 'faro-noche', w: 440, h: 300, ok: POSITION, c: [],
+    enc: 'Esta noche el faro alumbra a ratos: quiero ver si sabes colocar las luces de memoria. El farol, arriba a la derecha. La barca, abajo a la izquierda. Dieciséis de cada borde, ni uno más. El faro, donde está.',
+    teo: '<p><b>A oscuras:</b> la silueta solo asoma cuando pasa el haz. Un elemento <code>absolute</code> se coloca midiendo desde los <b>bordes del tablero</b>: <code>top</code> y <code>bottom</code> para la altura, <code>left</code> y <code>right</code> para los lados.</p>',
+    obj: 'El farol, a <b>16px</b> del borde superior y del derecho. La barca, a <b>16px</b> del borde inferior y del izquierdo. El faro no se mueve de su sitio.',
+    pistasPrevias: ['Las dos piezas salen del flujo con <code>position: absolute;</code>. Después, cada una necesita dos distancias: una vertical y una horizontal.'],
+    pista: 'Farol: <code>position: absolute;</code>, <code>top: 16px;</code> y <code>right: 16px;</code>. Barca: <code>position: absolute;</code>, <code>bottom: 16px;</code> y <code>left: 16px;</code>',
+    p: ['farol', 'faro', 'barca'],
+    b: [hidden('.pieza', 'width: 64px;'), { s: '.farol', sol: 'position: absolute;\ntop: 16px;\nright: 16px;' }, { s: '.barca', sol: 'position: absolute;\nbottom: 16px;\nleft: 16px;' }],
     fin: 'Ya está. Reglas, selectores, cajas y posiciones: con eso se sostiene todo lo demás. Baja al Aula Magna: la Maestra Rúbrica quiere verte antes de que zarpes hacia las Ruinas.',
   },
   //Region 7 · EL AULA MAGNA (prueba)
@@ -518,7 +626,7 @@ const lessons: LevelDraft[] = [
   },
   {
     id: 'b7-4', r: 7, n: 'La página del aprendiz', examen: true, html: true, et: false, anchos: [340, 620], h: 380, ok: ['margin', 'padding', 'box-sizing', 'height', 'max-width', 'width', 'background-color', 'color', 'text-align', 'font-size', 'font-family'], cmp: ['background-color', 'color', 'text-align', 'font-size'],
-    enc: 'Y para terminar, su primera página. Solar limpio, columna centrada, cabecera, contenido y pie. Si la entrega bien, mañana embarca hacia las Ruinas de la Cuadrícula. Si no, también, pero con deberes.',
+    enc: 'Ahora, su primera página. Solar limpio, columna centrada, cabecera, contenido y pie. Si la entrega bien, mañana embarca hacia las Ruinas de la Cuadrícula. Si no, también, pero con deberes.',
     obj: 'Reinicio universal (sin margen ni relleno, <code>border-box</code>). <code>.pagina</code>: 100% de alto, <b>400px</b> de ancho máximo y centrada. <code>header</code>: 60px de alto, fondo <code>teal</code>, letras <code>white</code>, texto centrado y de <b>24px</b>. <code>main</code>: el alto ya está puesto; añade <b>16px</b> de relleno. <code>footer</code>: 40px de alto, fondo <code>gold</code> y texto centrado.',
     p: ['div@pagina', ['header:Mi primera página', 'main:Aquí irá todo lo que aprenda en el continente.', 'footer:Isla del Aprendiz']],
     b: [
@@ -528,7 +636,54 @@ const lessons: LevelDraft[] = [
       { s: 'main', f: 'height: calc(100% - 100px);', sol: 'padding: 16px;' },
       { s: 'footer', sol: 'height: 40px;\nbackground-color: gold;\ntext-align: center;' },
     ],
+  },
+  {
+    id: 'b7-5', r: 7, n: 'El cartel de despedida', examen: true, w: 460, h: 220,
+    ok: ['font-family', 'font-size', 'font-weight', 'font-style', 'text-align', 'text-transform', 'text-decoration', 'color', 'background-color', 'border', 'border-width', 'border-style', 'border-color'],
+    cmp: ['font-family', 'font-size', 'text-align', 'text-transform', 'color', 'font-style', 'background-color', 'border-top-width', 'border-top-style', 'border-top-color'],
+    enc: 'Y para terminar, el cartel que colgaremos en el muelle el día que se marche. Letra, color y borde: todo lo que ha aprendido en el taller y en la imprenta. Que se lea desde el barco.',
+    obj: 'El titular: <code>Georgia, serif</code> a <b>28px</b>, centrado, en mayúsculas y de color <code>crimson</code>. El aviso: en cursiva, fondo <code>gold</code> y borde de 4px, a rayas, <code>crimson</code>.',
+    p: ['h2@titular:Zarpa la aprendiza', 'p@aviso:Mañana, al amanecer, desde el embarcadero.'],
+    b: [{ s: '.titular', sol: 'font-family: Georgia, serif;\nfont-size: 28px;\ntext-align: center;\ntext-transform: uppercase;\ncolor: crimson;' }, { s: '.aviso', sol: 'font-style: italic;\nbackground-color: gold;\nborder: 4px dashed crimson;' }, GAP],
     fin: 'Aprobada. No lo diga muy alto, que se me suben los demás a las barbas. El barco zarpa al amanecer: en el continente le esperan las cuadrículas, los túneles y los cielos. Escriba con buena letra.',
+  },
+  // ─────────────────────────────── secretos de la isla
+  {
+    id: 'bS-1', r: 8, n: 'El mensaje en la botella', hito: 'pluma', esp: 'secreto', t: 'imprenta', pj: 'Tilde', rol: 'el náufrago poeta', av: 'pj-bs1',
+    secreto: { x: 0.074, y: 0.454, w: 0.05, dib: 'botella', pista: 'Al oeste de la isla, entre las olas, algo de cristal sube y baja con la marea…' },
+    html: true, et: false, w: 440, h: 300, ok: [], cmp: ['font-size'], c: ['::first-letter'],
+    enc: 'Llevo once años en este islote escribiendo cartas. Tengo la tinta, tengo las botellas… pero una carta como es debido empieza con una letra capital, grande y roja, como en los libros antiguos. Solo la primera letra, ¿eh? El resto ya me quedó bien.',
+    teo: '<p>Un <b>pseudo-elemento</b> selecciona <b>un trozo</b> de un elemento, no el elemento entero. Se escribe con <b>dos veces dos puntos</b>:</p><pre>p::first-letter { … }  /* la primera letra */\np::first-line { … }    /* la primera línea */</pre><p>No hace falta tocar el HTML ni envolver la letra en nada: el navegador la encuentra solo.</p>',
+    obj: 'Solo la <b>primera letra</b> de cada párrafo, grande y de color <code>crimson</code>. El resto del texto no cambia.',
+    pista: '<code>p::first-letter</code>',
+    p: ['p:Querida aprendiza:', 'p:Si lees esto, la marea trae buenas noticias.', 'p:Posdata: manda más botellas.'],
+    b: [pick('p::first-letter', 'font-size: 44px;\ncolor: crimson;'), GAP],
+    fin: '¡Ahora sí parece una carta! La echaré al mar esta misma tarde. Si dentro de once años te llega otra, es la respuesta.',
+  },
+  {
+    id: 'bS-2', r: 8, n: 'Las vecinas de al lado', hito: 'casa', esp: 'secreto', t: 'patio', pj: 'Doña Contigua', rol: 'la vecina observadora', av: 'pj-bs2',
+    secreto: { x: 0.93, y: 0.846, w: 0.075, dib: 'gemelas', pista: 'Al sureste, en un islote que casi no sale en los mapas, hay dos casitas idénticas, pared con pared…' },
+    html: true, w: 440, h: 330, ok: [], cmp: BG, c: ['hermano adyacente'],
+    enc: 'Yo no soy cotilla: soy observadora. Y solo me interesa quien vive justo al lado, ¿eh? Pared con pared. De esta lista de vecinos, márcame en dorado a los que van inmediatamente después de un título. Los demás me dan igual.',
+    teo: '<p>El signo <code>+</code> selecciona al <b>hermano que va justo después</b>: los dos tienen el mismo padre y están uno a continuación del otro.</p><pre>h2 + p { … }</pre><p>«El <code>p</code> que va <b>inmediatamente después</b> de un <code>h2</code>». Su primo <code>~</code> es menos exigente: <code>h2 ~ p</code> alcanza a <b>todos</b> los <code>p</code> hermanos que vengan después, estén pegados o no.</p>',
+    obj: 'Solo los párrafos que van <b>justo después</b> de un título <code>h2</code>, dorados.',
+    pista: '<code>h2 + p</code>',
+    p: ['h2:Calle del Faro', 'p:Fanal, la farera', 'p:Su gato', 'h2:Calle del Canal', 'p:Remo, el barquero', 'p:Su barca, que cuenta como vecina'],
+    req: [{ sel: true, re: /\+/, m: 'Usa el signo <code>+</code> de hermano adyacente' }],
+    b: [pick('h2 + p', GOLD), GAP],
+    fin: '¡Lo sabía! Pared con pared. Y ahora, si me disculpas, tengo que mirar por la ventana. Es por seguridad.',
+  },
+  {
+    id: 'bS-3', r: 8, n: 'El barco fantasma', hito: 'ancla', esp: 'secreto', t: 'canal', pj: 'Capitán Bruma', rol: 'el capitán que casi no está', av: 'pj-bs3',
+    secreto: { x: 0.933, y: 0.137, w: 0.085, dib: 'fantasma', pista: 'Al noreste hay un banco de niebla que no se mueve con el viento. Y dentro, a veces, asoma un mástil…' },
+    w: 440, h: 240, ok: ['visibility', 'opacity'], cmp: ['visibility', 'opacity'], c: [],
+    enc: 'Buuu… perdona, es la costumbre. Mi tripulación está a medio desaparecer y así no hay quien pase revista. El contramaestre, invisible del todo, pero que guarde su sitio en la fila. El cocinero, a medio ver, como un buen espectro.',
+    teo: '<p>Tres formas de hacer desaparecer algo, y no son lo mismo:</p><ul><li><code>display: none;</code> lo quita: <b>no ocupa sitio</b>.</li><li><code>visibility: hidden;</code> lo vuelve invisible, pero <b>le guarda el hueco</b>.</li><li><code>opacity</code> lo hace <b>translúcido</b>: de <code>0</code> (invisible) a <code>1</code> (opaco). Sigue ocupando su sitio y se puede pulsar.</li></ul>',
+    obj: 'El contramaestre (<code>.invisible</code>), oculto pero guardando su hueco. El cocinero (<code>.espectro</code>), con una opacidad de <b>0.4</b>.',
+    pista: '<code>visibility: hidden;</code> en <code>.invisible</code> y <code>opacity: 0.4;</code> en <code>.espectro</code>.',
+    p: ['p:Capitán Bruma', 'p@invisible:Contramaestre', 'p:Grumete', 'p@espectro:Cocinero'],
+    b: [{ s: '.invisible', sol: 'visibility: hidden;' }, { s: '.espectro', sol: 'opacity: 0.4;' }, GAP],
+    fin: 'Así da gusto: una tripulación presentable. Si alguna noche ves un barco donde no hay nada, saluda. Seremos nosotros, o la niebla. Casi es lo mismo.',
   },
 ];
 

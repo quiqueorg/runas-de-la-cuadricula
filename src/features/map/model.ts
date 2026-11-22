@@ -13,7 +13,7 @@ function foldText(value: string): string {
 
 const SECRET_BOX: Record<string, readonly [number, number]> = {
   naufragio: [140, 100], serpiente: [170, 90], circulo: [120, 80], volcan: [120, 90], ballena: [140, 80],
-  isla: [100, 80], dragon: [140, 90], taller: [120, 90], gusano: [120, 100], aeronave: [140, 90], reves: [120, 100], fenix: [120, 100],
+  isla: [100, 80], botella: [80, 100], gemelas: [120, 90], fantasma: [140, 100], dragon: [140, 90], taller: [120, 90], gusano: [120, 100], aeronave: [140, 90], reves: [120, 100], fenix: [120, 100],
 };
 
 export interface RoutePoint {

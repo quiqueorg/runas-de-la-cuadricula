@@ -36,9 +36,11 @@ const WAVES: readonly (readonly [number, number])[] = [
 function Boat({ x, y, s = 1, sail = '#f6f1e6' }: { readonly x: number; readonly y: number; readonly s?: number; readonly sail?: string }) {
   return <g transform={`translate(${x} ${y}) scale(${s})`} stroke={INK} strokeWidth=".9" strokeLinejoin="round">
     <ellipse cx="0" cy="4.5" rx="11" ry="2.2" fill="#d8f6ee" stroke="none" opacity=".7"/>
-    <path fill={sail} d="M0-13 8 0H0Z"/><path fill="#e9dcc0" d="M-1-10-7 0h6Z"/>
-    <path d="M0-14V1" strokeWidth="1"/>
-    <path fill="#a8643a" d="M-9 0H9L6 4.5H-6Z"/>
+    <g className="isle-bob" style={{ animationDelay: `${-(x % 7) / 2}s` }}>
+      <path fill={sail} d="M0-13 8 0H0Z"/><path fill="#e9dcc0" d="M-1-10-7 0h6Z"/>
+      <path d="M0-14V1" strokeWidth="1"/>
+      <path fill="#a8643a" d="M-9 0H9L6 4.5H-6Z"/>
+    </g>
   </g>;
 }
 
@@ -50,6 +52,41 @@ function House({ x, y, w = 22, roof = '#c8553c', wall = '#f1e6cc' }: { readonly 
     <path fill={roof} d={`M${-w / 2 - 2.5} ${-h / 2}L0 ${-h / 2 - w * .34}L${w / 2 + 2.5} ${-h / 2}Z`}/>
     <path fill="#6b4a2c" d={`M-2 ${h / 2}v${-h * .5}h4v${h * .5}Z`}/>
   </g>;
+}
+
+/** Off the trail: a bottle on the swell, two houses wall to wall, and a ship that is barely there. */
+function Hideouts() {
+  return <>
+    <g className="isle-bottle" stroke={INK} strokeWidth=".8" strokeLinejoin="round">
+      <ellipse cx="49" cy="212" rx="11" ry="3" fill="#d8f6ee" stroke="none" opacity=".6"/>
+      <g transform="translate(5 0) rotate(-24 44 204)">
+        <path d="M40 198h8v12q0 3-4 3t-4-3Z" fill="#9fd8b8" fillOpacity=".85"/>
+        <path d="M42.4 193h3.2v5h-3.2Z" fill="#9fd8b8"/>
+        <path d="M42 190.6h4v2.6h-4Z" fill="#a8743f"/>
+        <path d="M41.6 201h4.8v7h-4.8Z" fill="#fff6dc" strokeWidth=".5"/>
+      </g>
+    </g>
+    <g stroke={INK} strokeWidth=".8" strokeLinejoin="round">
+      <ellipse cx="614" cy="388" rx="25" ry="11" fill="#d2f5ec" stroke="none" opacity=".5"/>
+      <ellipse cx="614" cy="387" rx="20" ry="8.5" fill="#f3e2ae"/>
+      <ellipse cx="614" cy="385.5" rx="15" ry="5.5" fill="#a6d16c" stroke="#4f7d38"/>
+    </g>
+    <House x={608} y={380} w={12} roof="#b0563a"/>
+    <House x={620} y={380} w={12} roof="#b0563a"/>
+    <g className="isle-ghost">
+      <ellipse cx="616" cy="66" rx="30" ry="13" fill="#eef4f6" opacity=".55"/>
+      <ellipse cx="600" cy="58" rx="16" ry="8" fill="#f6fafb" opacity=".5"/>
+      <ellipse cx="634" cy="60" rx="13" ry="7" fill="#f6fafb" opacity=".45"/>
+      <g opacity=".62" stroke="#3f6474" strokeWidth=".8" strokeLinejoin="round">
+        <path d="M602 66h28l-4 7h-20Z" fill="#b9d6de"/>
+        <path d="M611 66V46m9 20V50" strokeWidth="1"/>
+        <path d="M611 48l-7 12 7 2Zm0 1 6 9-6 3Z" fill="#eaf4f6"/>
+        <path d="M620 52l6 9-6 2Z" fill="#eaf4f6"/>
+        <path d="M606 62l2 3m10-6 1 4" strokeWidth=".5"/>
+      </g>
+      <ellipse cx="616" cy="75" rx="24" ry="6" fill="#f6fafb" opacity=".6"/>
+    </g>
+  </>;
 }
 
 export function Isle() {
@@ -87,6 +124,7 @@ export function Isle() {
     {/* shallows, beach, land */}
     <path d={COAST} stroke="#bfeee6" strokeWidth="40" opacity=".28" strokeLinejoin="round"/>
     <path d={COAST} stroke="#d2f5ec" strokeWidth="24" opacity=".45" strokeLinejoin="round"/>
+    <path className="isle-foam" d={COAST} stroke="#ffffff" strokeWidth="14" strokeLinejoin="round" opacity=".85"/>
     <path d={COAST} stroke="#f3e2ae" strokeWidth="11" strokeLinejoin="round"/>
     <path d={COAST} fill="url(#isle-land)" stroke="#4f7d38" strokeWidth="1.3"/>
     <g clipPath="url(#isle-clip)">
@@ -140,7 +178,7 @@ export function Isle() {
       <g fill="#8f96aa" strokeWidth=".7">
         {[0, 1, 2, 3].flatMap((column) => [0, 1, 2].map((row) => <path key={`${column}-${row}`} d={`M${193.5 + column * 11.2} ${197 + row * 12}h3.4v-5.4h-3.4Z`}/>))}
       </g>
-      <path d="M184 196v-22" strokeWidth="1.1"/><path fill="#c8553c" d="m184 174 11 3.4-11 3.4Z"/>
+      <path d="M184 196v-22" strokeWidth="1.1"/><path className="isle-flag" fill="#c8553c" d="m184 174 11 3.4-11 3.4Z"/>
     </g>
 
     {/* 3 · the dye works */}
@@ -149,8 +187,10 @@ export function Isle() {
       <circle cx="262" cy="116" r="6.2" fill="#7a5a3a"/><circle cx="262" cy="116" r="4.2" fill="#d8483a"/>
       <circle cx="277" cy="120" r="6.2" fill="#7a5a3a"/><circle cx="277" cy="120" r="4.2" fill="#f0c030"/>
       <circle cx="292" cy="114" r="6.2" fill="#7a5a3a"/><circle cx="292" cy="114" r="4.2" fill="#3a7ad8"/>
-      <path d="M206 84v12m38-18v12" strokeWidth="1.1"/><path d="M206 85q19 6 38-6" strokeWidth=".7"/>
-      <path fill="#d8483a" d="m211 87 6 1v8l-6-1Z"/><path fill="#f0c030" d="m221 88 6-.4v8l-6 .4Z"/><path fill="#3a7ad8" d="m231 86 6-1.6v8l-6 1.6Z"/>
+      <path d="M304 83v15m38-15v15" strokeWidth="1.1"/><path d="M304 85q19 5 38 0" strokeWidth=".7"/>
+      <path className="isle-cloth" fill="#d8483a" d="m308.5 86.6 6 .9v9l-6-.9Z"/>
+      <path className="isle-cloth" style={{ animationDelay: '-.9s' }} fill="#f0c030" d="m319.6 88h6v9h-6Z"/>
+      <path className="isle-cloth" style={{ animationDelay: '-1.7s' }} fill="#3a7ad8" d="m331 87.5 6-.9v9l-6 .9Z"/>
     </g>
 
     {/* 4 · the print shop */}
@@ -159,8 +199,10 @@ export function Isle() {
       <path fill="#d9d2c2" d="M396 66h32v19h-32Z"/><path fill="#5d6a7c" d="m393 66 19-11 19 11Z"/>
       <path fill="#8a5a3a" d="M421 52h5v9h-5Z"/><path fill="#6b4a2c" d="M409 85v-9h6v9Z"/>
       <path fill="#fffaf0" d="M400 71h6v5h-6Zm17 0h6v5h-6Z"/>
-      <circle cx="398" cy="102" r="6" fill="#7a5230"/><circle cx="398" cy="102" r="2" fill="#e8c76c"/>
-      <path d="M398 96v12m-6-6h12" strokeWidth=".7"/>
+      <g className="isle-wheel">
+        <circle cx="398" cy="102" r="6" fill="#7a5230"/><circle cx="398" cy="102" r="2" fill="#e8c76c"/>
+        <path d="M398 96v12m-6-6h12" strokeWidth=".7"/>
+      </g>
       <path fill="#fffaf0" d="m410 98 12-2 1.6 8-12 2Z"/><path stroke="#8a8478" strokeWidth=".5" d="m412.6 100 7-1.2m-6.6 3.6 7-1.2"/>
     </g>
 
@@ -215,7 +257,7 @@ export function Isle() {
       <path stroke="#12384f" strokeWidth=".7" d="M496 434h92m3 0h6" opacity=".7"/>
       <text x="496" y="441" fontSize="4.4" letterSpacing=".9" opacity=".8">CARTA DE PRIMERAS RUNAS</text>
     </g>
-    <Boat x={616} y={62} s={.9} sail="#ffe0a8"/>
+    <Hideouts/>
     <g stroke={INK} strokeWidth=".8">
       <ellipse cx="38" cy="124" rx="13" ry="7" fill="#f3e2ae"/><ellipse cx="38" cy="123" rx="8" ry="4" fill="#a6d16c" stroke="#4f7d38"/>
       <path d="M38 122v-9" stroke="#6b4a2c" strokeWidth="1.2"/><path fill="#5fae4e" stroke="#2f5d2b" d="m38 113-7-2 5-2-3-4 5 2 1-4 2 4 5-2-3 4 5 2-7 2Z"/>

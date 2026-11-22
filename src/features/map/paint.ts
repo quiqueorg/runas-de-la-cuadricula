@@ -120,6 +120,14 @@ export function paintMinecart(ctx: CanvasRenderingContext2D): void {
   }
 }
 
+export function paintPaperBoat(ctx: CanvasRenderingContext2D): void {
+  miniature(ctx, 'M10 1 15 8H5Z', '#f1e6cc');
+  miniature(ctx, 'M1 8H19L15 13H5Z', '#fffaf0');
+  ctx.strokeStyle = '#8a7a5a';
+  ctx.lineWidth = 0.7;
+  ctx.stroke(cachedPath('M10 1V8M5 13 10 8 15 13'));
+}
+
 export function paintBlades(ctx: CanvasRenderingContext2D): void {
   ctx.translate(20, 20);
   for (let arm = 0; arm < 4; arm++) {

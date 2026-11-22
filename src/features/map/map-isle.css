@@ -4,7 +4,7 @@
 #view-map.is-isle .trail path.done,#view-map.is-isle .trail path.upcoming{stroke:#6b2a12}
 
 /* its card on the title screen: a small island in open water */
-.adventure.is-isle .adventure-image{background:radial-gradient(ellipse 9% 12% at 60% 40%,#f6f1e6 0 45%,transparent 50%),radial-gradient(ellipse 30% 34% at 48% 54%,#a9d36e 0 62%,#f3e2ae 64% 76%,#c6f0e6 78% 90%,transparent 92%),linear-gradient(160deg,#5cb3c8,#2f7fa6);border-color:rgba(240,214,150,.6)}
+.adventure.is-isle .adventure-image{background:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 145 100%22%3E%3Cdefs%3E%3CradialGradient id=%22s%22 cx=%22.5%22 cy=%22.5%22 r=%22.75%22%3E%3Cstop stop-color=%22%2374c6d6%22/%3E%3Cstop offset=%22.6%22 stop-color=%22%233f93b6%22/%3E%3Cstop offset=%221%22 stop-color=%22%232a6f98%22/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect width=%22145%22 height=%22100%22 fill=%22url(%23s)%22/%3E%3Cg fill=%22none%22 stroke=%22%23d8f4f0%22 stroke-width=%22.7%22 opacity=%22.7%22%3E%3Cpath d=%22M8 20q2-2 4 0t4 0M122 12q2-2 4 0t4 0M6 80q2-2 4 0t4 0M124 88q2-2 4 0t4 0%22/%3E%3C/g%3E%3Cg transform=%22translate(9 6) scale(.193)%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M78 250C72 214 86 186 104 164C118 146 112 122 132 104C156 80 196 74 222 54C246 36 292 44 322 38C352 32 372 54 404 46C440 36 486 52 520 74C552 94 566 126 590 146C614 168 600 204 608 232C614 262 590 284 594 312C598 344 560 362 536 384C512 404 484 408 462 416C430 428 400 416 370 424C336 432 300 420 268 424C232 428 196 414 170 396C140 376 118 360 104 334C90 308 84 282 78 250Z%22 fill=%22none%22 stroke=%22%23c6f0e6%22 stroke-width=%2244%22 opacity=%22.5%22/%3E%3Cpath d=%22M78 250C72 214 86 186 104 164C118 146 112 122 132 104C156 80 196 74 222 54C246 36 292 44 322 38C352 32 372 54 404 46C440 36 486 52 520 74C552 94 566 126 590 146C614 168 600 204 608 232C614 262 590 284 594 312C598 344 560 362 536 384C512 404 484 408 462 416C430 428 400 416 370 424C336 432 300 420 268 424C232 428 196 414 170 396C140 376 118 360 104 334C90 308 84 282 78 250Z%22 fill=%22none%22 stroke=%22%23f3e2ae%22 stroke-width=%2216%22/%3E%3Cpath d=%22M78 250C72 214 86 186 104 164C118 146 112 122 132 104C156 80 196 74 222 54C246 36 292 44 322 38C352 32 372 54 404 46C440 36 486 52 520 74C552 94 566 126 590 146C614 168 600 204 608 232C614 262 590 284 594 312C598 344 560 362 536 384C512 404 484 408 462 416C430 428 400 416 370 424C336 432 300 420 268 424C232 428 196 414 170 396C140 376 118 360 104 334C90 308 84 282 78 250Z%22 fill=%22%23a9d36e%22 stroke=%22%234f7d38%22 stroke-width=%224%22/%3E%3Cg fill=%22%235fae4e%22 stroke=%22%232f5d2b%22 stroke-width=%223%22%3E%3Ccircle cx=%22150%22 cy=%22150%22 r=%2215%22/%3E%3Ccircle cx=%22182%22 cy=%22128%22 r=%2215%22/%3E%3Ccircle cx=%22128%22 cy=%22196%22 r=%2215%22/%3E%3Ccircle cx=%22140%22 cy=%22280%22 r=%2215%22/%3E%3Ccircle cx=%22230%22 cy=%22364%22 r=%2215%22/%3E%3Ccircle cx=%22300%22 cy=%22384%22 r=%2215%22/%3E%3Ccircle cx=%22330%22 cy=%2266%22 r=%2215%22/%3E%3Ccircle cx=%22460%22 cy=%2286%22 r=%2215%22/%3E%3Ccircle cx=%22560%22 cy=%22204%22 r=%2215%22/%3E%3Ccircle cx=%22552%22 cy=%22320%22 r=%2215%22/%3E%3Ccircle cx=%22250%22 cy=%22170%22 r=%2215%22/%3E%3Ccircle cx=%22420%22 cy=%22268%22 r=%2215%22/%3E%3C/g%3E%3Cpath d=%22M607 228C584 238 560 246 542 262S510 306 498 332S486 382 485 414%22 fill=%22none%22 stroke=%22%237fd4dc%22 stroke-width=%2212%22/%3E%3Ccircle cx=%22330%22 cy=%22227%22 r=%2255%22 fill=%22%23ecdfba%22 stroke=%22%238a7a4c%22 stroke-width=%224%22/%3E%3Ccircle cx=%22330%22 cy=%22227%22 r=%2224%22 fill=%22%23f6efd8%22 stroke=%22%233ac8b8%22 stroke-width=%225%22/%3E%3Cpath d=%22M424 398l8-52h16l8 52Z%22 fill=%22%23fffaf0%22 stroke=%22%233d3226%22 stroke-width=%224%22/%3E%3Cpath d=%22M428 372h24v-12h-24Z%22 fill=%22%23d8483a%22/%3E%3Ccircle cx=%22440%22 cy=%22338%22 r=%2212%22 fill=%22%23ffe890%22 stroke=%22%233d3226%22 stroke-width=%223%22/%3E%3Cpath d=%22M246 96h48v30h-48Z%22 fill=%22%23f4ead2%22 stroke=%22%233d3226%22 stroke-width=%224%22/%3E%3Cpath d=%22M238 96l32-22 32 22Z%22 fill=%22%23b03a66%22 stroke=%22%233d3226%22 stroke-width=%224%22/%3E%3Cpath d=%22M522 126h44v26h-44Z%22 fill=%22%23e6d2a4%22 stroke=%22%233d3226%22 stroke-width=%224%22/%3E%3Cpath d=%22M514 126l12-16h36l12 16Z%22 fill=%22%238a5230%22 stroke=%22%233d3226%22 stroke-width=%224%22/%3E%3C/g%3E%3Cg stroke=%22%233d3226%22 stroke-width=%22.7%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M17 72l5-9v9Z%22 fill=%22%23fffaf0%22/%3E%3Cpath d=%22M12 72h13l-2 4h-9Z%22 fill=%22%23a8643a%22/%3E%3C/g%3E%3C/svg%3E") center/cover;border-color:rgba(240,214,150,.6)}
 .adventure.is-isle:hover,.adventure.is-isle:focus-visible{border-color:#f0d696;box-shadow:0 12px 30px rgba(0,0,0,.5),0 0 22px -6px rgba(240,214,150,.8)}
 .adventure.is-isle .adventure-tech{color:#f0d696}
 .adventure.is-isle .adventure-bar i{background:linear-gradient(90deg,#c39a55,#f6e2a8)}
@@ -15,4 +15,35 @@
   .adventure-list{width:min(1120px,calc(100vw - 32px));grid-template-columns:1fr 1fr}
   .adventure-list>.adventure.is-final,.adventure-list>.button{grid-column:1 / -1;justify-self:center}
   .adventure-list>.adventure.is-final{width:min(560px,100%)}
+}
+
+/* behind a lesson: open water with the isle as a blur in the middle */
+body[data-mundo=base]:not([data-view=home]) .backdrop-scene{background-image:radial-gradient(ellipse 34% 40% at 50% 46%,#b9de8c 0 46%,#f0e0b0 58%,#8fdcd8 72%,transparent 100%),linear-gradient(160deg,#58b0c8,#2c739c)}
+
+/* small motions drawn into the chart itself; only transform and opacity move, as lesson 7·7 preaches */
+.isle-cloth,.isle-flag,.isle-wheel,.isle-bob,.isle-bottle{transform-box:fill-box}
+.isle-cloth{transform-origin:50% 0;animation:isle-tela 2.6s ease-in-out infinite alternate}
+@keyframes isle-tela{from{transform:skewX(-8deg) scaleY(.95)}to{transform:skewX(9deg)}}
+.isle-flag{transform-origin:0 50%;animation:isle-bandera 1.1s ease-in-out infinite alternate}
+@keyframes isle-bandera{from{transform:skewY(-6deg)}to{transform:scaleX(.8) skewY(8deg)}}
+.isle-wheel{transform-origin:50% 50%;animation:isle-rueda 7s linear infinite}
+@keyframes isle-rueda{to{transform:rotate(1turn)}}
+.isle-bob{transform-origin:50% 100%;animation:isle-mece 3.4s ease-in-out infinite alternate}
+.isle-bottle{transform-origin:50% 70%;animation:isle-mece 2.7s ease-in-out infinite alternate}
+@keyframes isle-mece{from{transform:rotate(-4deg)}to{transform:rotate(4deg) translateY(-.7px)}}
+.isle-foam{animation:isle-espuma 5.5s ease-in-out infinite alternate}
+@keyframes isle-espuma{from{opacity:.2}to{opacity:.9}}
+.isle-ghost{animation:isle-bruma 9s ease-in-out infinite alternate}
+@keyframes isle-bruma{from{opacity:.45;transform:translateX(-3px)}to{opacity:1;transform:translateX(3px)}}
+
+/* paper boats down the canal, bubbles in the vats, punctuation rising from the great hall */
+.barquito{z-index:2;width:1.9cqi;filter:drop-shadow(0 .15cqi .1cqi rgba(20,60,80,.4))}
+.barquito .rune{display:block;width:100%;height:auto;animation:isle-mece 2.2s ease-in-out infinite alternate}
+.fx-tinta{width:.5cqi;aspect-ratio:1;margin:-.25cqi 0 0 -.25cqi;border-radius:50%;background:var(--c);border:1px solid rgba(255,255,255,.75);opacity:0;animation:isle-burbuja 3.6s ease-out infinite;animation-delay:var(--d)}
+@keyframes isle-burbuja{0%{transform:scale(.4);opacity:0}20%{opacity:.95}100%{transform:translateY(-1.7cqi) scale(1.15);opacity:0}}
+.fx-glifos{width:0;height:0}
+.fx-glifos b{position:absolute;left:0;top:0;font:700 1.25cqi/1 ui-monospace,Consolas,monospace;color:#17616c;text-shadow:0 0 .3cqi #dffff8,0 0 .1cqi #fff;opacity:0;animation:isle-glifo 5.2s ease-out infinite;animation-delay:var(--d)}
+@keyframes isle-glifo{0%{transform:translate(calc(-50% + var(--dx)*1cqi),-.8cqi) scale(.6);opacity:0}18%{opacity:1}100%{transform:translate(calc(-50% + var(--dx)*2cqi),-5.6cqi) scale(1.15);opacity:0}}
+@media (prefers-reduced-motion:reduce){
+  .isle-cloth,.isle-flag,.isle-wheel,.isle-bob,.isle-bottle,.isle-foam,.isle-ghost,.barquito .rune,.fx-tinta,.fx-glifos b{animation:none}
 }

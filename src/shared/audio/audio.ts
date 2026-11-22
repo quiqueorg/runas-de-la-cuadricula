@@ -246,6 +246,7 @@ export const music = (() => {
   const recordings = {
     menu: new URL('../../../assets/kalimba-menu.wav', import.meta.url).href,
     surface: new URL('../../../assets/kalimba-surface.wav', import.meta.url).href,
+    isle: new URL('../../../assets/kalimba-isle.wav', import.meta.url).href,
   };
   const decoded = new Map<string, Promise<AudioBuffer>>();
 
@@ -262,15 +263,18 @@ export const music = (() => {
     aldea: { tempo: 0.96 },
     ciudadela: { tempo: 1.06 },
     secreto: { tempo: 1.14 },
-    // the apprentice's isle shares the surface theme
+  };
+  // The apprentice's isle has its own loop; each place plays it a little faster or slower.
+  const ZONAS_ISLA: ZoneMap = {
     embarcadero: { tempo: 1 },
-    patio: { tempo: 1.1 },
-    tintas: { tempo: 1.04 },
-    imprenta: { tempo: 0.98 },
-    almacen: { tempo: 1.06 },
+    patio: { tempo: 1.08 },
+    tintas: { tempo: 1.03 },
+    imprenta: { tempo: 0.97 },
+    almacen: { tempo: 1.05 },
     canal: { tempo: 0.94 },
-    farola: { tempo: 1 },
-    aula: { tempo: 1.08 },
+    farola: { tempo: 0.98 },
+    aula: { tempo: 1.06 },
+    secretoisla: { tempo: 1.1 },
   };
 
   let scene: MusicZone = ZONAS.inicio;
@@ -611,9 +615,10 @@ export const music = (() => {
     if (song === 'cielo') return scheduleSky(e, bus);
 
     applyPendingScene();
-    if (!bus.loading) void playRecording(e, bus, song === 'menu' ? recordings.menu : recordings.surface);
-    if (bus.loop && song === 'surface') {
-      const rate = 0.96 / (scene.tempo ?? 1);
+    if (!bus.loading) void playRecording(e, bus, song === 'menu' ? recordings.menu : song === 'isla' ? recordings.isle : recordings.surface);
+    if (bus.loop && song !== 'menu') {
+      // each loop was rendered at its own base tempo
+      const rate = (song === 'isla' ? 1 : 0.96) / (scene.tempo ?? 1);
       if (Math.abs(bus.loop.playbackRate.value - rate) > 0.0001)
         bus.loop.playbackRate.setTargetAtTime(rate, e.ctx.currentTime, 0.25);
     }
@@ -649,9 +654,9 @@ export const music = (() => {
     escala(nombre: string) {
       if (nombre === currentZoneName) return;
       currentZoneName = nombre;
-      const sub = nombre in ZONAS_SUB, cie = nombre in ZONAS_CIELO;
-      const nueva = sub ? 'sub' : cie ? 'cielo' : nombre === 'inicio' ? 'menu' : 'surface';
-      const nextScene = (sub ? ZONAS_SUB : cie ? ZONAS_CIELO : ZONAS)[nombre] || ZONAS.inicio;
+      const sub = nombre in ZONAS_SUB, cie = nombre in ZONAS_CIELO, isl = nombre in ZONAS_ISLA;
+      const nueva = sub ? 'sub' : cie ? 'cielo' : isl ? 'isla' : nombre === 'inicio' ? 'menu' : 'surface';
+      const nextScene = (sub ? ZONAS_SUB : cie ? ZONAS_CIELO : isl ? ZONAS_ISLA : ZONAS)[nombre] || ZONAS.inicio;
 
       if (nueva !== song) {
         // Crossfade cleanly to a fresh track bus so old world notes & tails don't clash

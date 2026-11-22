@@ -49,7 +49,7 @@ export function adventureCards(): readonly AdventureCard[] {
       tech: copy.tech,
       title: copy.title,
       className: copy.className,
-      status: !started ? `${EXERCISE_COUNTS[world]} ejercicios${world === 'base' ? ' y una prueba final' : `, ${world === 'cielo' ? 'un jefe final' : 'una prueba final'} y algún secreto`}` : done === total ? (world === 'base' ? '¡Aprendizaje completado! El continente te espera' : '¡Aventura completada! Vuelve a por los secretos') : `${done} de ${total} · siguiente: ${levelLabel(next.id)} ${next.n}`,
+      status: !started ? `${EXERCISE_COUNTS[world]} ejercicios, ${world === 'cielo' ? 'un jefe final' : 'una prueba final'} y algún secreto` : done === total ? (world === 'base' ? '¡Aprendizaje completado! Te quedan los secretos… y el continente' : '¡Aventura completada! Vuelve a por los secretos') : `${done} de ${total} · siguiente: ${levelLabel(next.id)} ${next.n}`,
       action: started ? 'Continuar' : 'Empezar',
       width: (done / total) * 100,
       locked: false,

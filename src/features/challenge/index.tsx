@@ -114,7 +114,7 @@ export function Challenge({ level, onVictory }: ChallengeProps) {
     if (level.secreto && !progress.secretos[level.id]) progress.secretos[level.id] = true;
     saveProgress();
     const modern = isModernLevel(level);
-    music.escala(level.secreto ? (level.mundo === 'flex' ? 'secretosub' : modern ? 'secretocielo' : 'secreto') : level.mundo === 'final' ? 'final' : level.t || regionOf(level).t);
+    music.escala(level.secreto ? (level.mundo === 'flex' ? 'secretosub' : level.mundo === 'base' ? 'secretoisla' : modern ? 'secretocielo' : 'secreto') : level.mundo === 'final' ? 'final' : level.t || regionOf(level).t);
     document.title = `${levelKind(level)} ${levelLabel(level.id)} ${level.n} · ${worldMeta[level.mundo].n}`;
     registerFill(level.id, (field) => {
       const filled = solutionTexts(level, field);

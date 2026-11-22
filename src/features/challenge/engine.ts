@@ -181,7 +181,7 @@ const COMPARE_LABELS: Record<string, string> = {
   'background-position': 'la posición del fondo', 'background-size': 'el tamaño del fondo', 'font-family': 'la familia de letra', 'font-size': 'el tamaño de letra',
   'font-weight': 'el grosor de la letra', 'font-style': 'el estilo de la letra', 'text-align': 'la alineación del texto', 'text-decoration-line': 'el subrayado',
   'text-transform': 'las mayúsculas', 'line-height': 'el interlineado', 'letter-spacing': 'el espaciado entre letras', 'box-shadow': 'la sombra',
-  'list-style-type': 'la viñeta de la lista', 'z-index': 'la capa', position: 'el tipo de posición', float: 'la flotación', display: 'el tipo de caja',
+  'list-style-type': 'la viñeta de la lista', visibility: 'la visibilidad', 'overflow-y': 'lo que pasa con el contenido que sobra', 'z-index': 'la capa', position: 'el tipo de posición', float: 'la flotación', display: 'el tipo de caja',
 };
 const TAUNTS = ['¡JA! ¿Eso es todo lo que sabes?', '¡Mis vientos se ríen de tus runas!', '¡Fallaste! El cielo es mío.', '¡Otra vez! ¡Me encanta verte fallar!', '¡Tu plano se lo lleva el huracán!'];
 

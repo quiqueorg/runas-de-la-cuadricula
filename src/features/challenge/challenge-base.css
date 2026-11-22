@@ -38,7 +38,7 @@
 
 /* look at the goal on the board itself */
 .canvas.peek #player-layer,.canvas.peek #outline-layer,.canvas.peek #target-layer{visibility:hidden}
-.canvas.peek #probe-target{visibility:visible}
+.canvas.peek #probe-target{opacity:1}
 .canvas.peek .floor{box-shadow:inset 0 0 0 1px rgba(0,0,0,.6),inset 0 0 50px rgba(0,0,0,.5),0 0 0 6px #5a5140,0 0 0 8px #6e5a33,0 0 0 9px var(--gold-bright),0 0 24px 8px rgba(242,210,122,.4),0 20px 34px -8px rgba(0,0,0,.8)}
 .canvas.peek::after{content:'objetivo';position:absolute;right:34px;top:8px;padding:1px 9px;border-radius:99px;background:var(--gold-bright);color:#3a2408;font:600 12px/1.5 var(--font-body);letter-spacing:.04em;text-transform:uppercase}
 
@@ -52,6 +52,16 @@
 .floor.t-farola{background-image:url(../../../assets/m-sillares.jpg)}
 .floor.t-aula{background-image:url(../../../assets/losas.jpg)}
 .floor.t-tintas~#outline-layer,.floor.t-imprenta~#outline-layer,.floor.t-embarcadero~#outline-layer,.floor.t-farola~#outline-layer,.floor.t-patio~#outline-layer{--huella:#0b6f68}
+
+/* the isle's own twists: a rising tide, boiling ink and a lighthouse that sweeps the dark */
+.marea .sand{background:url(../../../assets/m-agua.jpg) center/160px;box-shadow:inset 0 0 40px rgba(10,60,90,.5);animation:fluir 9s linear infinite}
+.tinta .sand{background:radial-gradient(circle at 22% 12px,rgba(255,255,255,.3) 0 5px,transparent 6px) 0 0/58px 100%,radial-gradient(circle at 70% 9px,rgba(255,255,255,.22) 0 4px,transparent 5px) 0 0/83px 100%,linear-gradient(180deg,#7a1f3d,#3a0f2a 60%,#1e0a1c);box-shadow:inset 0 0 40px rgba(0,0,0,.5)}
+.faro-noche .floor{filter:brightness(.3) saturate(.7)}
+.faro-noche #canvas::after{content:'';position:absolute;left:50%;top:50%;width:160%;aspect-ratio:1;translate:-50% -50%;pointer-events:none;border-radius:50%;background:conic-gradient(from 0deg,rgba(255,244,190,.34) 0 16deg,transparent 30deg 330deg,rgba(255,244,190,.34) 344deg);-webkit-mask:radial-gradient(closest-side,#000 8%,rgba(0,0,0,.55) 45%,transparent 72%);mask:radial-gradient(closest-side,#000 8%,rgba(0,0,0,.55) 45%,transparent 72%);mix-blend-mode:screen;animation:girar 6s linear infinite}
+.faro-noche #canvas{overflow:hidden}
+/* the footprint shows when the beam comes round, in step with it */
+.faro-noche.mirage #target-layer,.faro-noche.mirage #outline-layer{animation:haz-huella 6s linear infinite}
+@keyframes haz-huella{0%,100%{opacity:1}12%,88%{opacity:0}}
 
 /* the board seen on paper, or by someone who prefers dark */
 .canvas[data-medio=print] .floor{background:#f7f2e6 url(../../../assets/pergamino.jpg) center/420px;animation:none;box-shadow:inset 0 0 0 1px rgba(90,60,20,.5),inset 0 0 30px rgba(120,76,28,.25),0 0 0 6px #cfc3a4,0 0 0 8px #8a7a5a,0 20px 34px -8px rgba(0,0,0,.8)}

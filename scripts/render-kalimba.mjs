@@ -1,6 +1,6 @@
 import { writeFileSync } from 'node:fs';
 
-// Render the two dry, mono loops in advance. Wrap the release of the last
+// Render the dry, mono loops in advance. Wrap the release of the last
 // note into the start so repeating the PCM never cuts a vibrating tine.
 const rate = 24000;
 const keys = [261.63, 293.66, 329.63, 349.23, 392, 440, 493.88, 523.25, 587.33, 659.25];
@@ -8,6 +8,8 @@ const a = [3, 4, 7, 6, 5], b = [3, 4, 9, 6, 0];
 for (const [name, tempo, phrases] of [
   ['menu', 1.08, [a, a, b, b]],
   ['surface', 0.96, [[3, 4, 5, 4, 2], [2, 3, 4, 2, 1], [3, 4, 5, 7, 5], [4, 3, 2, 1, 0]]],
+  // The isle: a rocking tune on the five easiest keys, rising to the high C and settling home.
+  ['isle', 1, [[0, 2, 4, 2, 1], [1, 2, 4, 5, 4], [4, 5, 7, 5, 4], [2, 1, 0, 1, 0]]],
 ]) {
   let cursor = 0;
   const notes = [];

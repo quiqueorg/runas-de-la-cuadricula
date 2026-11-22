@@ -6,7 +6,7 @@ import { observeRenderVisibility } from '../../shared/canvas/visibility';
 import { Rune } from '../../shared/icons/Rune';
 import { Flag, Flock, Flyer, flyerSize } from './figures';
 import { routeSample } from './model';
-import { paintAirship, paintBlades, paintBolt, paintFish, paintFlowCanvas, paintMinecart, paintRunes, paintSketch, paintSpout } from './paint';
+import { paintAirship, paintBlades, paintBolt, paintFish, paintFlowCanvas, paintMinecart, paintPaperBoat, paintRunes, paintSketch, paintSpout } from './paint';
 import scenery from './scenery.json';
 
 type Pair = readonly number[];
@@ -151,6 +151,13 @@ function IsleLife() {
       {fx.ondas.map((point, index) => <i key={index} className="fx-onda" style={spot(point, { '--d': `${(-index * 0.9).toFixed(1)}s` })} />)}
       {fx.brillos.map((point, index) => <i key={index} className="fx-brillo" style={spot(point, { '--d': `${(-index * 0.77).toFixed(2)}s` })} />)}
       <i className="fx-aura" style={spot(fx.aura)} />
+      {/* someone upstream keeps folding boats out of misprints */}
+      {[31, 47].map((duration) => (
+        <Along key={duration} points={fx.canal} duration={duration} flight className="barquito"><Sketch className="" box={[20, 14]} style={{ aspectRatio: '20 / 14' }} draw={paintPaperBoat} /></Along>
+      ))}
+      {fx.tinas.map((vat, index) => <i key={index} className="fx-tinta" style={spot(vat, { '--c': vat[2] ?? '#fff', '--d': `${(-index * 1.2).toFixed(1)}s` })} />)}
+      {fx.mariposas.map((spotOf, index) => <i key={index} className="fx-mariposa" style={spot(spotOf, { '--c': spotOf[2] ?? '#fff', '--d': `${(-index * 1.9).toFixed(1)}s` })}><b /><b /></i>)}
+      <i className="fx-glifos" style={spot(fx.aura)}>{['{', ';', '#', '}', ':', '.'].map((glyph, index) => <b key={index} style={{ ['--d' as string]: `${(-index * 0.87).toFixed(2)}s`, ['--dx' as string]: (index - 2.5) * 0.8 }}>{glyph}</b>)}</i>
       {[[0.3, 78, -14], [0.72, 96, -58]].map(([y, duration, delay], index) => (
         <Flock key={index} style={{ ['--y' as string]: y, ['--dur' as string]: `${duration}s`, ['--d' as string]: `${delay}s` }} />
       ))}

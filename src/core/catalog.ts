@@ -205,12 +205,12 @@ export const ADVENTURES = ['grid', 'flex', 'cielo'] as const satisfies readonly 
 export const WORLD_IDS: readonly WorldId[] = ['base', 'grid', 'flex', 'cielo', 'final'];
 
 export const BASE_GROUPS = [
-  ['Tipo de ejercicio', ['prueba de aprendizaje', 'contra reloj', 'regateo', 'a oscuras', 'escribe el selector']],
-  ['La caja', ['width', 'height', 'max-width', 'min-height', 'padding', 'padding-left', 'padding-top', 'margin', 'margin-top', 'margin-bottom', 'margin-left', 'margin-right', 'border', 'border-width', 'border-style', 'border-color', 'border-bottom', 'border-left', 'border-radius', 'box-sizing']],
-  ['Color y fondo', ['color', 'background-color', 'background-image', 'background-repeat', 'background-position', 'background-size']],
-  ['Texto', ['font-family', 'font-size', 'font-weight', 'font-style', 'font', 'text-align', 'text-decoration', 'text-transform', 'line-height', 'letter-spacing']],
-  ['Flujo y posición', ['display', 'float', 'clear', 'position', 'top', 'right', 'bottom', 'left', 'z-index']],
-  ['Conceptos', ['regla', 'comentarios', 'tipo', 'clase', 'id', 'universal', 'lista de selectores', 'descendiente', 'hijo', ':first-child', ':last-child', ':nth-child()', ':not()', 'cascada', 'especificidad', 'px', '%', 'em', 'rem', 'colores', 'hex', 'rgb()', 'hsl()', 'shorthand', 'modelo de caja', 'margin auto', 'bloque y en línea', 'reset', 'página base']],
+  ['Tipo de ejercicio', ['prueba de aprendizaje', 'secreto', 'contra reloj', 'a oscuras', 'regateo', 'musical', 'escribe el selector']],
+  ['La caja', ['width', 'height', 'max-width', 'min-height', 'padding', 'padding-left', 'padding-top', 'margin', 'margin-top', 'margin-bottom', 'margin-left', 'margin-right', 'border', 'border-width', 'border-style', 'border-color', 'border-bottom', 'border-left', 'border-radius', 'box-sizing', 'overflow', 'overflow-x', 'overflow-y']],
+  ['Color y fondo', ['color', 'background-color', 'background-image', 'background-repeat', 'background-position', 'background-size', 'opacity']],
+  ['Texto', ['font-family', 'font-size', 'font-weight', 'font-style', 'font', 'text-align', 'text-decoration', 'text-transform', 'line-height', 'letter-spacing', 'list-style', 'list-style-type']],
+  ['Flujo y posición', ['display', 'visibility', 'float', 'clear', 'position', 'top', 'right', 'bottom', 'left', 'z-index']],
+  ['Conceptos', ['regla', 'comentarios', 'tipo', 'clase', 'id', 'universal', 'lista de selectores', 'descendiente', 'hijo', 'hermano adyacente', ':first-child', ':last-child', ':nth-child()', ':not()', '::first-letter', 'cascada', 'especificidad', 'herencia', 'px', '%', 'em', 'rem', 'colores', 'hex', 'rgb()', 'hsl()', 'shorthand', 'modelo de caja', 'margin auto', 'bloque y en línea', 'listas', 'capas', 'reset', 'página base']],
 ] as const satisfies readonly FilterGroup[];
 
 export const GRID_GROUPS = [

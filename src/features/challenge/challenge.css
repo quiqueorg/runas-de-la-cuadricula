@@ -8,7 +8,7 @@
 .canvas{position:absolute;left:0;top:0;transform-origin:0 0}
 .board-layer,.floor{position:absolute}
 .board-layer .tablero{position:relative;width:100%;height:100%;padding:14px}
-#probe{visibility:hidden;pointer-events:none}
+#probe,#probe-target{opacity:0;pointer-events:none}
 .floor{border-radius:6px;background:#34474a url(../../../assets/losas.jpg) center/240px;background-size:256px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.6),inset 0 0 50px rgba(0,0,0,.6),0 0 0 6px #4b5a5a,0 0 0 8px #232c2e,0 0 0 9px rgba(220,195,138,.6),0 0 0 12px rgba(10,16,18,.55),0 20px 34px -8px rgba(0,0,0,.8);transition:box-shadow .5s}
 .floor::before{content:'';position:absolute;inset:-9px;pointer-events:none;background:radial-gradient(circle,#c8fff6 0 1.5px,rgba(114,242,224,.75) 2.5px,transparent 5.5px) 0 0/12px 12px no-repeat,radial-gradient(circle,#c8fff6 0 1.5px,rgba(114,242,224,.75) 2.5px,transparent 5.5px) 100% 0/12px 12px no-repeat,radial-gradient(circle,#c8fff6 0 1.5px,rgba(114,242,224,.75) 2.5px,transparent 5.5px) 0 100%/12px 12px no-repeat,radial-gradient(circle,#c8fff6 0 1.5px,rgba(114,242,224,.75) 2.5px,transparent 5.5px) 100% 100%/12px 12px no-repeat}
 .floor.t-pradera{background-image:url(../../../assets/t-pradera.jpg)}.floor.t-bosque{background-image:url(../../../assets/t-bosque.jpg)}.floor.t-canon{background-image:url(../../../assets/t-canon.jpg)}

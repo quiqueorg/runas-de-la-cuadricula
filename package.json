@@ -1,6 +1,28 @@
 {
   "name": "runas-de-la-cuadricula",
   "private": true,
+  "description": "Juego para aprender CSS escribiéndolo: los fundamentos en la Isla del Aprendiz, Grid en la superficie, Flexbox bajo tierra y, en los cielos, media queries, variables y transiciones.",
+  "keywords": [
+    "css",
+    "css-grid",
+    "flexbox",
+    "media-queries",
+    "custom-properties",
+    "css-transitions",
+    "aprender-css",
+    "juego-educativo",
+    "react",
+    "vite"
+  ],
+  "homepage": "https://quiqueorg.github.io/runas-de-la-cuadricula/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/quiqueorg/runas-de-la-cuadricula.git"
+  },
+  "bugs": {
+    "url": "https://github.com/quiqueorg/runas-de-la-cuadricula/issues"
+  },
+  "author": "Quique",
   "type": "module",
   "packageManager": "pnpm@12.21.0",
   "engines": {
@@ -9,20 +31,15 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "preview": "vite preview"
+    "check:lessons": "node scripts/check-lessons.mjs",
+    "check": "tsc --noEmit && node scripts/check-lessons.mjs && vite build",
+    "music": "node scripts/render-kalimba.mjs"
   },
   "dependencies": {
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild"
-    ],
-    "overrides": {
-      "rollup": "npm:@rollup/wasm-node@4.68.8"
-    }
   },
   "devDependencies": {
     "@types/react": "^19.3.0",

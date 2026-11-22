@@ -1,0 +1,28 @@
+name: Errata o propuesta de ejercicio
+description: Una explicación confusa, una pista que no ayuda o un contenido del temario que falta.
+body:
+  - type: dropdown
+    id: mundo
+    attributes:
+      label: Mundo
+      options:
+        - La Isla del Aprendiz (fundamentos)
+        - Las Ruinas de la Cuadrícula (Grid)
+        - El Subsuelo Flexible (Flexbox)
+        - Los Cielos Cambiantes (media queries, variables, transiciones)
+        - El Vacío entre los Mundos (final)
+        - No lo sé
+    validations:
+      required: true
+  - type: input
+    id: ejercicio
+    attributes:
+      label: Ejercicio
+      description: Su número y nombre, si es uno que ya existe.
+      placeholder: 3·4 Varas de medir
+  - type: textarea
+    id: propuesta
+    attributes:
+      label: ¿Qué cambiarías o añadirías?
+    validations:
+      required: true

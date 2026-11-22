@@ -1,0 +1,28 @@
+name: Algo no funciona
+description: Un ejercicio que no se puede resolver, algo que se ve mal o un error del juego.
+labels: [bug]
+body:
+  - type: input
+    id: donde
+    attributes:
+      label: ¿Dónde?
+      description: El ejercicio (por ejemplo «Isla 5·7 La partitura»), el mapa o la pantalla de inicio.
+    validations:
+      required: true
+  - type: textarea
+    id: que
+    attributes:
+      label: ¿Qué pasa y qué esperabas?
+      description: Si es un ejercicio, pega lo que escribiste en la tablilla.
+    validations:
+      required: true
+  - type: input
+    id: navegador
+    attributes:
+      label: Navegador y dispositivo
+      placeholder: Firefox en Windows, Safari en iPad…
+  - type: textarea
+    id: captura
+    attributes:
+      label: Captura de pantalla
+      description: Opcional, pero ayuda mucho. Arrastra la imagen aquí.

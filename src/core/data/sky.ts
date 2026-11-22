@@ -25,12 +25,12 @@ export const skyRegions: Region[] = [
 ];
 
 export const skyPieceTypes: PieceTypeMap = {
-  globo: { o: 'globo' }, dirigible: { o: 'dirigible' }, lastre: { o: 'barril' }, cloudRef: { o: 'cloud' }, maceta: { o: 'maceta' },
+  globo: { o: 'globo' }, dirigible: { o: 'dirigible' }, lastre: { o: 'barril' }, nube: { o: 'nube' }, maceta: { o: 'maceta' },
   cupula: { a: 'estrellas', i: 'luna' }, carta: { a: 'estrellas', i: 'astro' }, catalogo: { a: 'tablones', i: 'libro' }, pie: { a: 'marmol', i: 'arena' },
   estrella: { o: 'astro' }, planeta: { o: 'planeta' }, telescopio: { o: 'telescopio' }, molinillo: { o: 'molinillo' },
-  campanilla: { o: 'campana' }, banderin: { a: 'canvas' }, pano: { a: 'canvas' }, franja: { a: 'canvas' }, tendedero: { a: 'celeste' },
-  huevo: { o: 'huevo' }, pluma: { o: 'pluma' }, grifo: { o: 'grifo' }, nido: { a: 'paja', i: 'huevo' }, isleta: { a: 'cloud' },
-  gota: { o: 'gota' }, chorro: { a: 'agua' }, campana: { o: 'campana' }, gallardete: { a: 'canvas', i: 'campana' },
+  campanilla: { o: 'campana' }, banderin: { a: 'lienzo' }, pano: { a: 'lienzo' }, franja: { a: 'lienzo' }, tendedero: { a: 'celeste' },
+  huevo: { o: 'huevo' }, pluma: { o: 'pluma' }, grifo: { o: 'grifo' }, nido: { a: 'paja', i: 'huevo' }, isleta: { a: 'nube' },
+  gota: { o: 'gota' }, chorro: { a: 'agua' }, campana: { o: 'campana' }, gallardete: { a: 'lienzo', i: 'campana' },
   rayo: { o: 'rayo' }, nubarron: { a: 'tormenta' }, ojo: { a: 'tormenta', i: 'tormenta' }, fenix: { o: 'fenix' },
 };
 
@@ -461,7 +461,7 @@ export const skyLevels: LevelDraft[] = [
     obj: 'Al activar, todas suben 120px: las rápidas en <b>0.4s</b> y la lenta en <b>2s</b>.',
     pista: '<code>transition: transform 0.4s;</code> en <code>.rapida</code> y <code>transition: transform 2s;</code> en <code>.lenta</code>.',
     p: ['nube@rapida', 'nube@lenta', 'nube@rapida'],
-    b: [{ s: '.tablero', f: 'display: flex;\njustify-content: space-around;\nalign-items: flex-end;', ed: false }, { s: '.tablero.activo .cloud', f: 'transform: translateY(-120px);', ed: false }, { s: '.rapida', sol: 'transition: transform 0.4s;' }, { s: '.lenta', sol: 'transition: transform 2s;' }],
+    b: [{ s: '.tablero', f: 'display: flex;\njustify-content: space-around;\nalign-items: flex-end;', ed: false }, { s: '.tablero.activo .nube', f: 'transform: translateY(-120px);', ed: false }, { s: '.rapida', sol: 'transition: transform 0.4s;' }, { s: '.lenta', sol: 'transition: transform 2s;' }],
   },
   {
     id: 'c6-3', r: 6, n: 'Solo lo que toca', estado: 'activo', w: 380, h: 260, ok: SKY_TRANSITION.slice(0, 3), c: ['transition-property'],

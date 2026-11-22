@@ -39,8 +39,9 @@ export function App() {
     window.addEventListener('app-refresh', onRefresh);
     initCloudSync();
     if (/[?&]test\b/.test(location.search)) {
-      void import('../features/challenge').then(({ requestFill }) => {
-        window.__runas = { NIVELES: levels, rellenar: (id) => { navigate(`prueba-${id}`); requestFill(id, 'sol'); } };
+      void Promise.all([import('../features/challenge'), import('./selfTest')]).then(([{ requestFill }, { selfTest }]) => {
+        const rellenar = (id: string) => { navigate(`prueba-${id}`); requestFill(id, 'sol'); };
+        window.__runas = { NIVELES: levels, rellenar, comprobar: (prefix) => selfTest(rellenar, prefix) };
       });
     }
     return () => {
@@ -98,6 +99,7 @@ declare global {
     __runas?: {
       NIVELES: typeof levels;
       rellenar: (id: string) => void;
+      comprobar: (prefix?: string) => Promise<import('./selfTest').SelfTestReport>;
     };
   }
 }

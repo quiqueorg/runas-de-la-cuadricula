@@ -1,0 +1,20 @@
+# Keeps the pinned actions and the toolchain current, a few pull requests a month instead of one per package.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      actions:
+        patterns: ['*']
+
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      react:
+        patterns: ['react', 'react-dom', '@types/react', '@types/react-dom']
+      toolchain:
+        patterns: ['vite', '@vitejs/*', 'typescript']

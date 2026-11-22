@@ -7,7 +7,8 @@
     "type": "git",
     "url": "git+https://github.com/quiqueorg/runas-de-la-cuadricula.git"
   },
-  "homepage": "https://github.com/quiqueorg/runas-de-la-cuadricula",
+  "homepage": "https://quiqueorg.github.io/runas-de-la-cuadricula/",
+  "packageManager": "pnpm@12.21.0",
   "bugs": {
     "url": "https://github.com/quiqueorg/runas-de-la-cuadricula/issues"
   },
@@ -23,12 +24,6 @@
   "dependencies": {
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": ["esbuild"],
-    "overrides": {
-      "rollup": "npm:@rollup/wasm-node@4.68.8"
-    }
   },
   "devDependencies": {
     "@types/react": "^19.2.2",

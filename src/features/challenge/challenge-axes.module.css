@@ -1,0 +1,21 @@
+/* flex axes on the board */
+#guides line.eje-p{stroke:var(--accent);stroke-width:2.4}
+#guides line.eje-c{stroke:#f0c45a;stroke-width:2;stroke-dasharray:6 5}
+#guides text.eje-p,#guides text.eje-c{font:600 12px var(--font-body);text-anchor:middle;fill:var(--accent)}
+#guides text.eje-c{fill:#f0c45a}
+.legend .axis-main,.legend .axis-cross{display:inline-block;width:18px;height:0;border-top:2.4px solid var(--accent);vertical-align:middle;margin:0 4px 0 8px}
+.legend .axis-cross{border-top:2px dashed #f0c45a}
+/* underground boards and special states */
+.floor.t-mina{background-image:url(../../../assets/t-mina.jpg)}.floor.t-hongos{background-image:url(../../../assets/t-hongos.jpg)}.floor.t-lagosub{background-image:url(../../../assets/t-lagosub.jpg);animation:fluir2 50s linear infinite}
+.floor.t-cristal{background-image:url(../../../assets/t-cristal.jpg)}.floor.t-forja{background-image:url(../../../assets/t-forja.jpg)}.floor.t-abismo{background-image:url(../../../assets/t-abismo.jpg)}
+.floor.t-drow{background-image:url(../../../assets/t-drow.jpg)}.floor.t-templo{background-image:url(../../../assets/t-templo.jpg)}.floor.t-boveda{background-image:url(../../../assets/t-boveda.jpg)}
+#view-challenge.is-flex .floor~#outline-layer .pieza{border-color:#9ff6ea}
+.oscuras .floor{filter:brightness(.35) saturate(.7)}
+.oscuras #canvas::after{content:'';position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 50% 50%,transparent 20%,rgba(0,0,0,.55) 75%);animation:candil 3.2s ease-in-out infinite}
+@keyframes candil{50%{opacity:.75}}
+.esporas .sand{background:url(../../../assets/t-hongos.jpg) center/200px}
+.brasas .sand{background:url(../../../assets/t-forja.jpg) center/200px}
+.derrumbe .sand{background:url(../../../assets/m-roca.jpg) center/160px}
+.fantasmal .sand{background:url(../../../assets/t-templo.jpg) center/200px}
+.fantasmal #canvas::after{content:'';position:absolute;inset:0;pointer-events:none;background:radial-gradient(40% 30% at 20% 70%,rgba(150,200,255,.16),transparent),radial-gradient(35% 28% at 80% 30%,rgba(150,200,255,.13),transparent);animation:niebla-f 9s ease-in-out infinite alternate}
+@keyframes niebla-f{to{background-position:30px -16px,-26px 14px;opacity:.6}}

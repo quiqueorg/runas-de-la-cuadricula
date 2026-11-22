@@ -1,0 +1,40 @@
+{
+  "name": "runas-de-la-cuadricula",
+  "description": "Tres aventuras para aprender CSS: Grid en la superficie, Flexbox bajo tierra y, en el cielo, media queries, variables y transiciones.",
+  "private": true,
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/quiqueorg/runas-de-la-cuadricula.git"
+  },
+  "homepage": "https://github.com/quiqueorg/runas-de-la-cuadricula",
+  "bugs": {
+    "url": "https://github.com/quiqueorg/runas-de-la-cuadricula/issues"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["esbuild"],
+    "overrides": {
+      "rollup": "npm:@rollup/wasm-node@4.68.8"
+    }
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2",
+    "@vitejs/plugin-react": "^5.1.0",
+    "typescript": "~5.9.3",
+    "vite": "^7.2.2"
+  }
+}

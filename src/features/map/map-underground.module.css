@@ -1,0 +1,65 @@
+/* ═══ underground map ═══ */
+#view-map.is-underground .map-stage{background:radial-gradient(ellipse 80% 70% at 50% 45%,rgba(70,50,96,.5),transparent 70%),linear-gradient(180deg,#1a1420,#0e0a12);animation:none}
+#view-map.is-underground .world{background-image:url(../../../assets/mapa-sub.jpg)}
+#view-map.is-underground .compass{left:2.4%;top:3.6%;width:7%}
+.fx-alma{width:1.1cqi;aspect-ratio:1;translate:-50% -50%;border-radius:50%;background:radial-gradient(circle,#ffffff 0 18%,#9ad0ff 40%,rgba(120,180,255,0) 70%);box-shadow:0 0 1.6cqi rgba(140,200,255,.7);mix-blend-mode:screen;opacity:0;animation:alma 11s ease-in-out infinite;animation-delay:var(--d)}
+@keyframes alma{0%{transform:translate(0,0) scale(.6);opacity:0}15%{opacity:.9}40%{transform:translate(calc(var(--dx)*2.4cqi),-1.6cqi) scale(1)}60%{opacity:.7}80%{transform:translate(calc(var(--dx)*-1.2cqi),-3.4cqi) scale(.8)}100%{transform:translate(calc(var(--dx)*.6cqi),-5cqi) scale(.4);opacity:0}}
+.fx-cirio{width:1.6cqi;aspect-ratio:1;translate:-50% -50%;border-radius:50%;background:radial-gradient(circle,rgba(255,236,170,.85) 0 12%,rgba(255,190,90,.35) 35%,transparent 70%);mix-blend-mode:screen;animation:titila 1.7s ease-in-out infinite alternate;animation-delay:var(--d)}
+.fx-cirio.farol{width:2.4cqi}
+@keyframes titila{0%{opacity:.55;transform:scale(.9)}35%{opacity:1;transform:scale(1.06)}60%{opacity:.7}100%{opacity:.95;transform:scale(1)}}
+.fx-puerta{width:6cqi;height:8cqi;translate:-50% -50%;border-radius:45% 45% 10% 10%;background:radial-gradient(closest-side,rgba(120,230,255,.45),transparent);mix-blend-mode:screen;animation:latido-c 2.6s ease-in-out infinite}
+.fx-puerta b{position:absolute;left:50%;top:50%;font:700 1.2cqi/1 serif;color:#b8f6ff;text-shadow:0 0 6px #4ad0ff;opacity:0;animation:runa-sube 4.4s ease-out infinite;animation-delay:var(--d)}
+@keyframes runa-sube{0%{transform:translate(calc(-50% + var(--dx)*1cqi),0) scale(.6);opacity:0}20%{opacity:1}100%{transform:translate(calc(-50% + var(--dx)*1.8cqi),-5cqi) scale(1.1);opacity:0}}
+.fx-hoguera{width:2cqi;height:2.4cqi;translate:-50% -90%}
+.fx-hoguera b{position:absolute;left:50%;bottom:0;width:60%;height:80%;translate:-50% 0;border-radius:50% 50% 40% 40%/70% 70% 30% 30%;background:radial-gradient(ellipse at 50% 85%,#fffbe0 0 18%,#ffc84a 40%,#ff7a2a 62%,rgba(255,80,20,0) 75%);mix-blend-mode:screen;transform-origin:50% 100%;animation:llama-h .42s ease-in-out infinite alternate}
+.fx-hoguera b:nth-child(2){left:30%;width:44%;height:60%;animation-delay:-.2s;animation-duration:.36s}
+.fx-hoguera b:nth-child(3){left:70%;width:44%;height:66%;animation-delay:-.1s;animation-duration:.5s}
+@keyframes llama-h{to{transform:scale(.86,1.18) skewX(7deg)}}
+.fx-burbuja{width:.5cqi;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 35% 35%,#f0ffe8 0 20%,#9ae88a 50%,#5ab04a);border:1px solid #1e4a1a;opacity:0;animation:burbuja-c 3.2s ease-in infinite;animation-delay:var(--d)}
+@keyframes burbuja-c{0%{transform:translateY(0) scale(.3);opacity:0}20%{opacity:1}80%{transform:translateY(-1.6cqi) scale(1.1);opacity:1}88%{transform:translateY(-1.8cqi) scale(1.6);opacity:0}100%{opacity:0}}
+.fx-gota{width:.22cqi;height:.34cqi}
+.fx-gota::before{content:'';position:absolute;inset:0;border-radius:50% 50% 50% 50%/30% 30% 70% 70%;background:#bfeaff;box-shadow:0 0 .4cqi rgba(160,220,255,.8);opacity:0;animation:gota 5.5s ease-in infinite;animation-delay:var(--d)}
+.fx-gota::after{content:'';position:absolute;left:50%;top:2.2cqi;width:1cqi;height:.4cqi;translate:-50% 0;border-radius:50%;border:1px solid rgba(190,234,255,.8);opacity:0;animation:salpica 5.5s ease-out infinite;animation-delay:var(--d)}
+@keyframes gota{0%,60%{transform:translateY(-1.2cqi);opacity:0}64%{opacity:1;transform:translateY(-1.2cqi)}76%{transform:translateY(2cqi);opacity:1}77%,100%{opacity:0;transform:translateY(2cqi)}}
+@keyframes salpica{0%,76%{opacity:0;transform:scale(.2)}78%{opacity:1}92%,100%{opacity:0;transform:scale(1.4)}}
+#view-map.is-underground .fx-brillo{width:1cqi;filter:drop-shadow(0 0 3px #ffe8a0)}
+#view-map.is-underground .trail path.done,#view-map.is-underground .trail path.upcoming{stroke:#ffcf6a}
+.fx-rios path.agua{stroke:rgba(230,255,255,.95)}
+.fx-rios path.lava{stroke:rgba(255,240,170,.95);stroke-dasharray:3 14;animation-duration:5s}
+.fx-carril{left:0!important;top:0!important;width:100%;height:100%;overflow:visible}
+.fx-rayo{width:7cqi;height:12cqi;translate:-50% 0;background:linear-gradient(180deg,rgba(255,244,200,.55),rgba(255,236,180,0));clip-path:polygon(35% 0,65% 0,100% 100%,0 100%);mix-blend-mode:screen;animation:rayo 5s ease-in-out infinite alternate}
+@keyframes rayo{to{opacity:.55}}
+.fx-espora{width:.5cqi;aspect-ratio:1;border-radius:50%;background:var(--c);box-shadow:0 0 .8cqi var(--c);opacity:0;animation:espora 7s ease-in-out infinite;animation-delay:var(--d)}
+@keyframes espora{0%{transform:translate(0,0);opacity:0}15%{opacity:1}50%{transform:translate(1.4cqi,-3cqi)}100%{transform:translate(-.8cqi,-6cqi);opacity:0}}
+.fx-cascada{width:2.6cqi;height:calc(var(--h)*68.75cqi);translate:-50% 0;background:repeating-linear-gradient(180deg,rgba(220,255,255,.9) 0 6px,rgba(140,220,240,.35) 6px 14px);-webkit-mask:linear-gradient(90deg,transparent,#000 25%,#000 75%,transparent);mask:linear-gradient(90deg,transparent,#000 25%,#000 75%,transparent);animation:cae .5s linear infinite;opacity:.75}
+@keyframes cae{to{background-position:0 14px}}
+.fx-cristal{width:4cqi;aspect-ratio:1;translate:-50% -50%;border-radius:50%;background:radial-gradient(closest-side,var(--c),transparent);mix-blend-mode:screen;opacity:.3;animation:latido-c 3.4s ease-in-out infinite;animation-delay:var(--d)}
+@keyframes latido-c{50%{opacity:.85;transform:scale(1.25)}}
+.fx-chispa{width:.28cqi;aspect-ratio:1;border-radius:50%;background:#ffe08a;box-shadow:0 0 .5cqi #ff9a2a;opacity:0;animation:chispa-f 1.4s ease-out infinite;animation-delay:var(--d)}
+@keyframes chispa-f{0%{transform:translate(0,0);opacity:1}100%{transform:translate(calc(var(--dx) * 1cqi),-2.4cqi);opacity:0}}
+.fx-bruma{width:22cqi;aspect-ratio:3;translate:-50% -50%;border-radius:50%;background:radial-gradient(closest-side,rgba(150,110,220,.35),transparent);animation:bruma 14s ease-in-out infinite alternate}
+.fx-bruma.b2{animation-duration:19s;animation-direction:alternate-reverse}
+@keyframes bruma{from{transform:translateX(-2cqi) scale(.9)}to{transform:translateX(2cqi) scale(1.1)}}
+.fx-fuego{width:.9cqi;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,#fff 0 20%,var(--c) 45%,transparent 70%);box-shadow:0 0 1.4cqi var(--c);animation:fuego 6s ease-in-out infinite;animation-delay:var(--d)}
+@keyframes fuego{0%,100%{transform:translate(0,0);opacity:.6}33%{transform:translate(.8cqi,-1.6cqi);opacity:1}66%{transform:translate(-.6cqi,-.6cqi);opacity:.8}}
+.fx-llama{width:1.2cqi;height:2cqi;translate:-50% -100%;border-radius:50% 50% 40% 40%/70% 70% 30% 30%;background:radial-gradient(ellipse at 50% 80%,#f4fff0 0 20%,#8affa0 45%,rgba(60,200,120,0) 70%);mix-blend-mode:screen;animation:llama .3s ease-in-out infinite alternate}
+@keyframes llama{to{transform:scaleY(1.2) skewX(6deg)}}
+.fx-arana{width:1.8cqi;translate:-50% 0;animation:baja 9s ease-in-out infinite;animation-delay:var(--d)}
+.fx-arana::before{content:'';position:absolute;left:50%;bottom:60%;width:1px;height:6cqi;background:rgba(230,226,240,.8)}
+.fx-arana .rune{display:block;width:100%}
+@keyframes baja{0%,100%{transform:translateY(0)}50%{transform:translateY(3cqi)}}
+.fx-runas{width:12.5cqi;aspect-ratio:1.45;translate:-50% -50%;overflow:visible;mix-blend-mode:screen}
+.fx-runas circle{fill:none;stroke:rgba(255,220,130,.55);stroke-width:1.4;vector-effect:non-scaling-stroke}
+.fx-runas .r2{stroke:rgba(200,150,255,.5);stroke-dasharray:6 10;animation:gira 40s linear infinite reverse;transform-origin:center}
+.fx-runas .giro{animation:gira 28s linear infinite}
+.fx-runas path{fill:none;stroke:#ffe6a0;stroke-width:1.6;vector-effect:non-scaling-stroke;filter:drop-shadow(0 0 2px #ffcf6a)}
+.fx-zzz{width:3cqi;height:3cqi}
+.fx-zzz b{position:absolute;left:0;bottom:0;font:700 1.3cqi/1 var(--font-display);color:#fff4d8;text-shadow:0 0 4px #000;opacity:0;animation:zzz 4.5s ease-out infinite}
+.fx-zzz b:nth-child(2){animation-delay:1.5s;font-size:1.6cqi}.fx-zzz b:nth-child(3){animation-delay:3s;font-size:2cqi}
+@keyframes zzz{0%{transform:translate(0,0);opacity:0}15%{opacity:1}100%{transform:translate(-2cqi,-3cqi);opacity:0}}
+.fx-humo.vapor{background:radial-gradient(circle at 36% 32%,#ffffff 0 34%,#e6eef2 36% 60%,#c8d4da 62%)}
+.fx-polvo{width:6cqi;height:3cqi;translate:-50% -30%;background:radial-gradient(circle,rgba(200,180,160,.8) 0 2px,transparent 3px) 0 0/1.4cqi 1.2cqi;opacity:0;animation:polvo 6s ease-out infinite}
+@keyframes polvo{0%,70%{opacity:0;transform:translateY(0)}75%{opacity:.9}100%{opacity:0;transform:translateY(2cqi)}}
+.fx-aves.murcis path{fill:#1e1626;stroke:#0a0610;stroke-width:.8}
+.mota{position:absolute;left:0;top:calc(var(--y)*100%);width:.6cqi;aspect-ratio:1;border-radius:50%;background:var(--c);box-shadow:0 0 1cqi var(--c),0 0 2cqi var(--c);opacity:.8;animation:paso var(--dur) linear infinite,flota-m 5s ease-in-out infinite alternate;animation-delay:var(--d),0s}
+@keyframes flota-m{to{margin-top:-2cqi}}

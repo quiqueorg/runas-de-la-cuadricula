@@ -1,0 +1,6 @@
+/* dialogs */
+.dialog-backdrop{position:fixed;inset:0;z-index:var(--z-dialog);display:grid;place-items:center;padding:16px;background:rgba(4,8,10,.66);backdrop-filter:blur(3px);animation:aparecer .25s ease-out}
+.dialog-card{width:min(460px,100%);padding:26px 24px 20px;text-align:center}
+.dialog-card h3{font-size:27px;color:var(--text-bright);margin-bottom:8px}
+.dialog-card p{margin:0 0 10px;color:var(--text-muted)}
+.dialog-actions{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:16px}

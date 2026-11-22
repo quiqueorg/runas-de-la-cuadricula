@@ -1,0 +1,16 @@
+#app{display:contents}
+/* Feature layout. Source order matches the original cascade. */
+.sprite-sheet{position:absolute}
+/* VOICE: a calm, bright adventure; a game that teaches without hurry.
+   IDEA: ancient ruins whose order is restored by writing runes (CSS) on a stone tablet.
+   PICTURE: painted landscape of floating islands and a tower of light; a slab board with turquoise traces.
+   COLOUR/TYPE: night slate, old gold and rune turquoise; Marcellus for titles, Alegreya Sans, JetBrains Mono.
+   LAYOUT: centered menu over the landscape; map plus a filterable list; challenge: fixed board, scroll and tablet. */
+*{box-sizing:border-box;min-width:0}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;min-height:100svh;background:var(--surface);color:var(--text);font:17px/1.55 var(--font-body);overflow-x:clip;-webkit-font-smoothing:antialiased}
+button,input{font:inherit;color:inherit}
+[hidden]{display:none!important}
+code{font-family:var(--font-mono);font-size:.88em}
+.rune{display:block}
+h1,h2,h3,h4{font-family:var(--font-display);font-weight:400;margin:0}

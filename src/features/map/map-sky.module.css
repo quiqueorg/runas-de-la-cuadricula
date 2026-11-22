@@ -1,0 +1,51 @@
+/* ═══ sky map ═══ */
+#view-map.is-sky .map-stage{background:radial-gradient(ellipse 80% 70% at 50% 40%,rgba(160,210,255,.45),transparent 70%),linear-gradient(180deg,#5a8ec8,#2e5a90);animation:none}
+#view-map.is-sky .world{background-image:url(../../../assets/mapa-cielo.jpg)}
+#view-map.is-sky .compass{left:auto;top:auto;right:2.4%;bottom:3.4%;width:7.5%}
+#view-map.is-sky .trail path.done,#view-map.is-sky .trail path.upcoming{stroke:#7a3412}
+.trail path.flight{stroke:#fff;stroke-width:3;stroke-dasharray:1 10;opacity:.95;filter:drop-shadow(0 0 2px rgba(40,90,180,.9));animation:marcha 1.4s linear infinite}
+.volador{position:relative;display:block;width:100%;overflow:visible}
+.volador canvas{position:absolute;display:block}
+.volador .ala{transform-origin:50% 100%;animation:aleteo-v .38s ease-in-out infinite alternate}
+@keyframes aleteo-v{to{transform:scaleY(-.55)}}
+#view-map.is-sky .bicho .rune{filter:drop-shadow(0 2px 1px rgba(20,40,80,.45))}
+.fx-vortice{width:34cqi;aspect-ratio:1/.82;translate:-50% -50%;border-radius:50%;pointer-events:none;-webkit-mask:radial-gradient(closest-side,transparent 14%,#000 30%,#000 62%,transparent 100%);mask:radial-gradient(closest-side,transparent 14%,#000 30%,#000 62%,transparent 100%)}
+.fx-vortice b{position:absolute;inset:0;border-radius:50%;background:repeating-conic-gradient(from 0deg,rgba(40,30,80,.26) 0 14deg,transparent 22deg 40deg,rgba(220,210,255,.14) 46deg 50deg,transparent 56deg 72deg);filter:blur(5px);animation:gira 46s linear infinite reverse}
+.fx-vortice b+b{inset:12%;background:repeating-conic-gradient(from 20deg,rgba(220,210,255,.16) 0 6deg,transparent 14deg 60deg);filter:blur(3px);animation-duration:28s}
+.fx-aura.ojo{width:7cqi;aspect-ratio:1/.82;background:radial-gradient(closest-side,rgba(255,250,220,.0) 40%,rgba(230,220,255,.75) 70%,rgba(230,220,255,0));animation-duration:4s}
+.fx-relampago{width:1.6cqi;translate:-50% -20%;overflow:visible;opacity:0;animation:relampago-m var(--dur) linear infinite;animation-delay:var(--d)}
+.fx-relampago path{fill:#fffbe8;stroke:#c8b8ff;stroke-width:1.4;filter:drop-shadow(0 0 4px #d8c8ff) drop-shadow(0 0 10px #a890ff)}
+@keyframes relampago-m{0%,90%,100%{opacity:0}91%{opacity:1}92.5%{opacity:.2}94%{opacity:1}96%{opacity:0}}
+.fx-ruta{left:0!important;top:0!important;width:100%;height:100%;overflow:visible}
+.fx-ruta .dir{filter:drop-shadow(14px 26px 4px rgba(20,40,80,.22))}
+.fx-globo-c{width:calc(2.4cqi * var(--e,1));translate:-50% -50%;animation:globo-c 9s ease-in-out infinite alternate;animation-delay:var(--d)}
+.fx-globo-c .rune{display:block;width:100%;filter:drop-shadow(.6cqi 1.6cqi .3cqi rgba(20,40,80,.22))}
+.fx-globo-c b{position:absolute;left:50%;top:92%;width:1px;height:2.6cqi;background:rgba(60,40,30,.6);transform-origin:top}
+.fx-globo-c.v2 b{display:none}
+.fx-globo-c.v2{animation-name:globo-libre;animation-duration:70s;animation-direction:normal;animation-iteration-count:infinite}
+@keyframes globo-c{to{transform:translate(.4cqi,-1cqi) rotate(3deg)}}
+@keyframes globo-libre{0%{transform:translate(0,0)}25%{transform:translate(6cqi,-3cqi)}50%{transform:translate(14cqi,-1cqi)}75%{transform:translate(8cqi,2cqi)}100%{transform:translate(0,0)}}
+.fx-molinillo{width:1.5cqi;translate:-50% -50%;overflow:visible}
+.fx-molinillo .rune{display:block;width:100%;height:auto;transform-origin:50% 41.67%;animation:gira var(--dur,2s) linear infinite;animation-delay:var(--d)}
+.fx-campana{width:2.3cqi;translate:-50% -10%;transform-origin:50% 8%;animation:campaneo 2.4s ease-in-out infinite;animation-delay:var(--d)}
+.fx-campana .rune{display:block;width:100%;height:auto}
+.fx-campana.chica{width:1.5cqi}
+@keyframes campaneo{0%,100%{transform:rotate(-14deg)}50%{transform:rotate(14deg)}}
+.fx-bruma.is-sky{width:9cqi;aspect-ratio:2.4;background:radial-gradient(closest-side,rgba(255,255,255,.75),transparent);animation-duration:5s}
+.fx-brillo.estelar{width:1cqi;filter:drop-shadow(0 0 3px #bfe0ff)}
+.fx-surtidor{width:1.6cqi;height:1.4cqi;translate:-50% -60%}
+.fx-surtidor b{position:absolute;left:46%;bottom:0;width:.3cqi;height:.3cqi;border-radius:50%;background:#bfe8ff;box-shadow:0 0 .3cqi #fff;animation:surtidor 1.4s ease-out infinite}
+.fx-surtidor b:nth-child(2){animation-delay:-.47s;--sx:-.7cqi}.fx-surtidor b:nth-child(3){animation-delay:-.94s;--sx:.7cqi}
+@keyframes surtidor{0%{transform:translate(0,0);opacity:1}50%{transform:translate(calc(var(--sx,0cqi)*.6),-1.3cqi)}100%{transform:translate(var(--sx,0cqi),.2cqi);opacity:0}}
+.fx-funambula{width:3.2cqi;aspect-ratio:60/40;translate:-50% -70%;overflow:visible}
+.fx-funambula .rune{display:block;width:100%;height:100%;transform-origin:50% 100%;animation:equilibrio 3.2s ease-in-out infinite}
+.fx-funambula path,.fx-funambula circle{fill:none;stroke:#3a2030;stroke-width:2.4;stroke-linecap:round}
+.fx-funambula circle{fill:#f6c8a0}
+.fx-funambula .pertiga{stroke:#8a5a3a;stroke-width:1.8}
+@keyframes equilibrio{0%,100%{transform:rotate(-9deg) translateX(-.4cqi)}50%{transform:rotate(9deg) translateX(.4cqi)}}
+.fx-viento{left:0!important;top:calc(var(--y)*100%)!important;width:var(--w,12cqi);height:.9cqi;border-top:2px solid rgba(255,255,255,.75);border-radius:50% 50% 0 0;opacity:0;animation:viento var(--dur) linear infinite;animation-delay:var(--d)}
+@keyframes viento{0%{transform:translateX(-15cqi);opacity:0}10%{opacity:.8}45%{opacity:.6}60%{opacity:0}100%{transform:translateX(110cqi);opacity:0}}
+.flyer{position:absolute;z-index:3;width:5.2cqi;filter:drop-shadow(10px 22px 3px rgba(20,40,80,.25))}
+.flyer .rune{width:100%;height:auto}
+.dir,.vag{z-index:3;width:3.6cqi}
+.dir .rune,.vag .rune{width:100%;height:auto}

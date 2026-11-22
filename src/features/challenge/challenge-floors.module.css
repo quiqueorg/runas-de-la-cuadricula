@@ -1,0 +1,44 @@
+/* floors of the sky boards */
+.floor.t-muelle{background-image:url(../../../assets/t-muelle.jpg)}.floor.t-jardin{background-image:url(../../../assets/t-jardin.jpg)}.floor.t-observatorio{background-image:url(../../../assets/t-observatorio.jpg)}
+.floor.t-viento{background-image:url(../../../assets/t-viento.jpg)}.floor.t-arcoiris{background-image:url(../../../assets/t-arcoiris.jpg)}.floor.t-nido{background-image:url(../../../assets/t-nido.jpg)}
+.floor.t-cascada{background-image:url(../../../assets/t-cascada.jpg);animation:fluir2 40s linear infinite}.floor.t-campanario{background-image:url(../../../assets/t-campanario.jpg)}.floor.t-tormenta{background-image:url(../../../assets/t-tormenta.jpg)}
+.floor.t-viento~#outline-layer .pieza,.floor.t-arcoiris~#outline-layer .pieza,.floor.t-nido~#outline-layer .pieza,.floor.t-campanario~#outline-layer .pieza,.floor.t-muelle~#outline-layer .pieza{border-color:#0a6e88;box-shadow:0 0 6px rgba(10,110,136,.5)}
+.boss .floor.t-tormenta{animation:tormenta-suelo 7s ease-in-out infinite}
+@keyframes tormenta-suelo{0%,93%,100%{filter:none}94%{filter:brightness(1.8) saturate(.6)}96%{filter:none}97%{filter:brightness(1.5)}}
+.home-footer{margin-top:14px}
+@media (max-height:980px) and (min-width:561px){
+  .game-header .emblem{width:64px;margin-bottom:2px}
+  .logo{margin:2px 0 6px}.logo .l2{font-size:clamp(46px,7vw,84px)}
+  .tagline{font-size:17px;max-width:46ch}
+  .adventure-list{gap:10px;margin-top:6px}
+  .adventure{padding:9px 14px 9px 10px}
+  .adventure-image{width:104px}
+}
+
+/* ═══ el final battle: el Vacío entre los Mundos ═══ */
+.adventure.is-final:hover,.adventure.is-final:focus-visible{border-color:#d8a8ff;box-shadow:0 12px 30px rgba(0,0,0,.5),0 0 22px -6px rgba(210,150,255,.85)}
+.adventure.is-final .adventure-image{background-image:url(../../../assets/mapa-final.jpg);background-position:50% 50%;background-size:180% auto;border-color:rgba(200,138,255,.6)}
+.adventure.is-final .adventure-tech{color:#e0b8ff}
+.adventure.is-final .adventure-bar i{background:linear-gradient(90deg,#8a3ad8,#ffb0f0)}
+.adventure.is-final .adventure-cta{background:rgba(200,138,255,.16);border-color:rgba(200,138,255,.6);color:#f8eaff}
+.adventure.is-final.locked{filter:grayscale(.8) brightness(.78);cursor:not-allowed}
+.adventure.is-final.locked:hover{transform:none;box-shadow:0 10px 24px rgba(0,0,0,.45)}
+.adventure.shake{animation:temblor .45s ease-in-out}
+#view-map.is-final .map-stage{background:radial-gradient(ellipse 80% 70% at 50% 45%,rgba(120,50,170,.5),transparent 70%),linear-gradient(180deg,#1c1028,#0c0614);animation:none}
+#view-map.is-final .world{background-image:url(../../../assets/mapa-final.jpg)}
+#view-map.is-final .compass{display:none}
+#view-map.is-final .region-marker.boss .marker-number{background:radial-gradient(circle,#3a1e50,#120a1c);border-color:#e8c8ff;box-shadow:0 0 0 3px rgba(200,138,255,.5),0 0 24px rgba(220,120,255,.8)}
+.fx-garabato{width:22cqi;aspect-ratio:1/.8;translate:-50% -50%;border-radius:50%;pointer-events:none}
+.fx-garabato b{position:absolute;inset:0;border-radius:50%;border:.25cqi dashed rgba(230,160,255,.55);animation:gira 18s linear infinite}
+.fx-garabato b:nth-child(2){inset:13%;border-color:rgba(255,180,230,.5);animation-duration:11s;animation-direction:reverse}
+.fx-garabato b:nth-child(3){inset:28%;border-style:dotted;border-color:rgba(255,240,255,.6);animation-duration:7s}
+.fx-portal{width:16.5cqi;aspect-ratio:1;translate:-50% -50%;border-radius:50%;pointer-events:none}
+.fx-portal b{position:absolute;inset:0;border-radius:50%;border:.22cqi dashed var(--c);opacity:.75;animation:gira 30s linear infinite;animation-delay:var(--d)}
+.fx-portal b+b{inset:-7%;border-style:dotted;animation-direction:reverse;animation-duration:44s;opacity:.55}
+.fx-portal::after{content:'';position:absolute;inset:-4%;border-radius:50%;box-shadow:0 0 3cqi var(--c),inset 0 0 2cqi var(--c);opacity:.35;animation:latido-r 3.4s ease-in-out infinite;animation-delay:var(--d)}
+.fx-fragmento{width:1.1cqi;aspect-ratio:1;translate:-50% -50%;background:color-mix(in srgb,var(--c) 45%,#120a1c);border:1px solid var(--c);box-shadow:0 0 .7cqi var(--c);animation:fragmento 9s ease-in-out infinite;animation-delay:var(--d)}
+@keyframes fragmento{0%,100%{transform:translate(0,0) rotate(0)}50%{transform:translate(calc((0.5 - var(--x)) * 7cqi),calc((0.5 - var(--y)) * 7cqi)) rotate(var(--g))}}
+body[data-mundo=final]:not([data-view=home]) .backdrop-scene{background-image:url(../../../assets/mapa-final.jpg)}
+.floor.t-vacio{background-image:url(../../../assets/t-vacio.jpg)}
+.is-final .jefe-barra{background:linear-gradient(135deg,#2a1438,#140a1e);border-color:rgba(230,160,255,.5)}
+.dv-despierta{display:block;margin-top:10px;padding:8px 10px;border-radius:8px;background:rgba(160,90,220,.18);border:1px solid rgba(200,138,255,.5);color:#f0dcff;font-weight:600}

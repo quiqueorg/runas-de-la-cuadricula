@@ -1,0 +1,18 @@
+/* cloud veil over sky regions that are not discovered yet */
+.cloud-veil{position:absolute;inset:0;z-index:3;pointer-events:none;overflow:hidden}
+.cloud-veil i{position:absolute;left:calc(var(--x)*100%);top:calc(var(--y)*100%);width:calc(var(--s)*1cqi);aspect-ratio:420/260;translate:-50% -50%;background:url(../../../assets/velo-1.webp) center/contain no-repeat;animation:velo-flota 11s ease-in-out infinite alternate;animation-delay:var(--d)}
+.cloud-veil i.v2{background-image:url(../../../assets/velo-2.webp)}
+.cloud-veil i.v3{background-image:url(../../../assets/velo-3.webp)}
+.cloud-veil i.faint{opacity:.55}
+.cloud-veil i.departing{animation:velo-fuera 2.6s cubic-bezier(.45,0,.6,1) forwards;animation-delay:calc(var(--k) * 70ms + .35s)}
+@keyframes velo-flota{to{transform:translate(.45cqi,-.35cqi)}}
+@keyframes velo-fuera{from{opacity:1;transform:none}to{opacity:0;transform:translate(calc(var(--dx) * 1cqi),calc(var(--dy) * 1cqi)) scale(1.35)}}
+@media (prefers-reduced-motion:reduce){.cloud-veil i{animation:none}.cloud-veil i.departing{display:none}}
+
+/* map curios: an occasional glint invites a closer look */
+.inhabitant.curio{width:clamp(26px,3.4cqi,44px);aspect-ratio:1;border-radius:50%}
+.inhabitant.curio::after{content:'';position:absolute;right:4%;top:2%;width:46%;aspect-ratio:1;pointer-events:none;background:radial-gradient(circle,#fff 0 8%,rgba(255,246,200,.9) 14%,transparent 46%),linear-gradient(90deg,transparent 46%,rgba(255,250,220,.95) 50%,transparent 54%),linear-gradient(0deg,transparent 46%,rgba(255,250,220,.95) 50%,transparent 54%);opacity:0;animation:curio-brillo 8s ease-in-out infinite;animation-delay:var(--d)}
+.inhabitant.curio.view::after{animation-duration:16s}
+.inhabitant.curio:hover,.inhabitant.curio:focus-visible{background:radial-gradient(closest-side,rgba(255,250,220,.6),transparent);outline:none}
+@keyframes curio-brillo{0%,84%,100%{opacity:0;transform:scale(.4) rotate(0)}90%{opacity:1;transform:scale(1) rotate(45deg)}}
+@media (prefers-reduced-motion:reduce){.inhabitant.curio::after{animation:none;opacity:.5;transform:scale(.6)}}

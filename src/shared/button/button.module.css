@@ -1,0 +1,18 @@
+/* Reusable controls composed from semantic tokens. */
+/* ───────── buttons ───────── */
+.button{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:44px;padding:10px 20px;border-radius:var(--radius-md);border:1px solid rgba(220,195,138,.5);background:linear-gradient(180deg,rgba(32,46,51,.94),rgba(12,19,22,.94));color:var(--text);font:18px/1.1 var(--font-display);cursor:pointer;transition:border-color .2s,box-shadow .2s,background .2s;-webkit-tap-highlight-color:transparent;text-decoration:none}
+.button::after{content:'';position:absolute;inset:-6px;pointer-events:none;opacity:0;transform:scale(1.05);transition:opacity .2s,transform .2s;--cc:var(--accent);
+  background:linear-gradient(var(--cc),var(--cc)) top left/14px 2px,linear-gradient(var(--cc),var(--cc)) top left/2px 14px,linear-gradient(var(--cc),var(--cc)) top right/14px 2px,linear-gradient(var(--cc),var(--cc)) top right/2px 14px,linear-gradient(var(--cc),var(--cc)) bottom left/14px 2px,linear-gradient(var(--cc),var(--cc)) bottom left/2px 14px,linear-gradient(var(--cc),var(--cc)) bottom right/14px 2px,linear-gradient(var(--cc),var(--cc)) bottom right/2px 14px;background-repeat:no-repeat;filter:drop-shadow(0 0 4px rgba(114,242,224,.9))}
+.button:hover,.button:focus-visible{border-color:var(--accent);box-shadow:0 0 22px -6px rgba(114,242,224,.75);outline:none}
+.button:hover::after,.button:focus-visible::after{opacity:1;transform:none}
+.button:disabled{opacity:.4;cursor:default;pointer-events:none}
+.button .rune{width:20px;height:20px;flex:none}
+.button.primary{background:linear-gradient(180deg,#2f7d75,#164a46);border-color:#8ff6e8;box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 0 24px -8px rgba(114,242,224,.8)}
+.button.danger{background:linear-gradient(180deg,#7b3326,#4a1c14);border-color:#ff9f88}
+.button.icon-only{width:44px;padding:0}
+.button.icon-text{padding:8px 14px 8px 10px;font-size:16px}
+.button.small{min-height:38px;padding:6px 12px;font-size:15px;gap:6px}
+.button.small .rune{width:17px;height:17px}
+.text-link{background:none;border:0;padding:6px 0;color:var(--accent);font:15px var(--font-body);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.progress-label{font:15px var(--font-display);color:var(--text-muted);white-space:nowrap}
+/* ───────── stone panel ───────── */

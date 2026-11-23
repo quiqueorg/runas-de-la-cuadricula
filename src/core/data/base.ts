@@ -1,27 +1,45 @@
 /** The apprentice's isle: CSS fundamentals, before any layout. Player-facing copy stays in Spanish. */
 import seal from '../../../assets/m-cerezo.jpg';
-import type { BoardRuleDraft, LevelDraft, PieceTypeMap, Region } from '../models';
+import type { LevelDraft, PieceTypeMap, Region } from '../models';
+import { BG, BORDER, BORDER_BOX, GAP, GOLD, ISLE, LAMPS, POSITION, fixed, hidden, inRow, pick, refill } from './isle/helpers';
+import * as library from './isle/biblioteca';
+import * as glasshouses from './isle/invernaderos';
+import * as market from './isle/mercado';
+import * as observatory from './isle/observatorio';
+import * as hideouts from './isle/secretos';
+import * as finals from './isle/aula';
 
 // ═══════════════════════════════════════════════════════════════
-//  THE APPRENTICE'S ISLE · rules, selectors, the box and the normal flow
-//  Regions use a local index (0–7); the catalog appends them after the finale.
+//  THE APPRENTICE'S ISLE · rules, selectors, the box, the normal flow and everything around them
+//  Regions use a local index (0–12); the catalog appends them after the finale.
+//  The isle is an atoll (src/features/map/isleLayout.ts): the trail goes round the ring of islands over
+//  bridges (`ruta`), then into the lagoon. After the lighthouse it branches: the four regions that
+//  follow open together (`tras`, local indexes of the regions they wait for) and the Aula Magna opens
+//  when all four are done. This list's order is still the suggested one.
 //  Nothing here is flex or grid: pieces are real elements in document flow.
 //  New blocks:  sel → the student writes the selector (s is the solution)
 //               html → the board's markup is shown beside the theory
 //               cmp → computed styles that must also match (colour, border, font…)
+//               [attr=value] after a piece's class or id gives it an HTML attribute
 //  Each region closes on a lesson with a twist (against the tide, in the dark, a tune, a bargain),
-//  and three places off the trail teach what the syllabus leaves out.
+//  and the places off the trail teach what the syllabus leaves out.
+//  Ids are save keys and keep the number they were born with: the four regions added after the
+//  lighthouse use b8–b11 and the Aula Magna kept b7. Players read the region's place instead.
 // ═══════════════════════════════════════════════════════════════
 export const baseRegions: Region[] = [
-  { n: 'El Embarcadero', sub: 'Reglas y selectores', x: 0.2, y: 0.76, t: 'embarcadero', pj: 'Maese Cálamo', rol: 'el viejo escriba' },
-  { n: 'El Patio de las Filas', sub: 'Combinar, contar y desempatar', x: 0.25, y: 0.47, t: 'patio', pj: 'Hilera', rol: 'la sargenta instructora' },
-  { n: 'El Taller de Tintas', sub: 'Colores, unidades, bordes y fondos', x: 0.36, y: 0.22, t: 'tintas', pj: 'Bermellón', rol: 'el maestro tintorero' },
-  { n: 'La Imprenta', sub: 'Fuentes y texto', x: 0.58, y: 0.2, t: 'imprenta', pj: 'Doña Serifa', rol: 'la impresora' },
-  { n: 'El Almacén de Cajas', sub: 'El modelo de caja', x: 0.77, y: 0.34, t: 'almacen', pj: 'Tara', rol: 'la estibadora' },
-  { n: 'El Canal', sub: 'Bloques, líneas y flotadores', x: 0.8, y: 0.6, t: 'canal', pj: 'Remo', rol: 'el barquero' },
-  { n: 'El Faro', sub: 'Posición y página base', x: 0.62, y: 0.8, t: 'farola', pj: 'Fanal', rol: 'la farera' },
-  { n: 'El Aula Magna', sub: 'Prueba de aprendizaje', x: 0.5, y: 0.5, t: 'aula', pj: 'Maestra Rúbrica', rol: 'la examinadora', examen: true },
-  { n: 'Lugares secretos', sub: 'Escondidos en la costa', t: 'embarcadero', secreto: true },
+  { n: 'El Embarcadero', sub: 'Reglas y selectores', x: 0.1636, y: 0.7885, ruta: [[0.1303, 0.7489], [0.1212, 0.6476]], t: 'embarcadero', pj: 'Maese Cálamo', rol: 'el viejo escriba' },
+  { n: 'El Patio de las Filas', sub: 'Combinar, contar y desempatar', x: 0.1061, y: 0.5198, ruta: [[0.1212, 0.4053], [0.1636, 0.3084]], t: 'patio', pj: 'Hilera', rol: 'la sargenta instructora' },
+  { n: 'El Taller de Tintas', sub: 'Colores, unidades, bordes y fondos', x: 0.203, y: 0.2291, ruta: [[0.2758, 0.2203], [0.3303, 0.1718]], t: 'tintas', pj: 'Bermellón', rol: 'el maestro tintorero' },
+  { n: 'La Imprenta', sub: 'Fuentes y texto', x: 0.397, y: 0.1366, ruta: [[0.4545, 0.1542], [0.5606, 0.1542]], t: 'imprenta', pj: 'Doña Serifa', rol: 'la impresora' },
+  { n: 'El Almacén de Cajas', sub: 'El modelo de caja', x: 0.6273, y: 0.1278, ruta: [[0.7061, 0.1586], [0.7727, 0.207]], t: 'almacen', pj: 'Tara', rol: 'la estibadora' },
+  { n: 'El Canal', sub: 'Bloques, líneas y flotadores', x: 0.8364, y: 0.2467, ruta: [[0.8788, 0.348], [0.8879, 0.4141]], t: 'canal', pj: 'Remo', rol: 'el barquero' },
+  { n: 'El Faro', sub: 'Posición y página base', x: 0.9364, y: 0.511, ruta: [[0.8818, 0.6476], [0.8576, 0.7401]], t: 'farola', pj: 'Fanal', rol: 'la farera' },
+  { n: 'El Mercado de las Etiquetas', sub: 'Atributos y pseudoclases', x: 0.8182, y: 0.8018, ruta: [[0.7394, 0.8458], [0.697, 0.8767]], tras: [6], t: 'mercado', pj: 'Almoneda', rol: 'la subastadora' },
+  { n: 'Los Invernaderos de Cristal', sub: 'Sombras, degradados y transparencias', x: 0.6136, y: 0.8855, ruta: [[0.5273, 0.8899], [0.4606, 0.8899]], tras: [6], t: 'invernadero', pj: 'Clorofila', rol: 'la jardinera del cristal' },
+  { n: 'El Observatorio de las Medidas', sub: 'Funciones, unidades y palabras clave', x: 0.3909, y: 0.8767, ruta: [[0.3727, 0.8238], [0.3364, 0.6564]], tras: [6], t: 'observatorio', pj: 'Astrolabio', rol: 'el astrónomo calculista' },
+  { n: 'La Biblioteca de los Pergaminos', sub: 'Pseudoelementos y texto que no cabe', x: 0.3152, y: 0.5683, ruta: [[0.3848, 0.5595], [0.4667, 0.5286]], tras: [6], t: 'biblioteca', pj: 'Marginalia', rol: 'la bibliotecaria' },
+  { n: 'El Aula Magna', sub: 'Prueba de aprendizaje', x: 0.5455, y: 0.511, tras: [7, 8, 9, 10], t: 'aula', pj: 'Maestra Rúbrica', rol: 'la examinadora', examen: true },
+  { n: 'Lugares secretos', sub: 'Escondidos por toda la isla', t: 'embarcadero', secreto: true },
 ];
 
 // tag: the piece is that element, and its type is not a class · texto: it is its own text
@@ -31,27 +49,14 @@ export const basePieceTypes: PieceTypeMap = {
   li: { tag: 'li', texto: true }, ul: { tag: 'ul' }, ol: { tag: 'ol' }, div: { tag: 'div' }, section: { tag: 'section' }, article: { tag: 'article' },
   header: { tag: 'header' }, nav: { tag: 'nav' }, main: { tag: 'main' }, aside: { tag: 'aside' }, footer: { tag: 'footer' },
   tablilla: { o: 'runa' }, libro: { o: 'libro' }, tintero: { o: 'pocion' }, caja: {}, tela: { a: 'lienzo' },
+  ...market.pieceTypes, ...glasshouses.pieceTypes, ...observatory.pieceTypes, ...library.pieceTypes, ...hideouts.pieceTypes, ...finals.pieceTypes,
 };
 
-const GOLD = 'background-color: gold;';
-const BG = ['background-color'];
-const BORDER = ['border-top-width', 'border-top-style', 'border-top-color', 'border-bottom-width', 'border-bottom-style', 'border-bottom-color', 'border-top-left-radius'];
-const POSITION = ['position', 'top', 'right', 'bottom', 'left'];
-const fixed = (s: string, f: string): BoardRuleDraft => ({ s, f, ed: false });
-/** Scenery the lesson is not about: applied to both boards, never shown on the tablet. */
-const hidden = (s: string, f: string): BoardRuleDraft => ({ s, f, ed: false, oculto: true });
-/** The declarations are given; the student says who they are for. */
-const pick = (s: string, f: string, sel = ''): BoardRuleDraft => ({ s, sel, f, ed: false });
-const GAP = hidden('.pieza', 'margin-bottom: 6px;');
-const inRow = (selector: string): BoardRuleDraft => hidden(selector, 'display: inline-block;\nvertical-align: top;\nmargin: 6px;');
-const BORDER_BOX = hidden('*', 'box-sizing: border-box;');
-const LAMPS = hidden('.farol', 'width: 64px;');
-const refill = (action: string): string => `<button type="button" class="text-link" id="p-sacudir">${action}</button>`;
 const CUARTEL = ['p:Vendedor de pipas', 'section@cuartel', ['p:Recluta Uno', 'p:Recluta Dos', 'div@banquillo', ['p:Recluta castigado']], 'p:Visitante despistado'];
 const FILA = ['ul@fila', ['li:Ana', 'li:Blas', 'li:Cleo', 'li:Dimas', 'li:Eva', 'li:Fidel']];
 
 // The landmark each region leaves on the map when a lesson is cleared.
-const LANDMARKS = ['ancla', 'escudo', 'pocion', 'libro', 'cofre', 'barca', 'faro', 'sello', 'llave'];
+const LANDMARKS = ['ancla', 'escudo', 'pocion', 'libro', 'cofre', 'barca', 'faro', 'moneda', 'maceta', 'telescopio', 'lupa', 'sello', 'llave'];
 
 const lessons: LevelDraft[] = [
   //Region 0 · EL EMBARCADERO
@@ -600,32 +605,32 @@ const lessons: LevelDraft[] = [
     pista: 'Farol: <code>position: absolute;</code>, <code>top: 16px;</code> y <code>right: 16px;</code>. Barca: <code>position: absolute;</code>, <code>bottom: 16px;</code> y <code>left: 16px;</code>',
     p: ['farol', 'faro', 'barca'],
     b: [hidden('.pieza', 'width: 64px;'), { s: '.farol', sol: 'position: absolute;\ntop: 16px;\nright: 16px;' }, { s: '.barca', sol: 'position: absolute;\nbottom: 16px;\nleft: 16px;' }],
-    fin: 'Ya está. Reglas, selectores, cajas y posiciones: con eso se sostiene todo lo demás. Baja al Aula Magna: la Maestra Rúbrica quiere verte antes de que zarpes hacia las Ruinas.',
+    fin: 'Ya está. Reglas, selectores, cajas y posiciones: con eso se sostiene todo lo demás. Pero la isla es más grande de lo que parece desde aquí arriba: baja al Mercado de las Etiquetas, que Almoneda lleva toda la mañana subastando cosas sin saber cómo se llaman.',
   },
-  //Region 7 · EL AULA MAGNA (prueba)
+  //Region 11 · EL AULA MAGNA (prueba) · ids b7, from before the trail grew
   {
-    id: 'b7-1', r: 7, n: 'Selectores rotos', examen: true, html: true, w: 440, h: 270, ok: [], cmp: BG,
+    id: 'b7-1', r: 11, n: 'Selectores rotos', examen: true, html: true, w: 440, h: 270, ok: [], cmp: BG,
     enc: 'Siéntese. Un aprendiz anterior —no diré nombres— dejó esta hoja antes de marcharse. Las declaraciones están bien. Los selectores, no acierta ni uno. Arréglelos.',
     obj: 'El título <code>h2</code>, de color <code>gold</code>. Los párrafos de clase <code>aviso</code>, de color <code>lightblue</code>. La firma (<code>id="firma"</code>), de 200px de ancho.',
     p: ['h2:Acta del examen', 'p@aviso:Se examina de selectores.', 'p:No se permiten chuletas.', 'p@aviso:Ni soplar.', 'p#firma:Maestra Rúbrica'],
     b: [pick('h2', GOLD, '.h2'), pick('.aviso', 'background-color: lightblue;', 'aviso'), pick('#firma', 'width: 200px;', '.firma'), GAP],
   },
   {
-    id: 'b7-2', r: 7, n: 'Más selectores rotos', examen: true, html: true, w: 440, h: 480, ok: [], cmp: BG,
+    id: 'b7-2', r: 11, n: 'Más selectores rotos', examen: true, html: true, w: 440, h: 480, ok: [], cmp: BG,
     enc: 'Segunda hoja del mismo aprendiz. Aquí al menos lo intentó. Tres reglas, tres errores: uno coge de más, otro no sabe contar y el tercero no sabe decir que no.',
     obj: 'Solo los elementos de primer nivel del menú (los hijos directos de <code>.menu</code>), <code>lightblue</code>. Los puestos impares de <code>.sub</code>, <code>gold</code>. Y todos los <code>p</code> menos el de clase <code>nota</code>, de 220px de ancho.',
     p: ['ul@menu', ['li:Inicio', 'ul@sub', ['li:Tintas', 'li:Cajas', 'li:Faros'], 'li:Contacto'], 'p:Horario de mañana', 'p@nota:Cerrado por examen', 'p:Horario de tarde'],
     b: [pick('.menu > li', 'background-color: lightblue;', '.menu li'), pick('.sub li:nth-child(odd)', GOLD, '.sub li:nth-child(impar)'), pick('p:not(.nota)', 'width: 220px;', 'p:no(.nota)'), GAP],
   },
   {
-    id: 'b7-3', r: 7, n: 'La caja del examen', examen: true, w: 460, h: 260, ok: ['width', 'height', 'padding', 'margin', 'border', 'box-sizing', 'background-color', 'color'], cmp: ['background-color', 'color', 'border-top-width', 'border-top-style', 'border-top-color'],
+    id: 'b7-3', r: 11, n: 'La caja del examen', examen: true, w: 460, h: 260, ok: ['width', 'height', 'padding', 'margin', 'border', 'box-sizing', 'background-color', 'color'], cmp: ['background-color', 'color', 'border-top-width', 'border-top-style', 'border-top-color'],
     enc: 'Ahora, una caja. Una sola. Si sabe hacer bien una caja, sabe hacer bien una página. Tiene las medidas en el enunciado; léalo dos veces.',
     obj: 'La caja ocupa <b>300px × 120px en total</b> (<code>border-box</code>), con <b>20px</b> de relleno y un borde de <b>6px</b>, continuo, <code>teal</code>. Fondo <code>ivory</code>, letras <code>teal</code>, y centrada con <b>30px</b> de margen por arriba.',
     p: ['caja:Diploma'],
     b: [{ s: '.caja', sol: 'box-sizing: border-box;\nwidth: 300px;\nheight: 120px;\npadding: 20px;\nborder: 6px solid teal;\nbackground-color: ivory;\ncolor: teal;\nmargin: 30px auto 0;' }],
   },
   {
-    id: 'b7-4', r: 7, n: 'La página del aprendiz', examen: true, html: true, et: false, anchos: [340, 620], h: 380, ok: ['margin', 'padding', 'box-sizing', 'height', 'max-width', 'width', 'background-color', 'color', 'text-align', 'font-size', 'font-family'], cmp: ['background-color', 'color', 'text-align', 'font-size'],
+    id: 'b7-4', r: 11, n: 'La página del aprendiz', examen: true, html: true, et: false, anchos: [340, 620], h: 380, ok: ['margin', 'padding', 'box-sizing', 'height', 'max-width', 'width', 'background-color', 'color', 'text-align', 'font-size', 'font-family'], cmp: ['background-color', 'color', 'text-align', 'font-size'],
     enc: 'Ahora, su primera página. Solar limpio, columna centrada, cabecera, contenido y pie. Si la entrega bien, mañana embarca hacia las Ruinas de la Cuadrícula. Si no, también, pero con deberes.',
     obj: 'Reinicio universal (sin margen ni relleno, <code>border-box</code>). <code>.pagina</code>: 100% de alto, <b>400px</b> de ancho máximo y centrada. <code>header</code>: 60px de alto, fondo <code>teal</code>, letras <code>white</code>, texto centrado y de <b>24px</b>. <code>main</code>: el alto ya está puesto; añade <b>16px</b> de relleno. <code>footer</code>: 40px de alto, fondo <code>gold</code> y texto centrado.',
     p: ['div@pagina', ['header:Mi primera página', 'main:Aquí irá todo lo que aprenda en el continente.', 'footer:Isla del Aprendiz']],
@@ -638,19 +643,18 @@ const lessons: LevelDraft[] = [
     ],
   },
   {
-    id: 'b7-5', r: 7, n: 'El cartel de despedida', examen: true, w: 460, h: 220,
+    id: 'b7-5', r: 11, n: 'El cartel de despedida', examen: true, w: 460, h: 220,
     ok: ['font-family', 'font-size', 'font-weight', 'font-style', 'text-align', 'text-transform', 'text-decoration', 'color', 'background-color', 'border', 'border-width', 'border-style', 'border-color'],
     cmp: ['font-family', 'font-size', 'text-align', 'text-transform', 'color', 'font-style', 'background-color', 'border-top-width', 'border-top-style', 'border-top-color'],
     enc: 'Y para terminar, el cartel que colgaremos en el muelle el día que se marche. Letra, color y borde: todo lo que ha aprendido en el taller y en la imprenta. Que se lea desde el barco.',
     obj: 'El titular: <code>Georgia, serif</code> a <b>28px</b>, centrado, en mayúsculas y de color <code>crimson</code>. El aviso: en cursiva, fondo <code>gold</code> y borde de 4px, a rayas, <code>crimson</code>.',
     p: ['h2@titular:Zarpa la aprendiza', 'p@aviso:Mañana, al amanecer, desde el embarcadero.'],
     b: [{ s: '.titular', sol: 'font-family: Georgia, serif;\nfont-size: 28px;\ntext-align: center;\ntext-transform: uppercase;\ncolor: crimson;' }, { s: '.aviso', sol: 'font-style: italic;\nbackground-color: gold;\nborder: 4px dashed crimson;' }, GAP],
-    fin: 'Aprobada. No lo diga muy alto, que se me suben los demás a las barbas. El barco zarpa al amanecer: en el continente le esperan las cuadrículas, los túneles y los cielos. Escriba con buena letra.',
   },
   // ─────────────────────────────── secretos de la isla
   {
-    id: 'bS-1', r: 8, n: 'El mensaje en la botella', hito: 'pluma', esp: 'secreto', t: 'imprenta', pj: 'Tilde', rol: 'el náufrago poeta', av: 'pj-bs1',
-    secreto: { x: 0.074, y: 0.454, w: 0.05, dib: 'botella', pista: 'Al oeste de la isla, entre las olas, algo de cristal sube y baja con la marea…' },
+    id: 'bS-1', r: 12, n: 'El mensaje en la botella', hito: 'pluma', esp: 'secreto', t: 'imprenta', pj: 'Tilde', rol: 'el náufrago poeta', av: 'pj-bs1',
+    secreto: { x: 0.036, y: 0.289, w: 0.05, dib: 'botella', pista: 'Al oeste del atolón, en mar abierto, algo de cristal sube y baja con la marea…' },
     html: true, et: false, w: 440, h: 300, ok: [], cmp: ['font-size'], c: ['::first-letter'],
     enc: 'Llevo once años en este islote escribiendo cartas. Tengo la tinta, tengo las botellas… pero una carta como es debido empieza con una letra capital, grande y roja, como en los libros antiguos. Solo la primera letra, ¿eh? El resto ya me quedó bien.',
     teo: '<p>Un <b>pseudo-elemento</b> selecciona <b>un trozo</b> de un elemento, no el elemento entero. Se escribe con <b>dos veces dos puntos</b>:</p><pre>p::first-letter { … }  /* la primera letra */\np::first-line { … }    /* la primera línea */</pre><p>No hace falta tocar el HTML ni envolver la letra en nada: el navegador la encuentra solo.</p>',
@@ -661,8 +665,8 @@ const lessons: LevelDraft[] = [
     fin: '¡Ahora sí parece una carta! La echaré al mar esta misma tarde. Si dentro de once años te llega otra, es la respuesta.',
   },
   {
-    id: 'bS-2', r: 8, n: 'Las vecinas de al lado', hito: 'casa', esp: 'secreto', t: 'patio', pj: 'Doña Contigua', rol: 'la vecina observadora', av: 'pj-bs2',
-    secreto: { x: 0.93, y: 0.846, w: 0.075, dib: 'gemelas', pista: 'Al sureste, en un islote que casi no sale en los mapas, hay dos casitas idénticas, pared con pared…' },
+    id: 'bS-2', r: 12, n: 'Las vecinas de al lado', hito: 'casa', esp: 'secreto', t: 'patio', pj: 'Doña Contigua', rol: 'la vecina observadora', av: 'pj-bs2',
+    secreto: { x: 0.955, y: 0.894, w: 0.075, dib: 'gemelas', pista: 'Al sureste, en un islote que casi no sale en los mapas, hay dos casitas idénticas, pared con pared…' },
     html: true, w: 440, h: 330, ok: [], cmp: BG, c: ['hermano adyacente'],
     enc: 'Yo no soy cotilla: soy observadora. Y solo me interesa quien vive justo al lado, ¿eh? Pared con pared. De esta lista de vecinos, márcame en dorado a los que van inmediatamente después de un título. Los demás me dan igual.',
     teo: '<p>El signo <code>+</code> selecciona al <b>hermano que va justo después</b>: los dos tienen el mismo padre y están uno a continuación del otro.</p><pre>h2 + p { … }</pre><p>«El <code>p</code> que va <b>inmediatamente después</b> de un <code>h2</code>». Su primo <code>~</code> es menos exigente: <code>h2 ~ p</code> alcanza a <b>todos</b> los <code>p</code> hermanos que vengan después, estén pegados o no.</p>',
@@ -674,7 +678,7 @@ const lessons: LevelDraft[] = [
     fin: '¡Lo sabía! Pared con pared. Y ahora, si me disculpas, tengo que mirar por la ventana. Es por seguridad.',
   },
   {
-    id: 'bS-3', r: 8, n: 'El barco fantasma', hito: 'ancla', esp: 'secreto', t: 'canal', pj: 'Capitán Bruma', rol: 'el capitán que casi no está', av: 'pj-bs3',
+    id: 'bS-3', r: 12, n: 'El barco fantasma', hito: 'ancla', esp: 'secreto', t: 'canal', pj: 'Capitán Bruma', rol: 'el capitán que casi no está', av: 'pj-bs3',
     secreto: { x: 0.933, y: 0.137, w: 0.085, dib: 'fantasma', pista: 'Al noreste hay un banco de niebla que no se mueve con el viento. Y dentro, a veces, asoma un mástil…' },
     w: 440, h: 240, ok: ['visibility', 'opacity'], cmp: ['visibility', 'opacity'], c: [],
     enc: 'Buuu… perdona, es la costumbre. Mi tripulación está a medio desaparecer y así no hay quien pase revista. El contramaestre, invisible del todo, pero que guarde su sitio en la fila. El cocinero, a medio ver, como un buen espectro.',
@@ -687,4 +691,14 @@ const lessons: LevelDraft[] = [
   },
 ];
 
-export const baseLevels: LevelDraft[] = lessons.map((lesson) => ({ hito: LANDMARKS[lesson.r], ...lesson }));
+// The trail order is this array's order: the new regions go between the lighthouse and the Aula Magna.
+const aula = lessons.findIndex((lesson) => lesson.r === ISLE.aula);
+const secrets = lessons.findIndex((lesson) => lesson.r === ISLE.secretos);
+const ordered: LevelDraft[] = [
+  ...lessons.slice(0, aula),
+  ...market.lessons, ...glasshouses.lessons, ...observatory.lessons, ...library.lessons,
+  ...lessons.slice(aula, secrets), ...finals.lessons,
+  ...lessons.slice(secrets), ...hideouts.lessons,
+];
+
+export const baseLevels: LevelDraft[] = ordered.map((lesson) => ({ hito: LANDMARKS[lesson.r], ...lesson }));

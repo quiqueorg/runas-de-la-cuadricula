@@ -57,6 +57,9 @@
 .s-naufragio .rune{animation:mece-s 5s ease-in-out infinite alternate;transform-origin:50% 80%}
 @keyframes mece-s{to{transform:rotate(3deg)}}
 .secret-name{position:absolute;left:50%;top:96%;transform:translateX(-50%);white-space:nowrap;padding:1px 8px;border-radius:3px;font:clamp(10px,1.5cqi,14px) var(--font-display);color:#3a2410;background:rgba(244,232,200,.88);box-shadow:0 1px 4px rgba(60,35,10,.35)}
+.edge-l .secret-name{left:0;transform:none}
+.edge-r .secret-name{left:auto;right:0;transform:none}
+.edge-b .secret-name{top:auto;bottom:100%}
 .compass{position:absolute;left:3%;top:5%;right:auto;bottom:auto;z-index:3;width:9%;padding:0;border:0;background:none;cursor:pointer;opacity:.9}
 .compass .rune{display:block;width:100%;height:auto;transition:transform .6s}
 .compass:hover .rune{transform:rotate(25deg)}
@@ -107,7 +110,7 @@
 .dib-grande{position:relative;width:180px;height:auto;margin:0 auto 6px;filter:drop-shadow(0 0 14px rgba(255,240,180,.6))}
 .marker-layer{pointer-events:none}
 .marker-layer .waypoint,.marker-layer .region-marker,.marker-layer .explorer{pointer-events:auto}
-.niebla,.onda,.trail{pointer-events:none}
+.onda,.trail{pointer-events:none}
 .marker-layer .region-marker{pointer-events:none}
 .marker-layer .region-marker .marker-ring{pointer-events:auto;cursor:pointer}
 .marker-layer .waypoint{z-index:4}

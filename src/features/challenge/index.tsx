@@ -162,6 +162,8 @@ export function Challenge({ level, onVictory }: ChallengeProps) {
     canvas.style.transform = `scale(${live.current.stageScale})`;
     stage.style.width = `${width * live.current.stageScale}px`;
     stage.style.height = `${height * live.current.stageScale}px`;
+    // On narrow screens the board is pinned over the page; fields scroll clear of it (see challenge.css).
+    roots.current?.style.setProperty('--board-h', `${frame.parentElement?.offsetHeight ?? 0}px`);
     if (level.dim) {
       canvas.style.setProperty('--dw', `${level.dim[0]}px`);
       canvas.style.setProperty('--dh', `${level.dim[1]}px`);
@@ -179,10 +181,6 @@ export function Challenge({ level, onVictory }: ChallengeProps) {
       if (level.examen) setPlans(readBlueprint(level, board, live.current, objectiveStyle.current));
     }
     if (next.victory) setSparks(burst(level, activeView(level, live.current)));
-    roots.current?.querySelectorAll('textarea').forEach((area) => {
-      area.style.height = 'auto';
-      area.style.height = `${area.scrollHeight}px`;
-    });
     return () => {
       if (!live.current.shown) live.current.celebrated = false;
     };
@@ -212,11 +210,16 @@ export function Challenge({ level, onVictory }: ChallengeProps) {
   const chrome = lessonChrome(level, !!view?.solved, hit, live.current.delivery?.tone === 'bien');
   const rows = editorRows(level);
 
-  const edit = (indexOfRule: number, value: string) => {
+  // The clock of a timed level starts with the first keystroke, in whichever field it lands.
+  const startClock = () => {
     if (live.current.clock.estado === 'espera' && level.tiempo) {
       live.current.clock = beginClock(live.current.clock);
       setRunning(true);
     }
+  };
+
+  const edit = (indexOfRule: number, value: string) => {
+    startClock();
     setTexts((current) => current.map((text, index) => (index === indexOfRule ? value : text)));
   };
 
@@ -246,6 +249,12 @@ export function Challenge({ level, onVictory }: ChallengeProps) {
     const end = area.selectionEnd ?? start;
     const next = area.value.slice(0, start) + text + area.value.slice(end);
     const cursor = start + text.length - rewind;
+    // insertText goes through the browser's own editing, so it lands in the undo history and
+    // fires the same input event as typing. The manual path is for browsers that dropped it.
+    if (document.execCommand?.('insertText', false, text) && area.value === next) {
+      area.setSelectionRange(cursor, cursor);
+      return;
+    }
     if (area.dataset.m !== undefined) setConditions((current) => current.map((value, index) => (index === Number(area.dataset.m) ? next : value)));
     else if (area.dataset.s !== undefined) setSelectors((current) => current.map((value, index) => (index === Number(area.dataset.s) ? next : value)));
     else setTexts((current) => current.map((value, index) => (index === Number(area.dataset.b) ? next : value)));
@@ -327,9 +336,9 @@ export function Challenge({ level, onVictory }: ChallengeProps) {
       onShowSolution={() => { live.current.usedHelp = true; const solved = solutionTexts(level, 'sol'); setTexts(solved.texts); setConditions(solved.conditions); setSelectors(solved.selectors); }}
       onInsertRune={insertRune}
       onEditRule={edit}
-      onEditCondition={(index, value) => setConditions((current) => current.map((item, itemIndex) => (itemIndex === index ? value : item)))}
+      onEditCondition={(index, value) => { startClock(); setConditions((current) => current.map((item, itemIndex) => (itemIndex === index ? value : item))); }}
       onEditSelector={(index, value) => {
-        if (live.current.clock.estado === 'espera' && level.tiempo) { live.current.clock = beginClock(live.current.clock); setRunning(true); }
+        startClock();
         setSelectors((current) => current.map((item, itemIndex) => (itemIndex === index ? value : item)));
       }}
       onFocusArea={(area) => { lastArea.current = area; }}

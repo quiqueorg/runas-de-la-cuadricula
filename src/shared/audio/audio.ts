@@ -23,6 +23,20 @@ interface MusicZone {
   tambor?: boolean;
   pad?: number;
   tema?: boolean;
+  /** The isle: chance per eighth of a water drop. */
+  agua?: number;
+  /** The isle: waves lapping every other bar. */
+  olas?: boolean;
+  /** The isle: loudness of the deep rumble from under the lagoon. */
+  fondo?: number;
+  /** The isle: a soft clockwork tick on the off-beats. */
+  reloj?: boolean;
+  /** The surface: birdsong between the notes. */
+  pajaros?: boolean;
+  /** The surface: the tune kept to a pentatonic. */
+  penta?: boolean;
+  /** The surface: loudness of the flute that answers on the second pass. */
+  flauta?: number;
 }
 
 type ZoneMap = Record<string, MusicZone>;
@@ -245,36 +259,39 @@ export const music = (() => {
   const F = [261.63, 293.66, 329.63, 349.23, 392.0, 440.0, 493.88, 523.25, 587.33, 659.25, 698.46, 783.99, 880.0, 987.77, 1046.5, 1174.66, 1318.51];
   const recordings = {
     menu: new URL('../../../assets/kalimba-menu.wav', import.meta.url).href,
-    surface: new URL('../../../assets/kalimba-surface.wav', import.meta.url).href,
-    isle: new URL('../../../assets/kalimba-isle.wav', import.meta.url).href,
   };
   const decoded = new Map<string, Promise<AudioBuffer>>();
 
   // Regional tempo changes take effect between phrases.
+  // The surface (scheduleSurface): one tune, coloured by each place on the continent.
   const ZONAS: ZoneMap = {
     inicio: { tempo: 1.08 },
-    pradera: { tempo: 0.96 },
-    bosque: { tempo: 1.12 },
-    canon: { tempo: 1.1 },
-    valle: { tempo: 0.98 },
-    lago: { tempo: 1.05 },
-    cumbres: { tempo: 1.12 },
-    desierto: { tempo: 1.04 },
-    aldea: { tempo: 0.96 },
-    ciudadela: { tempo: 1.06 },
-    secreto: { tempo: 1.14 },
+    pradera: {},
+    bosque: { tempo: 1.04, pajaros: true, flauta: 0.026 },
+    canon: { tempo: 1.04, tambor: true, eco: 0.5 },
+    valle: { arm: 3, brillo: 0.14 },
+    lago: { tempo: 1.1, suave: true, agua: 0.1 },
+    cumbres: { tempo: 1.14, viento: true, escaso: 0.3, eco: 0.38 },
+    desierto: { tempo: 1.02, bemol: true, dron: true },
+    aldea: { tempo: 0.98, penta: true, brillo: 0.2 },
+    ciudadela: { tempo: 1.08, campanas: true, pad: 0.05, bajo: true, flauta: 0.03 },
+    secreto: { tempo: 1.12, oct: 12, eco: 0.3, campanillas: 0.15 },
   };
-  // The apprentice's isle has its own loop; each place plays it a little faster or slower.
+  // The apprentice's isle has its own theme (scheduleIsle); each island colours it differently.
   const ZONAS_ISLA: ZoneMap = {
-    embarcadero: { tempo: 1 },
-    patio: { tempo: 1.08 },
-    tintas: { tempo: 1.03 },
-    imprenta: { tempo: 0.97 },
-    almacen: { tempo: 1.05 },
-    canal: { tempo: 0.94 },
-    farola: { tempo: 0.98 },
-    aula: { tempo: 1.06 },
-    secretoisla: { tempo: 1.1 },
+    embarcadero: { olas: true },
+    patio: { tempo: 0.94, reloj: true },
+    tintas: { arm: 2, brillo: 0.18 },
+    imprenta: { tempo: 0.97, reloj: true },
+    almacen: { tempo: 1.03, bajo: true },
+    canal: { tempo: 1.06, agua: 0.16, olas: true },
+    farola: { tempo: 1.04, campanas: true },
+    mercado: { tempo: 0.92, arm: 4, brillo: 0.15 },
+    invernadero: { tempo: 1.02, brillo: 0.25, agua: 0.1 },
+    observatorio: { tempo: 1.05, oct: 12, campanillas: 0.2 },
+    biblioteca: { tempo: 1.12, escaso: 0.4, dron: true },
+    aula: { pad: 0.04, bajo: true, campanas: true },
+    secretoisla: { tempo: 1.1, oct: 12, agua: 0.14, fondo: 0.05, escaso: 0.25 },
   };
 
   let scene: MusicZone = ZONAS.inicio;
@@ -333,6 +350,49 @@ export const music = (() => {
   //F lydian uses only the white keys: nudge a black key down onto the scale (keeps harmony notes in key)
   const enEscala = (m: number) => ([1, 3, 6, 8, 10].includes(((m % 12) + 12) % 12) ? m - 1 : m);
 
+  // ── The isle: E dorian at 72 bpm. Suspended and add9 chords that never quite land, a slow kalimba
+  //    with a long echo over a glassy pad, water lapping and dripping, bells far off, and now and then
+  //    something big moving under the lagoon. Calm, and a little curious.
+  const CORCHEA_I = 60 / 72 / 2;
+  const ISLA_ACORDES: readonly (readonly [number, readonly number[]])[] = [ // [bass, chord tones] in MIDI
+    [40, [64, 67, 71, 74, 78]], // Em9
+    [36, [64, 67, 71, 74, 78]], // Cmaj9(#11): the same tones over a new floor
+    [45, [60, 64, 67, 71, 74]], // Am9
+    [35, [64, 66, 71, 76]], //     Bsus4, left hanging
+    [40, [64, 67, 71, 74, 78]], // Em9
+    [43, [62, 64, 67, 69, 71]], // G6/9
+    [36, [64, 67, 71, 72, 78]], // Cmaj7(#11)
+    [38, [62, 64, 66, 69, 71]], // D6sus2, back round without resolving
+  ];
+  const ISLA_ARP = [0, -1, 2, 1, -1, 3, 2, -1]; // chord tone per eighth; -1 is a rest
+  const MEL_ISLA = [[[0, 76], [3, 79], [6, 78]], [[2, 74], [4, 71]], [[0, 72], [3, 76], [5, 74]], [[0, 71]], [[0, 76], [2, 78], [3, 79], [6, 83]], [[1, 81], [4, 79]], [[0, 78], [3, 76], [6, 74]], [[0, 78], [5, 76]]];
+  const MEL_ISLA_B = [[[0, 71], [4, 74]], [[0, 76], [3, 74], [6, 71]], [[2, 69], [4, 72]], [[0, 71], [6, 66]], [[0, 79], [4, 78]], [[0, 76], [2, 74], [5, 71]], [[0, 72], [4, 71]], [[0, 71], [4, 76]]];
+
+  // ── The surface: a deep lo-fi stroll in G at 70 bpm, swung. A dark electric piano on jazzy sevenths
+  //    and ninths over a sub-bass and a warm low bed, brushed drums, the kalimba tune down in its low
+  //    register taking its time, and a little vinyl crackle.
+  const CORCHEA_S = 60 / 70 / 2;
+  const SWING = 0.17; // how late the off-beat eighths land, as a fraction of an eighth
+  const SUP_ACORDES: readonly (readonly [number, readonly number[]])[] = [ // [bass, chord tones] in MIDI
+    [43, [59, 62, 66, 69]], // Gmaj9
+    [47, [57, 62, 66, 69]], // Bm7
+    [40, [59, 62, 66, 67]], // Em9
+    [36, [59, 62, 64, 67]], // Cmaj7
+    [45, [55, 60, 64, 67]], // Am9
+    [38, [57, 60, 64, 67]], // D9sus4
+    [43, [59, 62, 66, 69]], // Gmaj9
+    [36, [59, 62, 66, 67]], // Cmaj7(#11)
+  ];
+  const MEL_SUP = [[[0, 74], [3, 76], [5, 79]], [[2, 78], [4, 74]], [[0, 71], [3, 74], [6, 76]], [[1, 74]], [[0, 72], [2, 76], [3, 79], [6, 81]], [[1, 79], [4, 76]], [[0, 78], [3, 74], [5, 71]], [[2, 74]]];
+  const MEL_SUP_B = [[[1, 79], [3, 81], [6, 83]], [[0, 81], [4, 78]], [[0, 79], [2, 76], [5, 74]], [[0, 76], [6, 71]], [[1, 76], [3, 79], [5, 84]], [[0, 83], [4, 79]], [[1, 78], [3, 76], [6, 74]], [[0, 79]]];
+  // the desert flattens the second and the sixth, which turns the road south
+  const aDesierto = (m: number) => ([9, 4].includes(((m % 12) + 12) % 12) ? m - 1 : m);
+  // the village keeps to G major's five notes: C steps down to B and F sharp down to E
+  const aPenta = (m: number) => {
+    const pc = ((m % 12) + 12) % 12;
+    return pc === 0 ? m - 1 : pc === 6 ? m - 2 : m;
+  };
+
   function createTrackBus(e: AudioEngine, fadeInDelay = 0): TrackBus {
     const { ctx, musicMaster, reverbSend } = e;
     const gain = ctx.createGain();
@@ -351,7 +411,7 @@ export const music = (() => {
     body.connect(suave);
     suave.connect(gain);
     gain.connect(musicMaster);
-    if (song === 'sub' || song === 'cielo') gain.connect(reverbSend);
+    if (song !== 'menu') gain.connect(reverbSend);
     return { gain, body };
   }
 
@@ -478,6 +538,229 @@ export const music = (() => {
     g.gain.linearRampToValueAtTime(0, end + 0.03);
     o.connect(lp); o2.connect(lp); lp.connect(g); g.connect(bus.gain);
     o.start(t); o2.start(t); o.stop(end + 0.04); o2.stop(end + 0.04);
+  }
+
+  /** Waves on the shore: filtered noise that swells and draws back. */
+  function playSwell(e: AudioEngine, bus: TrackBus, t: number, v: number) {
+    const { ctx, gustBuf } = e;
+    const src = ctx.createBufferSource(), lp = ctx.createBiquadFilter(), g = ctx.createGain();
+    src.buffer = gustBuf;
+    src.playbackRate.value = 0.55;
+    lp.type = 'lowpass';
+    lp.frequency.setValueAtTime(260, t);
+    lp.frequency.linearRampToValueAtTime(820, t + 1.9);
+    lp.frequency.linearRampToValueAtTime(240, t + 4.2);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(v, t + 1.6);
+    g.gain.linearRampToValueAtTime(0.0001, t + 4.3);
+    src.connect(lp); lp.connect(g); g.connect(bus.gain);
+    src.start(t); src.stop(t + 4.4);
+  }
+
+  /** A drop falling into still water: a quick downward sine. */
+  function playDrop(e: AudioEngine, bus: TrackBus, t: number, v: number) {
+    const { ctx } = e;
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    const f = 900 + Math.random() * 700;
+    o.frequency.setValueAtTime(f, t);
+    o.frequency.exponentialRampToValueAtTime(f * 0.45, t + 0.09);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(v, t + 0.005);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+    g.gain.linearRampToValueAtTime(0, t + 0.17);
+    o.connect(g); g.connect(bus.gain); o.start(t); o.stop(t + 0.18);
+  }
+
+  /** A bell across the water: inharmonic partials with a long tail. */
+  function playBell(e: AudioEngine, bus: TrackBus, f: number, t: number, v: number) {
+    [[1, 1, 2.6], [2.76, 0.42, 1.4], [5.4, 0.2, 0.7], [0.5, 0.3, 3]].forEach(([ratio, amp, tau]) => playPartial(e, bus, f * ratio!, t, v * amp!, tau!, 'sine', 0.006));
+  }
+
+  /** Something big under the lagoon: a low glide that rises out of nothing and sinks back. */
+  function playDeep(e: AudioEngine, bus: TrackBus, t: number, v: number) {
+    const { ctx } = e;
+    [0, 1.004].forEach((detune, i) => {
+      const o = ctx.createOscillator(), g = ctx.createGain(), lp = ctx.createBiquadFilter();
+      o.type = 'triangle';
+      o.frequency.setValueAtTime(82.41 * (detune || 1), t);
+      o.frequency.linearRampToValueAtTime(73.42 * (detune || 1), t + 3.4);
+      lp.type = 'lowpass'; lp.frequency.value = 320;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.linearRampToValueAtTime(v / (i + 1), t + 1.4);
+      g.gain.linearRampToValueAtTime(0.0001, t + 3.8);
+      o.connect(lp); lp.connect(g); g.connect(bus.gain); o.start(t); o.stop(t + 3.9);
+    });
+  }
+
+  /** A wooden flute, held and breathing: a sine with a slow vibrato and a soft attack. */
+  function playFlute(e: AudioEngine, bus: TrackBus, f: number, t: number, dur: number, v: number) {
+    const { ctx } = e;
+    if (f <= 20 || f >= ctx.sampleRate * 0.42) return;
+    const o = ctx.createOscillator(), lfo = ctx.createOscillator(), depth = ctx.createGain(), g = ctx.createGain();
+    o.type = 'sine'; o.frequency.value = f;
+    lfo.frequency.value = 5.2; depth.gain.value = f * 0.006;
+    lfo.connect(depth); depth.connect(o.frequency);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(v, t + 0.09);
+    g.gain.setValueAtTime(v, t + dur * 0.7);
+    g.gain.linearRampToValueAtTime(0.0001, t + dur);
+    g.gain.linearRampToValueAtTime(0, t + dur + 0.02);
+    o.connect(g); g.connect(bus.body);
+    o.start(t); lfo.start(t); o.stop(t + dur + 0.05); lfo.stop(t + dur + 0.05);
+  }
+
+  /** A bird in the wood: two or three quick upward chirps. */
+  function playBird(e: AudioEngine, bus: TrackBus, t: number, v: number) {
+    const { ctx } = e;
+    const base = 2400 + Math.random() * 1400;
+    const chirps = 2 + Math.floor(Math.random() * 2);
+    for (let i = 0; i < chirps; i++) {
+      const o = ctx.createOscillator(), g = ctx.createGain(), at = t + i * 0.09;
+      o.frequency.setValueAtTime(base, at);
+      o.frequency.exponentialRampToValueAtTime(base * 1.5, at + 0.05);
+      g.gain.setValueAtTime(0.0001, at);
+      g.gain.linearRampToValueAtTime(v, at + 0.008);
+      g.gain.exponentialRampToValueAtTime(0.0001, at + 0.07);
+      g.gain.linearRampToValueAtTime(0, at + 0.075);
+      o.connect(g); g.connect(bus.gain); o.start(at); o.stop(at + 0.08);
+    }
+  }
+
+  /** An electric piano, worn and warm: a sine pair with a slow tremolo, rounded off by a lowpass. */
+  function playKeys(e: AudioEngine, bus: TrackBus, f: number, t: number, dur: number, v: number) {
+    const { ctx } = e;
+    if (f <= 20 || f >= ctx.sampleRate * 0.42) return;
+    const o = ctx.createOscillator(), o2 = ctx.createOscillator(), lp = ctx.createBiquadFilter(), g = ctx.createGain(), trem = ctx.createOscillator(), depth = ctx.createGain();
+    o.type = 'sine'; o.frequency.value = f;
+    o2.type = 'triangle'; o2.frequency.value = f * 2.001;
+    lp.type = 'lowpass'; lp.frequency.value = 950;
+    trem.frequency.value = 4.6; depth.gain.value = v * 0.25;
+    trem.connect(depth); depth.connect(g.gain);
+    const o2g = ctx.createGain(); o2g.gain.value = 0.1;
+    o.connect(lp); o2.connect(o2g); o2g.connect(lp); lp.connect(g); g.connect(bus.body);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(v, t + 0.012);
+    g.gain.setTargetAtTime(v * 0.45, t + 0.012, 0.35);
+    g.gain.setTargetAtTime(0.0001, t + dur, 0.18);
+    const end = t + dur + 0.8;
+    o.start(t); o2.start(t); trem.start(t); o.stop(end); o2.stop(end); trem.stop(end);
+  }
+
+  /** A brushed snare: a short breath of filtered noise. */
+  function playBrush(e: AudioEngine, bus: TrackBus, t: number, v: number) {
+    const { ctx, gustBuf } = e;
+    const src = ctx.createBufferSource(), bp = ctx.createBiquadFilter(), g = ctx.createGain();
+    src.buffer = gustBuf;
+    bp.type = 'bandpass'; bp.frequency.value = 2400; bp.Q.value = 0.7;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(v, t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.24);
+    g.gain.linearRampToValueAtTime(0, t + 0.25);
+    src.connect(bp); bp.connect(g); g.connect(bus.gain);
+    src.start(t, Math.random() * 1.5, 0.26);
+  }
+
+  function scheduleSurface(e: AudioEngine, bus: TrackBus) {
+    const ahora = e.ctx.currentTime;
+    clampDrift(ahora);
+    while (nextTime < ahora + 0.45) {
+      const c = Math.floor(step / 8), s = step % 8;
+      if (s === 0) applyPendingScene();
+      const z = scene, corch = CORCHEA_S * (z.tempo || 1);
+      // the off-beats land late: that lean is the whole groove
+      const t0 = Math.max(nextTime, ahora + 0.02) + (s % 2 ? corch * SWING : 0);
+      const hum = () => (Math.random() - 0.5) * 0.016;
+      const tono = (m: number) => midi(z.bemol ? aDesierto(m) : m);
+      const chord = SUP_ACORDES[c];
+      if (!chord) { nextTime += corch; if (++step >= 64) { step = 0; cycle++; } continue; }
+      const [bass, tones] = chord;
+      const oct = z.oct || 0;
+      // keys: the chord on the downbeat, pushed again just before beat three
+      if (s === 0 || s === 3) tones.forEach((m, j) => playKeys(e, bus, tono(m), t0 + j * 0.012 + hum(), corch * (s === 0 ? 2.6 : 4), (z.pad || 0.042) * (s === 0 ? 1 : 0.75)));
+      // bass: root on one, a passing fifth or octave before the next bar
+      if (s === 0) {
+        playBass(e, bus, tono(bass), t0, z.bajo ? 0.115 : 0.1, 2.4);
+        // the floor under it all: a sub an octave down, and root and fifth held low and warm
+        playPartial(e, bus, tono(bass - 12), t0, 0.05, 1.6, 'sine', 0.03);
+        [bass + 12, bass + 19].forEach((m, j) => playPartial(e, bus, tono(m), t0 + j * 0.04, 0.018, 3.4 * corch, 'sine', 1.4 * corch));
+      }
+      if (s === 5 && c % 2) playBass(e, bus, tono(bass + 7), t0, 0.07, 1.2);
+      if (s === 7 && !(c % 2)) playBass(e, bus, tono(bass + 12), t0, 0.05, 0.8);
+      // brushed drums
+      if (!z.suave || s === 0) {
+        if (s === 0 || s === 5) playKick(e, bus, t0, (z.tambor ? 0.18 : 0.13) * (s === 0 ? 1 : 0.7), 68, 36);
+        if (s === 2 || s === 6) playBrush(e, bus, t0 + hum(), z.tambor ? 0.06 : 0.042);
+        if (!(z.escaso && s % 2)) playTick(e, bus, t0 + hum(), s % 2 ? 0.012 : 0.02, 6800, 0.025);
+      }
+      // the kalimba tune, an octave down and unhurried, with its echo a quarter behind
+      for (const [p, m0] of (cycle % 2 ? MEL_SUP_B : MEL_SUP)[c] ?? []) {
+        if (p !== s) continue;
+        if (z.escaso && Math.random() < z.escaso) continue;
+        const m = (z.penta ? aPenta(m0) : m0) - 12 + oct, t = t0 + hum(), v = 0.16 + Math.random() * 0.025;
+        pluck(e, bus, tono(m), t, v);
+        pluck(e, bus, tono(m), t + (typeof z.eco === 'number' ? z.eco : corch * 2), v * 0.3);
+        if (z.arm) pluck(e, bus, tono(enEscala(m - z.arm)), t + 0.02, v * 0.38);
+        if (z.brillo && m + 12 <= 100) pluck(e, bus, tono(m + 12), t + 0.16, v * z.brillo);
+      }
+      if (s === 0) {
+        if (z.flauta && c % 2 === 0) playFlute(e, bus, tono((tones[tones.length - 1] ?? 69) + 12 + oct), t0 + 0.05, corch * 6, z.flauta);
+        if (z.dron) playPartial(e, bus, midi(43), t0, 0.022, 3, 'sine', 0.3);
+        if (z.campanas && c % 4 === 0) [0, 0.14].forEach((d, j) => playTin(e, bus, t0 + d, 0.018 / (j + 1)));
+        if (z.viento && c % 2 === 0) playGust(e, bus, t0, 0.045);
+      }
+      // dust on the record
+      if (Math.random() < 0.22) playTick(e, bus, t0 + corch * Math.random(), 0.004 + Math.random() * 0.006, 2500 + Math.random() * 4000, 0.004);
+      if (z.pajaros && Math.random() < 0.04) playBird(e, bus, t0 + corch * Math.random(), 0.014);
+      if (z.agua && Math.random() < z.agua) playDrop(e, bus, t0 + corch * Math.random(), 0.015);
+      if (z.campanillas && Math.random() < z.campanillas) pluck(e, bus, tono(Math.min(100, (tones[Math.floor(Math.random() * tones.length)] ?? 69) + 24)), t0 + 0.1, 0.022);
+      nextTime += corch;
+      if (++step >= 64) { step = 0; cycle++; }
+    }
+  }
+
+  function scheduleIsle(e: AudioEngine, bus: TrackBus) {
+    const ahora = e.ctx.currentTime;
+    clampDrift(ahora);
+    while (nextTime < ahora + 0.5) {
+      const c = Math.floor(step / 8), s = step % 8;
+      if (s === 0) applyPendingScene();
+      const z = scene, corch = CORCHEA_I * (z.tempo || 1);
+      const t0 = Math.max(nextTime, ahora + 0.02);
+      const hum = () => (Math.random() - 0.5) * 0.02;
+      const chord = ISLA_ACORDES[c];
+      if (!chord) { nextTime += corch; if (++step >= 64) { step = 0; cycle++; } continue; }
+      const [bass, tones] = chord;
+      const oct = z.oct || 0;
+      // kalimba arpeggio, an octave down and soft, with gaps to breathe
+      const k = ISLA_ARP[s] ?? -1;
+      if (k >= 0 && !(z.escaso && Math.random() < z.escaso)) pluck(e, bus, midi((tones[k % tones.length] ?? 64) - 12), t0 + hum(), 0.06);
+      // the tune, answered by its own echo
+      for (const [p, m0] of (cycle % 2 ? MEL_ISLA_B : MEL_ISLA)[c] ?? []) {
+        if (p !== s) continue;
+        const m = m0 + oct, t = t0 + hum(), v = 0.13 + Math.random() * 0.025;
+        pluck(e, bus, midi(m), t, v);
+        pluck(e, bus, midi(m), t + corch * 1.5, v * 0.3);
+        if (z.arm) pluck(e, bus, midi(m - 12 + z.arm), t + 0.03, v * 0.38);
+        if (z.brillo && m + 12 <= 100) pluck(e, bus, midi(m + 12), t + 0.2, v * z.brillo);
+      }
+      if (s === 0) {
+        // glassy pad: three low chord tones, slow to arrive, each a hair out of tune with its twin
+        tones.slice(0, 3).forEach((m, j) => {
+          playPartial(e, bus, midi(m - 12), t0 + j * 0.05, z.pad || 0.026, 3.2 * corch, 'sine', 1.6 * corch);
+          playPartial(e, bus, midi(m - 12) * 1.003, t0 + j * 0.05 + 0.03, (z.pad || 0.026) * 0.6, 3.2 * corch, 'sine', 1.8 * corch);
+        });
+        playBass(e, bus, midi(bass), t0, z.bajo ? 0.11 : 0.075, 3);
+        if (z.dron) playPartial(e, bus, midi(40), t0, 0.03, 4, 'sine', 0.8);
+        if (c % 2 === 0 && (z.olas || c === 0)) playSwell(e, bus, t0, z.olas ? 0.05 : 0.03);
+        if (z.campanas && c % 4 === 0) playBell(e, bus, midi(88), t0 + 0.3, 0.022);
+        if (c === 4 && cycle % 2 === 0) playDeep(e, bus, t0, z.fondo ?? 0.022);
+      }
+      if (z.reloj && (s === 2 || s === 6)) playTick(e, bus, t0 + hum(), 0.022, 4200, 0.03);
+      if (Math.random() < (z.agua ?? 0.05)) playDrop(e, bus, t0 + corch * Math.random(), 0.018);
+      if (Math.random() < (z.campanillas ?? 0.04)) pluck(e, bus, midi(Math.min(100, (tones[Math.floor(Math.random() * tones.length)] ?? 76) + 24)), t0 + 0.13, 0.024);
+      nextTime += corch;
+      if (++step >= 64) { step = 0; cycle++; }
+    }
   }
 
   function clampDrift(ahora: number) {
@@ -613,15 +896,12 @@ export const music = (() => {
     if (e.ctx.state !== 'running') return;
     if (song === 'sub') return scheduleUnderground(e, bus);
     if (song === 'cielo') return scheduleSky(e, bus);
+    if (song === 'isla') return scheduleIsle(e, bus);
+    if (song === 'surface') return scheduleSurface(e, bus);
 
+    // only the title screen still plays a recorded loop
     applyPendingScene();
-    if (!bus.loading) void playRecording(e, bus, song === 'menu' ? recordings.menu : song === 'isla' ? recordings.isle : recordings.surface);
-    if (bus.loop && song !== 'menu') {
-      // each loop was rendered at its own base tempo
-      const rate = (song === 'isla' ? 1 : 0.96) / (scene.tempo ?? 1);
-      if (Math.abs(bus.loop.playbackRate.value - rate) > 0.0001)
-        bus.loop.playbackRate.setTargetAtTime(rate, e.ctx.currentTime, 0.25);
-    }
+    if (!bus.loading) void playRecording(e, bus, recordings.menu);
   }
 
   function startMusic() {

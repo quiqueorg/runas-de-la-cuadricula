@@ -23,9 +23,9 @@
 .media .bl-lin{display:flex;align-items:center;gap:.6ch;flex-wrap:wrap;white-space:normal}
 .media>.stack .bl-lin{display:block;white-space:pre}
 .code-line.cond{display:inline-block;flex:1 1 14ch;min-width:14ch;margin:0}
-.code-line.cond textarea{min-height:0;height:2em;white-space:nowrap;outline-color:rgba(255,154,213,.55);background:rgba(255,154,213,.06)}
+.code-line.cond textarea{min-height:0;outline-color:rgba(255,154,213,.55);background:rgba(255,154,213,.06)}
 .code-line.cond textarea:focus{outline-color:#ff9ad5;box-shadow:0 0 0 3px rgba(255,154,213,.15)}
-.code-line.cond pre{white-space:nowrap}
+.code-line.cond pre,.code-line.cond textarea{white-space:pre-wrap;overflow-wrap:anywhere}
 .cond-fija{color:var(--text)}
 .t-var{color:#ffb3e6}
 .t-prop.t-var{color:#ff9ad5}

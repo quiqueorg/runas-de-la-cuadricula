@@ -1,5 +1,5 @@
 /** Map facts: who is visible, what a click means, and where a flyer is on its cycle. */
-import { CONCEPTS, EXAM_COUNTS, EXERCISE_COUNTS, EXERCISE_KINDS, GROUPS_BY_WORLD, examProgress, exerciseProgress, frontierLevel, isDiscovered, levelKind, levelLabel, levels, levelsById, levelsInRegion, levelsInWorld, regionComplete, regionStats, regions, routes, secretsInWorld, worldMeta } from '../../core/catalog';
+import { CONCEPTS, EXAM_COUNTS, EXERCISE_COUNTS, EXERCISE_KINDS, GROUPS_BY_WORLD, examProgress, exerciseProgress, frontierLevel, isDiscovered, levelKind, levelLabel, levels, levelsById, levelsInRegion, levelsInWorld, regionComplete, regionPrerequisites, regionStats, regions, routes, secretsInWorld, worldMeta } from '../../core/catalog';
 import type { Level, WorldId } from '../../core/models';
 import { progress } from '../../core/state';
 import type { Joke, MapAction, MapEffect, MapUi } from './actions';
@@ -14,6 +14,7 @@ function foldText(value: string): string {
 const SECRET_BOX: Record<string, readonly [number, number]> = {
   naufragio: [140, 100], serpiente: [170, 90], circulo: [120, 80], volcan: [120, 90], ballena: [140, 80],
   isla: [100, 80], botella: [80, 100], gemelas: [120, 90], fantasma: [140, 100], dragon: [140, 90], taller: [120, 90], gusano: [120, 100], aeronave: [140, 90], reves: [120, 100], fenix: [120, 100],
+  cueva: [130, 90], pozo: [100, 90], cartografo: [110, 100], faroviejo: [100, 100], sumergida: [140, 100], pecio: [140, 90],
 };
 
 export interface RoutePoint {
@@ -216,7 +217,12 @@ export interface IndexCard {
 export function mapScene(world: WorldId, ui: MapUi): MapScene {
   const frontier = frontierLevel();
   const current = progress.actual ? levelsById[progress.actual] : undefined;
-  const visible = (level: Level) => !!progress.hechos[level.id] || level === frontier || (level === current && isDiscovered(level.r)) || !!(level.examen && isDiscovered(level.r));
+  // Where the trail branches, every open region shows its next stop, not only the suggested one.
+  const heads = new Set(allRegions.filter((region) => region.mundo === world && isDiscovered(region.ri)).flatMap((region) => {
+    const next = levelsInRegion(region.ri).find((level) => !progress.hechos[level.id]);
+    return next ? [next] : [];
+  }));
+  const visible = (level: Level) => !!progress.hechos[level.id] || level === frontier || heads.has(level) || (level === current && isDiscovered(level.r)) || !!(level.examen && isDiscovered(level.r));
   const cleared = (level: Level) => !!progress.hechos[level.id];
   const onMap = allRegions.filter((region) => region.mundo === world);
   const hidden = onMap.find((region) => !isDiscovered(region.ri));
@@ -256,7 +262,8 @@ export function mapScene(world: WorldId, ui: MapUi): MapScene {
       const known = !!progress.secretos[level.id];
       return [{
         id: level.id,
-        className: `secreto s-${place.dib} ${known ? 'found' : ''} ${progress.hechos[level.id] ? 'resuelto' : ''}`,
+        // Near the chart's edge the name opens inwards, so the frame does not cut it.
+        className: `secreto s-${place.dib} ${known ? 'found' : ''} ${progress.hechos[level.id] ? 'resuelto' : ''} ${place.x < 0.12 ? 'edge-l' : place.x > 0.88 ? 'edge-r' : ''} ${place.y > 0.9 ? 'edge-b' : ''}`,
         x: place.x, y: place.y, w: place.w, ar: `${box[0]}/${box[1]}`,
         label: known ? level.n : 'Algo llama la atención en el mapa',
         name: known ? level.n : null,
@@ -278,8 +285,9 @@ export function mapScene(world: WorldId, ui: MapUi): MapScene {
         rune: sprite ? `i-${sprite}` : curious ? null : 'pez-hab',
       }];
     }),
-    veils: world === 'cielo' ? onMap.flatMap((region, index) => {
-      const veil = scenery.cielo.velos[index] ?? [];
+    // Undiscovered places hide under cloud in the sky and under sea mist on the isle.
+    veils: world === 'cielo' || world === 'base' ? onMap.flatMap((region, index) => {
+      const veil = scenery[world].velos[index] ?? [];
       if (!veil.length || isDiscovered(region.ri)) return [];
       return veil.map((cloud, cloudIndex) => ({
         key: `${region.ri}-${cloudIndex}`,
@@ -370,6 +378,10 @@ export function mapScene(world: WorldId, ui: MapUi): MapScene {
   };
 }
 
+function listOf(names: readonly string[]): string {
+  return names.length > 1 ? `${names.slice(0, -1).join(', ')} y ${names[names.length - 1]}` : names[0] ?? 'la región anterior';
+}
+
 function regionCard(regionIndex: number): RegionCard | null {
   const region = regions[regionIndex];
   if (!region) return null;
@@ -377,7 +389,7 @@ function regionCard(regionIndex: number): RegionCard | null {
   if (!known) {
     return {
       known: false, title: 'Región sin descubrir', kicker: '', speaker: '', portrait: '', bar: 0, progress: '',
-      blocked: `El camino hasta aquí se abrirá cuando completes ${regions[regionIndex - 1]?.n ?? 'la región anterior'}. Si tienes prisa, el índice te lleva a cualquier ejercicio.`,
+      blocked: `El camino hasta aquí se abrirá cuando completes ${listOf(regionPrerequisites(regionIndex).filter((index) => !regionComplete(index)).map((index) => regions[index]?.n ?? 'la región anterior'))}. Si tienes prisa, el índice te lleva a cualquier ejercicio.`,
       rows: [], next: null,
     };
   }

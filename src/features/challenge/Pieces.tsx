@@ -1,5 +1,5 @@
 /** The board's pieces. Icons are canvases; the boxes stay real elements so student CSS can measure them. */
-import { createElement, type ReactNode } from 'react';
+import { createElement, type MouseEvent, type ReactNode } from 'react';
 import type { Level, RuntimePiece } from '../../core/models';
 import { Rune } from '../../shared/icons/Rune';
 
@@ -43,7 +43,15 @@ export function PieceTree({ level, matches }: { readonly level: Level; readonly 
       // Nothing but the piece's own content goes inside: `:first-child` and friends must see the real children.
       return createElement(
         piece.T.tag ?? 'div',
-        { key: index, className: `${elementClasses(piece)}${matched}`, 'data-id': piece.id || undefined, 'data-marca': piece.marca || undefined },
+        {
+          ...piece.attrs,
+          key: index,
+          className: `${elementClasses(piece)}${matched}`,
+          'data-id': piece.id || undefined,
+          'data-marca': piece.marca || undefined,
+          // A board link is there to be selected, not followed.
+          ...(piece.T.tag === 'a' ? { onClick: (event: MouseEvent) => event.preventDefault() } : {}),
+        },
         piece.cont ? null : <Icon piece={piece} />,
         piece.txt || null,
         ...nested,
@@ -85,7 +93,8 @@ export function boardMarkup(level: Level): string {
     if (!piece) return;
     const tag = piece.T.tag ?? 'div';
     const names = [piece.T.tag ? '' : piece.t, piece.k].filter(Boolean).join(' ');
-    const open = `<${tag}${names ? ` class="${names}"` : ''}${piece.id ? ` id="${piece.id}"` : ''}>`;
+    const extra = Object.entries(piece.attrs ?? {}).map(([name, value]) => (value ? ` ${name}="${value}"` : ` ${name}`)).join('');
+    const open = `<${tag}${names ? ` class="${names}"` : ''}${piece.id ? ` id="${piece.id}"` : ''}${extra}>`;
     const pad = '  '.repeat(depth);
     const inside = children[index] ?? [];
     const text = piece.txt.length > 30 ? `${piece.txt.slice(0, 28)}…` : piece.txt;

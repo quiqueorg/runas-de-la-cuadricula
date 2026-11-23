@@ -35,7 +35,8 @@
     "typecheck": "tsc --noEmit",
     "check:lessons": "node scripts/check-lessons.mjs",
     "check": "tsc --noEmit && node scripts/check-lessons.mjs && vite build",
-    "music": "node scripts/render-kalimba.mjs"
+    "music": "node scripts/render-kalimba.mjs",
+    "isle-map": "node scripts/render-isle.mjs"
   },
   "dependencies": {
     "react": "^19.3.1",

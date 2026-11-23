@@ -40,6 +40,27 @@ function mergePieceTypes(extra: PieceTypeMap): void {
   }
 }
 
+/**
+ * Splits `head[attr=value][flag]:text`. Brackets are read before the colon, so a value may hold one
+ * (`a[href=https://isla.es]:Puerto`). Quotes around a value are optional.
+ */
+function splitPiece(body: string): { head: string; text: string; attrs: Record<string, string> | undefined } {
+  let head = '';
+  let attrs: Record<string, string> | undefined;
+  let at = 0;
+  while (at < body.length && body[at] !== ':') {
+    if (body[at] === '[') {
+      const close = body.indexOf(']', at);
+      if (close < 0) break;
+      const [name = '', ...rest] = body.slice(at + 1, close).split('=');
+      const value = rest.join('=').replace(/^(["'])(.*)\1$/, '$2');
+      if (name.trim()) (attrs ??= {})[name.trim()] = value;
+      at = close + 1;
+    } else head += body[at++];
+  }
+  return { head, text: body[at] === ':' ? body.slice(at + 1) : '', attrs };
+}
+
 function flattenPieces(list: readonly PieceSpec[], parent: number, out: { s: string; padre: number }[]): void {
   list.forEach((item) => {
     if (typeof item === 'string') out.push({ s: item, padre: parent });
@@ -93,13 +114,11 @@ function normalize(draft: LevelDraft, index: number): Level {
   const selectors = new Set(rules.map((rule) => rule.s));
   const flat: { s: string; padre: number }[] = [];
   flattenPieces(draft.p as PieceSpec[], -1, flat);
-  // A piece is written `type@class.class#id:text`; a leading # pins it to the board.
+  // A piece is written `type@class.class#id[attr=value]:text`; a leading # pins it to the board.
   const pieces: RuntimePiece[] = flat.map(({ s, padre }) => {
     const fixed = s.startsWith('#');
-    const body = fixed ? s.slice(1) : s;
-    const colon = body.indexOf(':');
-    const text = colon >= 0 ? body.slice(colon + 1) : '';
-    const [names = '', id = ''] = (colon >= 0 ? body.slice(0, colon) : body).split('#');
+    const { head, text, attrs } = splitPiece(fixed ? s.slice(1) : s);
+    const [names = '', id = ''] = head.split('#');
     const [type = '', dotted = ''] = names.split('@');
     const variant = dotted.replace(/\./g, ' ');
     const className = variant || type;
@@ -117,6 +136,7 @@ function normalize(draft: LevelDraft, index: number): Level {
       e: !element && labelled && selectors.has('.' + className) ? className : '',
       id,
       marca: element && labelled ? `${known?.tag ?? ''}${variant ? `.${variant.replace(/ /g, '.')}` : known?.tag ? '' : `.${type}`}${id ? `#${id}` : ''}` : '',
+      ...(attrs ? { attrs } : {}),
     };
   });
   pieces.forEach((piece) => {
@@ -206,11 +226,12 @@ export const WORLD_IDS: readonly WorldId[] = ['base', 'grid', 'flex', 'cielo', '
 
 export const BASE_GROUPS = [
   ['Tipo de ejercicio', ['prueba de aprendizaje', 'secreto', 'contra reloj', 'a oscuras', 'regateo', 'musical', 'escribe el selector']],
-  ['La caja', ['width', 'height', 'max-width', 'min-height', 'padding', 'padding-left', 'padding-top', 'margin', 'margin-top', 'margin-bottom', 'margin-left', 'margin-right', 'border', 'border-width', 'border-style', 'border-color', 'border-bottom', 'border-left', 'border-radius', 'box-sizing', 'overflow', 'overflow-x', 'overflow-y']],
-  ['Color y fondo', ['color', 'background-color', 'background-image', 'background-repeat', 'background-position', 'background-size', 'opacity']],
-  ['Texto', ['font-family', 'font-size', 'font-weight', 'font-style', 'font', 'text-align', 'text-decoration', 'text-transform', 'line-height', 'letter-spacing', 'list-style', 'list-style-type']],
+  ['La caja', ['width', 'height', 'max-width', 'min-width', 'min-height', 'max-height', 'aspect-ratio', 'padding', 'padding-left', 'padding-top', 'margin', 'margin-top', 'margin-bottom', 'margin-left', 'margin-right', 'border', 'border-width', 'border-style', 'border-color', 'border-bottom', 'border-left', 'border-radius', 'box-sizing', 'overflow', 'overflow-x', 'overflow-y']],
+  ['Color y fondo', ['color', 'background-color', 'background', 'background-image', 'background-repeat', 'background-position', 'background-size', 'opacity']],
+  ['Efectos', ['box-shadow', 'text-shadow', 'outline', 'outline-offset', 'filter', 'clip-path', 'cursor']],
+  ['Texto', ['font-family', 'font-size', 'font-weight', 'font-style', 'font', 'text-align', 'text-decoration', 'text-transform', 'line-height', 'letter-spacing', 'list-style', 'list-style-type', 'white-space', 'text-overflow', 'overflow-wrap', 'word-break', 'hyphens', 'text-indent', 'vertical-align', 'writing-mode', 'content', 'counter-reset', 'counter-increment', 'columns', 'column-count', 'column-width', 'column-gap', 'column-rule']],
   ['Flujo y posición', ['display', 'visibility', 'float', 'clear', 'position', 'top', 'right', 'bottom', 'left', 'z-index']],
-  ['Conceptos', ['regla', 'comentarios', 'tipo', 'clase', 'id', 'universal', 'lista de selectores', 'descendiente', 'hijo', 'hermano adyacente', ':first-child', ':last-child', ':nth-child()', ':not()', '::first-letter', 'cascada', 'especificidad', 'herencia', 'px', '%', 'em', 'rem', 'colores', 'hex', 'rgb()', 'hsl()', 'shorthand', 'modelo de caja', 'margin auto', 'bloque y en línea', 'listas', 'capas', 'reset', 'página base']],
+  ['Conceptos', ['regla', 'comentarios', 'tipo', 'clase', 'id', 'universal', 'lista de selectores', 'descendiente', 'hijo', 'hermano adyacente', 'hermanos', ':first-child', ':last-child', ':nth-child()', ':not()', 'atributo', ':is()', ':where()', ':has()', ':hover', ':focus', ':focus-visible', ':active', '::first-letter', '::first-line', '::before', '::after', '::marker', 'cascada', 'especificidad', '!important', 'herencia', 'inherit', 'initial', 'unset', 'currentColor', 'px', '%', 'em', 'rem', 'ch', 'vw', 'calc()', 'min()', 'max()', 'clamp()', 'colores', 'hex', 'rgb()', 'hsl()', 'transparencia', 'degradados', 'sombras', 'shorthand', 'modelo de caja', 'margin auto', 'bloque y en línea', 'listas', 'contadores', 'texto que no cabe', 'capas', 'reset', 'página base']],
 ] as const satisfies readonly FilterGroup[];
 
 export const GRID_GROUPS = [
@@ -274,7 +295,20 @@ export function regionOf(level: Level): Region {
 
 export const levelsById: Record<string, Level> = Object.fromEntries(levels.map((level) => [level.id, level]));
 
+let isleLabels: Map<string, string> | null = null;
+
 export function levelLabel(id: string): string {
+  // Isle ids keep the number they were born with (they are save keys); players read where the lesson
+  // sits instead: the region's place on the trail and the lesson's place in the region.
+  if (id[0] === 'b') {
+    isleLabels ??= new Map(levels.filter((level) => level.mundo === 'base' && !regions[level.r]?.secreto).map((level) => {
+      const region = regions[level.r];
+      const place = levels.filter((other) => other.r === level.r).indexOf(level) + 1;
+      return [level.id, `${region?.num ?? ''}·${place}`];
+    }));
+    const label = isleLabels.get(id);
+    if (label) return label;
+  }
   return id[0] === 'x'
     ? 'Fase ' + id.split('-')[1]
     : ('fcb'.includes(id[0] ?? '') ? id.slice(1).replace(/^\d+/, (digits) => String(+digits + 1)) : id).replace('-', '·');
@@ -320,5 +354,12 @@ export const regionComplete = (regionIndex: number): boolean => {
 };
 
 export const isFirstInWorld = (regionIndex: number): boolean => !regions[regionIndex - 1] || regions[regionIndex - 1]?.mundo !== regions[regionIndex]?.mundo;
-export const isDiscovered = (regionIndex: number): boolean => isFirstInWorld(regionIndex) || regionComplete(regionIndex - 1) || levelsInRegion(regionIndex).some((level) => progress.hechos[level.id]);
+/** Global indexes of the regions this one waits for: its own `tras`, or simply the previous one. */
+export function regionPrerequisites(regionIndex: number): number[] {
+  const region = regions[regionIndex];
+  if (!region?.tras) return [regionIndex - 1];
+  const first = regions.findIndex((other) => other.mundo === region.mundo);
+  return region.tras.map((local) => first + local);
+}
+export const isDiscovered = (regionIndex: number): boolean => isFirstInWorld(regionIndex) || regionPrerequisites(regionIndex).every(regionComplete) || levelsInRegion(regionIndex).some((level) => progress.hechos[level.id]);
 export const frontierLevel = (): Level | undefined => routes[session.world].find((level) => !progress.hechos[level.id]);

@@ -111,6 +111,8 @@ export interface RuntimePiece {
   /** How the piece reads in the markup (`p.nota#aviso`), shown on pieces that are real elements. */
   marca: string;
   cont?: boolean;
+  /** HTML attributes written `[name=value]` after the class and id, for attribute selectors. */
+  readonly attrs?: Readonly<Record<string, string>>;
 }
 
 export interface LevelDraft {
@@ -200,6 +202,8 @@ export interface Region {
   readonly ruta?: readonly (readonly [number, number])[];
   readonly vuelo?: { readonly desde: number; readonly con: string };
   readonly radio?: number;
+  /** Regions (local indexes in its world) that must be complete before this one opens; without it, the previous one. Several regions waiting for the same one make a branch. */
+  readonly tras?: readonly number[];
   readonly icono?: string;
   readonly al?: string;
   readonly pullas?: readonly string[];

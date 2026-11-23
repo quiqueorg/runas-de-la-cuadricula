@@ -1,5 +1,5 @@
 /** Lesson screen. It draws the chrome it is given and reports named actions. */
-import { forwardRef, type ReactNode, type RefObject } from 'react';
+import { forwardRef, useLayoutEffect, useRef, type ReactNode, type RefObject } from 'react';
 import type { Level } from '../../core/models';
 import { MusicButton } from '../../shared/audio/MusicButton';
 import { Rune } from '../../shared/icons/Rune';
@@ -285,11 +285,25 @@ function CodeField({ value, label, placeholder, rule, media, selector, allowed, 
   readonly onTab?: (area: HTMLTextAreaElement) => void;
 }) {
   const oneLine = media !== undefined || selector !== undefined;
+  const areaRef = useRef<HTMLTextAreaElement>(null);
+  const preRef = useRef<HTMLPreElement>(null);
+  // The textarea is transparent and the <pre> shows its text, so both must share size and scroll.
+  // Growing on every value, before paint, keeps a new line from ever being clipped.
+  useLayoutEffect(() => {
+    const area = areaRef.current;
+    if (!area) return;
+    area.style.height = 'auto';
+    area.style.height = `${area.scrollHeight}px`;
+    syncScroll(area, preRef.current);
+  }, [value]);
   return (
     <div className={`code-line${media !== undefined ? ' cond' : ''}${selector !== undefined ? ' cond sel' : ''}`}>
-      <pre aria-hidden="true">{selector !== undefined ? <span className="t-sel">{value || ' '}</span> : <CodeText text={value.endsWith('\n') || !value ? `${value} ` : value} fixed={false} allowed={allowed} />}</pre>
+      <pre ref={preRef} aria-hidden="true">{selector !== undefined ? <span className="t-sel">{value || ' '}</span> : <CodeText text={value.endsWith('\n') || !value ? `${value} ` : value} fixed={false} allowed={allowed} />}</pre>
       <textarea
+        ref={areaRef}
         value={value}
+        onScroll={(event) => syncScroll(event.currentTarget, preRef.current)}
+        onSelect={(event) => syncScroll(event.currentTarget, preRef.current)}
         rows={1}
         spellCheck={false}
         autoCapitalize="off"
@@ -300,8 +314,13 @@ function CodeField({ value, label, placeholder, rule, media, selector, allowed, 
         data-b={rule}
         data-m={media}
         data-s={selector}
-        onFocus={(event) => onFocus(event.currentTarget)}
-        onChange={(event) => onChange(event.currentTarget.value)}
+        onFocus={(event) => {
+          const area = event.currentTarget;
+          onFocus(area);
+          // scroll-margin keeps the field out from under the pinned board on phones.
+          area.scrollIntoView({ block: 'nearest' });
+        }}
+        onChange={(event) => onChange(oneLine ? event.currentTarget.value.replace(/\s*\n\s*/g, ' ') : event.currentTarget.value)}
         onKeyDown={(event) => {
           if (event.key === 'Enter' && oneLine) event.preventDefault();
           if (event.key === 'Tab' && onTab && !event.shiftKey && !event.altKey && !event.ctrlKey && !event.metaKey) {
@@ -312,6 +331,12 @@ function CodeField({ value, label, placeholder, rule, media, selector, allowed, 
       />
     </div>
   );
+}
+
+function syncScroll(area: HTMLTextAreaElement, pre: HTMLPreElement | null): void {
+  if (!pre) return;
+  pre.scrollTop = area.scrollTop;
+  pre.scrollLeft = area.scrollLeft;
 }
 
 const Layer = forwardRef<HTMLDivElement, { readonly id: string; readonly children: ReactNode }>(function Layer({ id, children }, ref) {

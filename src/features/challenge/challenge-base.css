@@ -50,8 +50,12 @@
 .floor.t-almacen{background-image:url(../../../assets/m-tablones.jpg)}
 .floor.t-canal{background-image:url(../../../assets/m-agua.jpg);animation:fluir2 50s linear infinite}
 .floor.t-farola{background-image:url(../../../assets/m-sillares.jpg)}
+.floor.t-mercado{background-image:url(../../../assets/m-tejas.jpg)}
+.floor.t-invernadero{background-image:url(../../../assets/m-flores.jpg)}
+.floor.t-observatorio{background-image:url(../../../assets/m-roca.jpg)}
+.floor.t-biblioteca{background-image:url(../../../assets/pergamino.jpg);background-size:360px}
 .floor.t-aula{background-image:url(../../../assets/losas.jpg)}
-.floor.t-tintas~#outline-layer,.floor.t-imprenta~#outline-layer,.floor.t-embarcadero~#outline-layer,.floor.t-farola~#outline-layer,.floor.t-patio~#outline-layer{--huella:#0b6f68}
+.floor.t-tintas~#outline-layer,.floor.t-imprenta~#outline-layer,.floor.t-embarcadero~#outline-layer,.floor.t-farola~#outline-layer,.floor.t-patio~#outline-layer,.floor.t-biblioteca~#outline-layer,.floor.t-invernadero~#outline-layer{--huella:#0b6f68}
 
 /* the isle's own twists: a rising tide, boiling ink and a lighthouse that sweeps the dark */
 .marea .sand{background:url(../../../assets/m-agua.jpg) center/160px;box-shadow:inset 0 0 40px rgba(10,60,90,.5);animation:fluir 9s linear infinite}
@@ -76,4 +80,4 @@
 /* the board's markup, next to the theory */
 .marcado{margin:4px 0 12px}
 .marcado h3{font-size:17px;color:#5a3314;margin-bottom:4px}
-.scroll .marcado pre{margin:0;font-size:13px;line-height:1.45;white-space:pre;overflow-x:auto}
+.scroll .marcado pre{margin:0;font-size:13px;line-height:1.45;white-space:pre-wrap;overflow-wrap:anywhere;padding-left:calc(12px + 2ch);text-indent:-2ch}

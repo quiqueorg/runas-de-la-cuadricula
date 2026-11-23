@@ -186,6 +186,7 @@
   .switch,.counter{font-size:14px}
   .scroll{font-size:16.5px;padding:20px 18px 16px}
   .code-surface{font-size:16px}
+  .code-line textarea{scroll-margin-top:calc(var(--board-h,40vh) + 70px);scroll-margin-bottom:24px}
 }
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}

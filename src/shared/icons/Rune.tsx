@@ -1,56 +1,58 @@
-/** A sprite symbol painted on a canvas, sized by the same CSS that used to size the SVG. */
-import { useLayoutEffect, useRef } from 'react';
-import { observeDevicePixelSize } from '../canvas/htmlInCanvas';
-import { frameOf } from '../canvas/surface';
-import { drawSymbol } from './paint';
+/** A registered symbol as inline SVG, sized by CSS; `currentColor` is the element's CSS `color`. */
+import { useId } from 'react';
 import { symbolOf } from './registry';
+import { SymbolShapes, viewBoxOf } from './SymbolShapes';
+import type { SymbolArt } from './symbols';
 
 export interface RuneProps {
   readonly id: string;
   readonly className?: string;
   readonly title?: string;
+  /** Glazes the ink with light from the top left, for figures standing on the painted chart. */
   readonly painted?: boolean;
 }
 
 export function Rune({ id, className, title, painted }: RuneProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const glazeId = useId();
   const art = symbolOf(id);
-  const aspect = art ? `${art.w} / ${art.h}` : '1 / 1';
-
-  useLayoutEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const paint = () => {
-      const frame = frameOf(canvas);
-      if (!frame) return;
-      const color = getComputedStyle(canvas).color;
-      drawSymbol(frame.ctx, id, frame.width, frame.height, color);
-      if (painted) {
-        const { ctx, width, height } = frame;
-        // Glaze only the inked silhouette, leaving transparent pixels untouched.
-        const wash = ctx.createLinearGradient(width * .25, 0, width * .7, height);
-        wash.addColorStop(0, 'rgba(255,221,165,.42)');
-        wash.addColorStop(.46, 'rgba(255,225,185,.05)');
-        wash.addColorStop(1, 'rgba(65,47,68,.38)');
-        ctx.save();
-        ctx.globalCompositeOperation = 'source-atop';
-        ctx.fillStyle = wash;
-        ctx.fillRect(0, 0, width, height);
-        ctx.restore();
-      }
-    };
-    paint();
-    return observeDevicePixelSize(canvas, paint);
-  }, [id, className, painted]);
-
   return (
-    <canvas
-      ref={canvasRef}
+    <svg
       className={className ? `rune ${className}` : 'rune'}
-      style={{ aspectRatio: aspect }}
+      viewBox={art ? viewBoxOf(art) : undefined}
+      style={{ aspectRatio: art ? `${art.w} / ${art.h}` : '1 / 1' }}
       role={title ? 'img' : undefined}
       aria-label={title}
       aria-hidden={title ? undefined : true}
-    />
+    >
+      {art ? <SymbolShapes art={art} /> : null}
+      {art && painted ? <Glaze art={art} id={glazeId} /> : null}
+    </svg>
+  );
+}
+
+/** A wash laid only over the inked silhouette: the symbol itself is its alpha mask. */
+function Glaze({ art, id }: { readonly art: SymbolArt; readonly id: string }) {
+  const box = { x: art.x, y: art.y, width: art.w, height: art.h };
+  return (
+    <>
+      <defs>
+        <linearGradient
+          id={`${id}-wash`}
+          gradientUnits="userSpaceOnUse"
+          x1={art.x + art.w * 0.25}
+          y1={art.y}
+          x2={art.x + art.w * 0.7}
+          y2={art.y + art.h}
+        >
+          <stop offset={0} stopColor="rgba(255,221,165,.42)" />
+          <stop offset={0.46} stopColor="rgba(255,225,185,.05)" />
+          <stop offset={1} stopColor="rgba(65,47,68,.38)" />
+        </linearGradient>
+        <mask id={`${id}-ink`} maskUnits="userSpaceOnUse" {...box} style={{ maskType: 'alpha' }}>
+          <SymbolShapes art={art} />
+        </mask>
+      </defs>
+      <rect {...box} fill={`url(#${id}-wash)`} mask={`url(#${id}-ink)`} />
+    </>
   );
 }

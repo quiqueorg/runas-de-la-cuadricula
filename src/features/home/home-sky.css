@@ -1,7 +1,28 @@
 /* sky adventure card */
-.adventure.is-sky:hover,.adventure.is-sky:focus-visible{border-color:#9fd8ff;box-shadow:0 12px 30px rgba(0,0,0,.5),0 0 22px -6px rgba(150,210,255,.85)}
-.adventure.is-sky .adventure-image{background-image:url(../../../assets/mapa-cielo.jpg);background-position:46% 20%;border-color:rgba(150,210,255,.55)}
-.adventure.is-sky .adventure-tech{color:#a8dcff}
-.adventure.is-sky .adventure-bar i{background:linear-gradient(90deg,#4a8ad8,#bfe6ff)}
-.adventure.is-sky .adventure-cta{background:rgba(150,210,255,.14);border-color:rgba(150,210,255,.55);color:#eef8ff}
-body[data-mundo=cielo]:not([data-view=home]) .backdrop-scene{background-image:url(../../../assets/mapa-cielo.jpg);background-position:50% 40%}
+.adventure.is-sky:hover,
+.adventure.is-sky:focus-visible {
+  border-color: #9fd8ff;
+  box-shadow:
+    0 12px 30px rgba(0, 0, 0, 0.5),
+    0 0 22px -6px rgba(150, 210, 255, 0.85);
+}
+.adventure.is-sky .adventure-image {
+  background-image: url(../../../assets/mapa-cielo.jpg);
+  background-position: 46% 20%;
+  border-color: rgba(150, 210, 255, 0.55);
+}
+.adventure.is-sky .adventure-tech {
+  color: #a8dcff;
+}
+.adventure.is-sky .adventure-bar i {
+  background: linear-gradient(90deg, #4a8ad8, #bfe6ff);
+}
+.adventure.is-sky .adventure-cta {
+  background: rgba(150, 210, 255, 0.14);
+  border-color: rgba(150, 210, 255, 0.55);
+  color: #eef8ff;
+}
+body[data-world="sky"]:not([data-view="home"]) .backdrop-scene {
+  background-image: url(../../../assets/mapa-cielo.jpg);
+  background-position: 50% 40%;
+}

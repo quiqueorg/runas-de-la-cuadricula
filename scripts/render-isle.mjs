@@ -32,7 +32,14 @@ function findChrome() {
 
 const dir = mkdtempSync(join(tmpdir(), 'isla-'));
 // Its own cache, so a dev server running at the same time keeps the dependency bundle it is serving.
-const server = await createServer({ root, cacheDir: join(dir, 'vite'), logLevel: 'error', appType: 'custom', server: { middlewareMode: true, hmr: false, watch: null }, optimizeDeps: { noDiscovery: true } });
+const server = await createServer({
+  root,
+  cacheDir: join(dir, 'vite'),
+  logLevel: 'error',
+  appType: 'custom',
+  server: { middlewareMode: true, hmr: false, watch: null },
+  optimizeDeps: { noDiscovery: true },
+});
 let svg;
 try {
   const { isleChart } = await server.ssrLoadModule('/scripts/isle-chart.ts');
@@ -44,7 +51,9 @@ try {
 
 try {
   const page = join(dir, 'bake.html');
-  writeFileSync(page, `<!doctype html><meta charset="utf-8"><body><script>
+  writeFileSync(
+    page,
+    `<!doctype html><meta charset="utf-8"><body><script>
 const img = new Image();
 img.onload = () => {
   const canvas = document.createElement('canvas');
@@ -54,15 +63,34 @@ img.onload = () => {
 };
 img.onerror = () => { document.body.textContent = 'ERROR'; };
 img.src = 'data:image/svg+xml;base64,' + ${JSON.stringify(Buffer.from(svg).toString('base64'))};
-</script>`);
-  const dom = execFileSync(findChrome(), [
-    '--headless=new', '--disable-gpu', '--hide-scrollbars', '--no-first-run', '--no-default-browser-check',
-    `--user-data-dir=${join(dir, 'profile')}`, '--virtual-time-budget=120000', '--dump-dom', `file://${page}`,
-  ], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, timeout: 180000, stdio: ['ignore', 'pipe', 'ignore'] });
+</script>`,
+  );
+  const dom = execFileSync(
+    findChrome(),
+    [
+      '--headless=new',
+      '--disable-gpu',
+      '--hide-scrollbars',
+      '--no-first-run',
+      '--no-default-browser-check',
+      `--user-data-dir=${join(dir, 'profile')}`,
+      '--virtual-time-budget=120000',
+      '--dump-dom',
+      `file://${page}`,
+    ],
+    {
+      encoding: 'utf8',
+      maxBuffer: 64 * 1024 * 1024,
+      timeout: 180000,
+      stdio: ['ignore', 'pipe', 'ignore'],
+    },
+  );
   const match = dom.match(/JPEG:data:image\/jpeg;base64,([A-Za-z0-9+/=]+)/);
   if (!match) throw new Error(`The browser did not return an image: ${dom.slice(0, 300)}`);
   writeFileSync(out, Buffer.from(match[1], 'base64'));
-  console.log(`assets/mapa-isla.jpg · ${WIDTH}×${HEIGHT} · ${Math.round(Buffer.byteLength(match[1], 'base64') / 1024)} kB`);
+  console.log(
+    `assets/mapa-isla.jpg · ${WIDTH}×${HEIGHT} · ${Math.round(Buffer.byteLength(match[1], 'base64') / 1024)} kB`,
+  );
 } finally {
   rmSync(dir, { recursive: true, force: true });
 }

@@ -1,12 +1,18 @@
 /** DOM query helpers and text utilities. */
 
-export function query<T extends Element = HTMLElement>(selector: string, root: ParentNode = document): T {
+export function query<T extends Element = HTMLElement>(
+  selector: string,
+  root: ParentNode = document,
+): T {
   const found = root.querySelector(selector);
   if (!found) throw new Error(`Missing element: ${selector}`);
   return found as T;
 }
 
-export function queryAll<T extends Element = HTMLElement>(selector: string, root: ParentNode = document): T[] {
+export function queryAll<T extends Element = HTMLElement>(
+  selector: string,
+  root: ParentNode = document,
+): T[] {
   return [...root.querySelectorAll<T>(selector)];
 }
 

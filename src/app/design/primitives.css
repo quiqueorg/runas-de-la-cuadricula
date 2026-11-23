@@ -1,0 +1,27 @@
+/* Raw design tokens. No element selectors. */
+:root {
+  color-scheme: dark;
+  --color-ink: #f4eddc;
+  --color-ink-muted: #d2c8af;
+  --color-ink-faint: #9d957f;
+  --color-ink-bright: #fbf3df;
+  --color-gold: #dcc38a;
+  --color-gold-deep: #a98c55;
+  --color-gold-shadow: #6e5a33;
+  --color-gold-bright: #f2d27a;
+  --color-accent: #72f2e0;
+  --color-accent-deep: #2bbfb0;
+  --color-accent-shadow: #13716b;
+  --color-warning: #f6b955;
+  --color-danger: #ff8a76;
+  --color-night: #0d1416;
+  --font-display: "Marcellus", "Cardo", "Palatino Linotype", Georgia, serif;
+  --font-body: "Alegreya Sans", "Fira Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "DejaVu Sans Mono", ui-monospace, Menlo, Consolas, monospace;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-pill: 999px;
+  --z-bar: 30;
+  --z-raised: 20;
+  --z-overlay: 22;
+}

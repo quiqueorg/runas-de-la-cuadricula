@@ -31,28 +31,6 @@ export function frameOf(canvas: HTMLCanvasElement): CanvasFrame | null {
   return { ctx, width, height, dpr };
 }
 
-/** Draws in the element's layout box, including when a parent CSS transform scales it. */
-export function paintLayout(canvas: HTMLCanvasElement, width: number, height: number): CanvasRenderingContext2D | null {
-  if (width < 1 || height < 1) return null;
-  canvas.style.width = `${width}px`;
-  canvas.style.height = `${height}px`;
-  const rect = canvas.getBoundingClientRect();
-  const dpr = window.devicePixelRatio || 1;
-  const pixelsWide = Math.max(1, Math.round(rect.width * dpr));
-  const pixelsHigh = Math.max(1, Math.round(rect.height * dpr));
-  if (canvas.width !== pixelsWide || canvas.height !== pixelsHigh) {
-    canvas.width = pixelsWide;
-    canvas.height = pixelsHigh;
-  }
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return null;
-  const scaleX = rect.width > 0 ? rect.width / width : 1;
-  const scaleY = rect.height > 0 ? rect.height / height : 1;
-  ctx.setTransform(dpr * scaleX, 0, 0, dpr * scaleY, 0, 0);
-  ctx.clearRect(0, 0, width, height);
-  return ctx;
-}
-
 const paths = new Map<string, Path2D>();
 
 export function cachedPath(data: string): Path2D {

@@ -1,103 +1,113 @@
-/** Guide canvas. Uses HTML-in-Canvas for accessible guide labels when supported, with 2D fallback. */
-import { useEffect, useLayoutEffect, useRef } from 'react';
-import { observeDevicePixelSize, supportsHtmlInCanvas } from '../../shared/canvas/htmlInCanvas';
-import type { GuideDrawing } from './engine';
-import { paintGuideGeometry, paintGuides } from './paint';
+/** The board's guides as SVG: hatched gaps, grid lines or flex axes, and their numbered labels. */
+import { useId } from 'react';
+import type { GuideDrawing, GuideGap, GuideKind, GuideLine } from './board/guides';
+
+const ACCENT = 'var(--accent, #72f2e0)';
+const CROSS = '#f0c45a';
+
+const INK: Record<
+  GuideKind,
+  { readonly stroke: string; readonly width: number; readonly dash: string }
+> = {
+  shadow: { stroke: 'rgba(10,16,18,.38)', width: 3.4, dash: '6 4' },
+  main: { stroke: 'rgba(250,244,228,.8)', width: 1.3, dash: '6 4' },
+  'shadow-implicit': { stroke: 'rgba(10,16,18,.38)', width: 3.4, dash: '1.5 4.5' },
+  implicit: { stroke: 'rgba(242,234,214,.42)', width: 1.3, dash: '1.5 4.5' },
+  'axis-main': { stroke: ACCENT, width: 2.4, dash: 'none' },
+  'axis-cross': { stroke: CROSS, width: 2, dash: '6 5' },
+};
+
+/** The hatch tile: a faint wash with one bright stripe. */
+const HATCH_TILE = 6;
+const HATCH_STRIPE = 2;
+/** Arrowhead at the end of an axis, pointing along +x before it is turned. */
+const ARROW = 'M0 0L-8 -3.5L-8 3.5Z';
 
 export function Guides({ drawing }: { readonly drawing: GuideDrawing | null }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const labelsRef = useRef<HTMLDivElement>(null);
-  const drawingRef = useRef(drawing);
-  drawingRef.current = drawing;
-  const painted = useRef('');
-  const htmlInCanvas = supportsHtmlInCanvas();
-  const hasLabels = Boolean(drawing && drawing.labels.length > 0);
-
-  useEffect(() => {
-    if (!htmlInCanvas) return;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    canvas.onpaint = () => {
-      const current = drawingRef.current;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-      ctx.reset();
-      if (!current || current.width < 1 || current.height < 1) return;
-      const scaleX = canvas.width / current.width;
-      const scaleY = canvas.height / current.height;
-      ctx.save();
-      ctx.setTransform(scaleX, 0, 0, scaleY, 0, 0);
-      paintGuideGeometry(ctx, canvas, current);
-      ctx.restore();
-      const labelsEl = labelsRef.current;
-      if (labelsEl && ctx.drawElementImage) {
-        ctx.drawElementImage(labelsEl, 0, 0);
-      }
-    };
-    const disconnect = observeDevicePixelSize(canvas, () => {
-      canvas.requestPaint?.();
-    });
-    canvas.requestPaint?.();
-    return () => {
-      disconnect();
-      canvas.onpaint = null;
-    };
-  }, [htmlInCanvas]);
-
-  useLayoutEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    if (htmlInCanvas) {
-      if (drawing && drawing.width >= 1 && drawing.height >= 1) {
-        canvas.style.width = `${drawing.width}px`;
-        canvas.style.height = `${drawing.height}px`;
-      }
-      canvas.requestPaint?.();
-      return;
-    }
-    const paint = () => {
-      if (!drawing) return;
-      const rect = canvas.getBoundingClientRect();
-      const dpr = window.devicePixelRatio || 1;
-      const token = `${Math.round(rect.width * dpr)}x${Math.round(rect.height * dpr)}:${JSON.stringify(drawing)}`;
-      if (token === painted.current) return;
-      painted.current = token;
-      paintGuides(canvas, drawing);
-    };
-    paint();
-    const observer = new ResizeObserver(paint);
-    observer.observe(canvas);
-    return () => observer.disconnect();
-  }, [htmlInCanvas, drawing]);
-
+  if (!drawing || drawing.width < 1 || drawing.height < 1) return null;
+  const { width, height } = drawing;
+  const hasLabels = drawing.labels.length > 0;
+  // Everything here is redrawn together from the board and never reordered: position is identity.
   return (
-    <canvas
-      ref={canvasRef}
+    <svg
       className="guides rune"
-      content={htmlInCanvas ? 'drawable' : undefined}
+      width={width}
+      height={height}
+      viewBox={`0 0 ${width} ${height}`}
+      role={hasLabels ? 'list' : undefined}
+      aria-label={hasLabels ? 'Guías del tablero' : undefined}
       aria-hidden={hasLabels ? undefined : true}
     >
-      {drawing && drawing.labels.length > 0 ? (
-        <div
-          ref={labelsRef}
-          className="guides-drawable"
-          drawable={htmlInCanvas ? '' : undefined}
-          role="list"
-          aria-label="Guías del tablero"
-          style={{ width: `${drawing.width}px`, height: `${drawing.height}px` }}
+      <Gaps gaps={drawing.gaps} />
+      {drawing.lines.map((line, index) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: see above.
+        <Line key={index} line={line} />
+      ))}
+      {drawing.labels.map((label, index) => (
+        // SVG has no <li>, and Biome takes <text> for an interactive element.
+        // biome-ignore lint/a11y/useSemanticElements lint/a11y/noInteractiveElementToNoninteractiveRole: see above.
+        <text
+          // biome-ignore lint/suspicious/noArrayIndexKey: see above.
+          key={index}
+          role="listitem"
+          className={`guide-lbl is-${label.kind}`}
+          transform={`translate(${label.x} ${label.y})${label.rotate ? ' rotate(-90)' : ''}`}
         >
-          {drawing.labels.map((label, index) => (
-            <span
-              key={index}
-              role="listitem"
-              className={`guide-lbl is-${label.kind}${label.rotate ? ' is-rot' : ''}`}
-              style={{ left: `${label.x}px`, top: `${label.y}px` }}
-            >
-              {label.text}
-            </span>
-          ))}
-        </div>
+          {label.text}
+        </text>
+      ))}
+    </svg>
+  );
+}
+
+/** Gaps between tracks, hatched with a stripe that runs diagonally. */
+function Gaps({ gaps }: { readonly gaps: readonly GuideGap[] }) {
+  const hatchId = useId();
+  if (gaps.length === 0) return null;
+  return (
+    <>
+      <defs>
+        <pattern
+          id={hatchId}
+          patternUnits="userSpaceOnUse"
+          width={HATCH_TILE}
+          height={HATCH_TILE}
+          patternTransform="rotate(45)"
+        >
+          <rect width={HATCH_TILE} height={HATCH_TILE} fill="rgba(114,242,224,.05)" />
+          <rect width={HATCH_STRIPE} height={HATCH_TILE} fill="rgba(114,242,224,.3)" />
+        </pattern>
+      </defs>
+      {gaps.map((gap, index) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: redrawn together, never reordered.
+        <rect key={index} {...gap} fill={`url(#${hatchId})`} />
+      ))}
+    </>
+  );
+}
+
+function Line({ line }: { readonly line: GuideLine }) {
+  const ink = INK[line.kind];
+  const axis = line.kind === 'axis-main' || line.kind === 'axis-cross';
+  const degrees = (Math.atan2(line.y2 - line.y1, line.x2 - line.x1) * 180) / Math.PI;
+  return (
+    <>
+      <line
+        x1={line.x1}
+        y1={line.y1}
+        x2={line.x2}
+        y2={line.y2}
+        strokeWidth={ink.width}
+        strokeDasharray={ink.dash}
+        style={{ stroke: ink.stroke }}
+      />
+      {axis ? (
+        <path
+          d={ARROW}
+          transform={`translate(${line.x2} ${line.y2}) rotate(${degrees})`}
+          style={{ fill: ink.stroke }}
+        />
       ) : null}
-    </canvas>
+    </>
   );
 }

@@ -2,82 +2,350 @@
 /* Defaults carry no id, so the weakest rule a student can write (`* { … }`) still wins. */
 
 /* A real element falls back to what the browser gives it: blocks stack, spans flow, lists have bullets. */
-.pieza.el{display:revert;position:static;margin:0;padding:6px;gap:0;overflow:hidden;text-align:center;border:2px solid #4b3a25;border-radius:8px;box-shadow:0 2px 0 rgba(0,0,0,.3),0 6px 10px -4px rgba(0,0,0,.45)}
-.pieza.el:not(.material){background:linear-gradient(160deg,rgba(255,255,255,.5),transparent 42%),linear-gradient(180deg,rgba(255,255,255,.1),rgba(60,30,0,.14));background-color:#e9dcb8}
-.pieza.el.cosa{background:radial-gradient(130% 100% at 22% 12%,rgba(255,255,255,.34),transparent 46%),url(../../../assets/piedra.jpg) center/180px;background-color:#8f9aa6;background-blend-mode:normal,soft-light}
-.pieza.el.caja{background:linear-gradient(160deg,rgba(255,255,255,.3),transparent 40%),repeating-linear-gradient(0deg,rgba(60,30,5,.2) 0 1px,transparent 1px 15px);background-color:#cfa76b}
-:where(.pieza.el.material){background-color:#555;background-position:center;background-size:128px}
-.pieza.el.texto{padding:5px 10px;border-radius:5px;text-align:left}
-.board-layer .pieza.el.contenedor{display:revert;padding:8px;overflow:hidden}
-.pieza.el .ic{display:block;margin:0 auto}
+.pieza.el {
+  display: revert;
+  position: static;
+  margin: 0;
+  padding: 6px;
+  gap: 0;
+  overflow: hidden;
+  text-align: center;
+  border: 2px solid #4b3a25;
+  border-radius: 8px;
+  box-shadow:
+    0 2px 0 rgba(0, 0, 0, 0.3),
+    0 6px 10px -4px rgba(0, 0, 0, 0.45);
+}
+.pieza.el:not(.material) {
+  background:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.5), transparent 42%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(60, 30, 0, 0.14));
+  background-color: #e9dcb8;
+}
+.pieza.el.cosa {
+  background:
+    radial-gradient(130% 100% at 22% 12%, rgba(255, 255, 255, 0.34), transparent 46%),
+    url(../../../assets/piedra.jpg) center / 180px;
+  background-color: #8f9aa6;
+  background-blend-mode: normal, soft-light;
+}
+.pieza.el.caja {
+  background:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.3), transparent 40%),
+    repeating-linear-gradient(0deg, rgba(60, 30, 5, 0.2) 0 1px, transparent 1px 15px);
+  background-color: #cfa76b;
+}
+:where(.pieza.el.material) {
+  background-color: #555;
+  background-position: center;
+  background-size: 128px;
+}
+.pieza.el.texto {
+  padding: 5px 10px;
+  border-radius: 5px;
+  text-align: left;
+}
+.board-layer .pieza.el.contenedor {
+  display: revert;
+  padding: 8px;
+  overflow: hidden;
+}
+.pieza.el .ic {
+  display: block;
+  margin: 0 auto;
+}
 /* how the piece reads in the markup */
-.pieza.el.cosa[data-marca]::after{content:attr(data-marca);display:block;width:fit-content;max-width:100%;margin:2px auto 0;padding:1px 6px;border-radius:99px;background:rgba(10,6,2,.45);font:600 11px/1.3 var(--font-mono);letter-spacing:0;color:#fff8e8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-transform:none}
-.pieza.el:not(.cosa)[data-marca]::before{content:attr(data-marca);display:inline-block;margin-right:7px;padding:0 5px;border-radius:4px;background:rgba(60,40,15,.16);font:600 11px/1.6 var(--font-mono);letter-spacing:0;color:#6a4a22;vertical-align:middle;white-space:nowrap;text-transform:none}
-.pieza.el.contenedor[data-marca]::before{display:block;width:fit-content;margin:0 0 6px}
+.pieza.el.cosa[data-marca]::after {
+  content: attr(data-marca);
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  margin: 2px auto 0;
+  padding: 1px 6px;
+  border-radius: 99px;
+  background: rgba(10, 6, 2, 0.45);
+  font: 600 11px / 1.3 var(--font-mono);
+  letter-spacing: 0;
+  color: #fff8e8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-transform: none;
+}
+.pieza.el:not(.cosa)[data-marca]::before {
+  content: attr(data-marca);
+  display: inline-block;
+  margin-right: 7px;
+  padding: 0 5px;
+  border-radius: 4px;
+  background: rgba(60, 40, 15, 0.16);
+  font: 600 11px / 1.6 var(--font-mono);
+  letter-spacing: 0;
+  color: #6a4a22;
+  vertical-align: middle;
+  white-space: nowrap;
+  text-transform: none;
+}
+.pieza.el.contenedor[data-marca]::before {
+  display: block;
+  width: fit-content;
+  margin: 0 0 6px;
+}
 
 /* a board that holds real elements is a page: dark ink on parchment, wherever it is */
-.board-layer .tablero:has(.pieza.el){font:400 16px/1.35 var(--font-body);color:#2b2015}
-:where(#view-challenge.is-base) .board-layer .pieza.el{box-sizing:content-box}
-:where(#view-challenge.is-base) .board-layer :is(h1,h2,h3).pieza{font-family:inherit;font-weight:700}
+.board-layer .tablero:has(.pieza.el) {
+  font: 400 16px / 1.35 var(--font-body);
+  color: #2b2015;
+}
+:where(#view-challenge.is-base) .board-layer .pieza.el {
+  box-sizing: content-box;
+}
+:where(#view-challenge.is-base) .board-layer :is(h1, h2, h3).pieza {
+  font-family: inherit;
+  font-weight: 700;
+}
 /* `position: fixed` anchors to the board, which plays the window */
-#view-challenge.is-base .board-layer{contain:layout}
+#view-challenge.is-base .board-layer {
+  contain: layout;
+}
 /* a "raw" lesson keeps the browser's own margins, so a reset has something to remove */
-:where(#view-challenge.is-base.crudo) .board-layer .pieza.el{margin:revert}
-:where(#view-challenge.is-base.crudo) .board-layer ul.pieza.el{padding-left:28px}
-:where(#view-challenge.is-base.crudo) .board-layer li.pieza.el{overflow:visible}
+:where(#view-challenge.is-base.crudo) .board-layer .pieza.el {
+  margin: revert;
+}
+:where(#view-challenge.is-base.crudo) .board-layer ul.pieza.el {
+  padding-left: 28px;
+}
+:where(#view-challenge.is-base.crudo) .board-layer li.pieza.el {
+  overflow: visible;
+}
 
 /* the footprint shows the real look, faded; the outline above the player only marks the box */
 /* no filter here: it would turn a faded tower into the anchor of anything fixed inside it */
-#target-layer .pieza.el{opacity:.4;box-shadow:none;animation:none}
-#target-layer .pieza.el .pieza.el{opacity:1}
-#outline-layer .pieza.el{background:none!important;border-color:transparent!important;border-image:none!important;box-shadow:none!important;color:transparent!important;text-shadow:none!important;list-style:none!important;outline:2px dashed var(--huella,rgba(150,255,240,.95));outline-offset:2px}
-#outline-layer .pieza.el .pieza.el{outline-color:#0b6f68}
-#outline-layer .pieza.el::before,#outline-layer .pieza.el::after{visibility:hidden}
-#outline-layer .pieza.el>.pieza{visibility:inherit}
-#outline-layer .pieza.el.matched{opacity:0}
+#target-layer .pieza.el {
+  opacity: 0.4;
+  box-shadow: none;
+  animation: none;
+}
+#target-layer .pieza.el .pieza.el {
+  opacity: 1;
+}
+#outline-layer .pieza.el {
+  background: none !important;
+  border-color: transparent !important;
+  border-image: none !important;
+  box-shadow: none !important;
+  color: transparent !important;
+  text-shadow: none !important;
+  list-style: none !important;
+  outline: 2px dashed var(--huella, rgba(150, 255, 240, 0.95));
+  outline-offset: 2px;
+}
+#outline-layer .pieza.el .pieza.el {
+  outline-color: #0b6f68;
+}
+#outline-layer .pieza.el::before,
+#outline-layer .pieza.el::after {
+  visibility: hidden;
+}
+#outline-layer .pieza.el > .pieza {
+  visibility: inherit;
+}
+#outline-layer .pieza.el.matched {
+  opacity: 0;
+}
 
 /* look at the goal on the board itself */
-.canvas.peek #player-layer,.canvas.peek #outline-layer,.canvas.peek #target-layer{visibility:hidden}
-.canvas.peek #probe-target{opacity:1}
-.canvas.peek .floor{box-shadow:inset 0 0 0 1px rgba(0,0,0,.6),inset 0 0 50px rgba(0,0,0,.5),0 0 0 6px #5a5140,0 0 0 8px #6e5a33,0 0 0 9px var(--gold-bright),0 0 24px 8px rgba(242,210,122,.4),0 20px 34px -8px rgba(0,0,0,.8)}
-.canvas.peek::after{content:'objetivo';position:absolute;right:34px;top:8px;padding:1px 9px;border-radius:99px;background:var(--gold-bright);color:#3a2408;font:600 12px/1.5 var(--font-body);letter-spacing:.04em;text-transform:uppercase}
+.canvas.peek #player-layer,
+.canvas.peek #outline-layer,
+.canvas.peek #target-layer {
+  visibility: hidden;
+}
+.canvas.peek #probe-target {
+  opacity: 1;
+}
+.canvas.peek .floor {
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.6),
+    inset 0 0 50px rgba(0, 0, 0, 0.5),
+    0 0 0 6px #5a5140,
+    0 0 0 8px #6e5a33,
+    0 0 0 9px var(--gold-bright),
+    0 0 24px 8px rgba(242, 210, 122, 0.4),
+    0 20px 34px -8px rgba(0, 0, 0, 0.8);
+}
+.canvas.peek::after {
+  content: "objetivo";
+  position: absolute;
+  right: 34px;
+  top: 8px;
+  padding: 1px 9px;
+  border-radius: 99px;
+  background: var(--gold-bright);
+  color: #3a2408;
+  font: 600 12px / 1.5 var(--font-body);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
 
 /* floors of the isle */
-.floor.t-embarcadero{background-image:url(../../../assets/t-muelle.jpg)}
-.floor.t-patio{background-image:url(../../../assets/m-camino.jpg)}
-.floor.t-tintas{background-image:url(../../../assets/m-marmol.jpg)}
-.floor.t-imprenta{background-image:url(../../../assets/pergamino.jpg);background-size:420px}
-.floor.t-almacen{background-image:url(../../../assets/m-tablones.jpg)}
-.floor.t-canal{background-image:url(../../../assets/m-agua.jpg);animation:fluir2 50s linear infinite}
-.floor.t-farola{background-image:url(../../../assets/m-sillares.jpg)}
-.floor.t-mercado{background-image:url(../../../assets/m-tejas.jpg)}
-.floor.t-invernadero{background-image:url(../../../assets/m-flores.jpg)}
-.floor.t-observatorio{background-image:url(../../../assets/m-roca.jpg)}
-.floor.t-biblioteca{background-image:url(../../../assets/pergamino.jpg);background-size:360px}
-.floor.t-aula{background-image:url(../../../assets/losas.jpg)}
-.floor.t-tintas~#outline-layer,.floor.t-imprenta~#outline-layer,.floor.t-embarcadero~#outline-layer,.floor.t-farola~#outline-layer,.floor.t-patio~#outline-layer,.floor.t-biblioteca~#outline-layer,.floor.t-invernadero~#outline-layer{--huella:#0b6f68}
+.floor.t-embarcadero {
+  background-image: url(../../../assets/t-muelle.jpg);
+}
+.floor.t-patio {
+  background-image: url(../../../assets/m-camino.jpg);
+}
+.floor.t-tintas {
+  background-image: url(../../../assets/m-marmol.jpg);
+}
+.floor.t-imprenta {
+  background-image: url(../../../assets/pergamino.jpg);
+  background-size: 420px;
+}
+.floor.t-almacen {
+  background-image: url(../../../assets/m-tablones.jpg);
+}
+.floor.t-canal {
+  background-image: url(../../../assets/m-agua.jpg);
+  animation: fluir2 50s linear infinite;
+}
+.floor.t-farola {
+  background-image: url(../../../assets/m-sillares.jpg);
+}
+.floor.t-mercado {
+  background-image: url(../../../assets/m-tejas.jpg);
+}
+.floor.t-invernadero {
+  background-image: url(../../../assets/m-flores.jpg);
+}
+.floor.t-observatorio {
+  background-image: url(../../../assets/m-roca.jpg);
+}
+.floor.t-biblioteca {
+  background-image: url(../../../assets/pergamino.jpg);
+  background-size: 360px;
+}
+.floor.t-aula {
+  background-image: url(../../../assets/losas.jpg);
+}
+.floor.t-tintas ~ #outline-layer,
+.floor.t-imprenta ~ #outline-layer,
+.floor.t-embarcadero ~ #outline-layer,
+.floor.t-farola ~ #outline-layer,
+.floor.t-patio ~ #outline-layer,
+.floor.t-biblioteca ~ #outline-layer,
+.floor.t-invernadero ~ #outline-layer {
+  --huella: #0b6f68;
+}
 
 /* the isle's own twists: a rising tide, boiling ink and a lighthouse that sweeps the dark */
-.marea .sand{background:url(../../../assets/m-agua.jpg) center/160px;box-shadow:inset 0 0 40px rgba(10,60,90,.5);animation:fluir 9s linear infinite}
-.tinta .sand{background:radial-gradient(circle at 22% 12px,rgba(255,255,255,.3) 0 5px,transparent 6px) 0 0/58px 100%,radial-gradient(circle at 70% 9px,rgba(255,255,255,.22) 0 4px,transparent 5px) 0 0/83px 100%,linear-gradient(180deg,#7a1f3d,#3a0f2a 60%,#1e0a1c);box-shadow:inset 0 0 40px rgba(0,0,0,.5)}
-.faro-noche .floor{filter:brightness(.3) saturate(.7)}
-.faro-noche #canvas::after{content:'';position:absolute;left:50%;top:50%;width:160%;aspect-ratio:1;translate:-50% -50%;pointer-events:none;border-radius:50%;background:conic-gradient(from 0deg,rgba(255,244,190,.34) 0 16deg,transparent 30deg 330deg,rgba(255,244,190,.34) 344deg);-webkit-mask:radial-gradient(closest-side,#000 8%,rgba(0,0,0,.55) 45%,transparent 72%);mask:radial-gradient(closest-side,#000 8%,rgba(0,0,0,.55) 45%,transparent 72%);mix-blend-mode:screen;animation:girar 6s linear infinite}
-.faro-noche #canvas{overflow:hidden}
+.marea .sand {
+  background: url(../../../assets/m-agua.jpg) center / 160px;
+  box-shadow: inset 0 0 40px rgba(10, 60, 90, 0.5);
+  animation: fluir 9s linear infinite;
+}
+.tinta .sand {
+  background:
+    radial-gradient(circle at 22% 12px, rgba(255, 255, 255, 0.3) 0 5px, transparent 6px) 0 0 / 58px
+    100%,
+    radial-gradient(circle at 70% 9px, rgba(255, 255, 255, 0.22) 0 4px, transparent 5px) 0 0 / 83px
+    100%,
+    linear-gradient(180deg, #7a1f3d, #3a0f2a 60%, #1e0a1c);
+  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.5);
+}
+.faro-noche .floor {
+  filter: brightness(0.3) saturate(0.7);
+}
+.faro-noche #canvas::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 160%;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  pointer-events: none;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    rgba(255, 244, 190, 0.34) 0 16deg,
+    transparent 30deg 330deg,
+    rgba(255, 244, 190, 0.34) 344deg
+  );
+  -webkit-mask: radial-gradient(closest-side, #000 8%, rgba(0, 0, 0, 0.55) 45%, transparent 72%);
+  mask: radial-gradient(closest-side, #000 8%, rgba(0, 0, 0, 0.55) 45%, transparent 72%);
+  mix-blend-mode: screen;
+  animation: girar 6s linear infinite;
+}
+.faro-noche #canvas {
+  overflow: hidden;
+}
 /* the footprint shows when the beam comes round, in step with it */
-.faro-noche.mirage #target-layer,.faro-noche.mirage #outline-layer{animation:haz-huella 6s linear infinite}
-@keyframes haz-huella{0%,100%{opacity:1}12%,88%{opacity:0}}
+.faro-noche.mirage #target-layer,
+.faro-noche.mirage #outline-layer {
+  animation: haz-huella 6s linear infinite;
+}
+@keyframes haz-huella {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  12%,
+  88% {
+    opacity: 0;
+  }
+}
 
 /* the board seen on paper, or by someone who prefers dark */
-.canvas[data-medio=print] .floor{background:#f7f2e6 url(../../../assets/pergamino.jpg) center/420px;animation:none;box-shadow:inset 0 0 0 1px rgba(90,60,20,.5),inset 0 0 30px rgba(120,76,28,.25),0 0 0 6px #cfc3a4,0 0 0 8px #8a7a5a,0 20px 34px -8px rgba(0,0,0,.8)}
-.canvas[data-esquema=dark] .floor{filter:brightness(.42) saturate(.75)}
+.canvas[data-media="print"] .floor {
+  background: #f7f2e6 url(../../../assets/pergamino.jpg) center / 420px;
+  animation: none;
+  box-shadow:
+    inset 0 0 0 1px rgba(90, 60, 20, 0.5),
+    inset 0 0 30px rgba(120, 76, 28, 0.25),
+    0 0 0 6px #cfc3a4,
+    0 0 0 8px #8a7a5a,
+    0 20px 34px -8px rgba(0, 0, 0, 0.8);
+}
+.canvas[data-color-scheme="dark"] .floor {
+  filter: brightness(0.42) saturate(0.75);
+}
 
 /* the selector, when the student writes it */
-.bl-lin.sel-ed{display:flex;align-items:center;gap:.6ch;white-space:normal}
-.code-line.cond.sel{flex:0 1 30ch;min-width:10ch}
-.code-line.sel textarea{outline-color:rgba(232,201,131,.6);background:rgba(232,201,131,.07);caret-color:#e8c983}
-.code-line.sel textarea:focus{outline-color:#e8c983;box-shadow:0 0 0 3px rgba(232,201,131,.16)}
+.bl-lin.sel-ed {
+  display: flex;
+  align-items: center;
+  gap: 0.6ch;
+  white-space: normal;
+}
+.code-line.cond.sel {
+  flex: 0 1 30ch;
+  min-width: 10ch;
+}
+.code-line.sel textarea {
+  outline-color: rgba(232, 201, 131, 0.6);
+  background: rgba(232, 201, 131, 0.07);
+  caret-color: #e8c983;
+}
+.code-line.sel textarea:focus {
+  outline-color: #e8c983;
+  box-shadow: 0 0 0 3px rgba(232, 201, 131, 0.16);
+}
 
 /* the board's markup, next to the theory */
-.marcado{margin:4px 0 12px}
-.marcado h3{font-size:17px;color:#5a3314;margin-bottom:4px}
-.scroll .marcado pre{margin:0;font-size:13px;line-height:1.45;white-space:pre-wrap;overflow-wrap:anywhere;padding-left:calc(12px + 2ch);text-indent:-2ch}
+.marcado {
+  margin: 4px 0 12px;
+}
+.marcado h3 {
+  font-size: 17px;
+  color: #5a3314;
+  margin-bottom: 4px;
+}
+.scroll .marcado pre {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  padding-left: calc(12px + 2ch);
+  text-indent: -2ch;
+}

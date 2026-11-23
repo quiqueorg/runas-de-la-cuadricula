@@ -1,3 +1,104 @@
 import type { SymbolArt } from './symbols';
 
-export const SHELL_SYMBOLS: readonly SymbolArt[] = [{"id":"emblema","x":0,"y":0,"w":120,"h":120,"ops":[{"t":"g","ops":[{"t":"circle","cx":60,"cy":60,"r":53,"paint":{"strokeWidth":2.5}},{"t":"circle","cx":60,"cy":60,"r":46,"paint":{"strokeWidth":1.2,"dash":[2,5.2]}},{"t":"rect","x":33,"y":33,"w":54,"h":54,"paint":{"strokeWidth":2.6},"rx":3},{"t":"path","d":"M51 33v54M69 33v54M33 51h54M33 69h54","paint":{"strokeWidth":1.6}}],"paint":{"fill":"none","stroke":"currentColor"}},{"t":"rect","x":51,"y":51,"w":18,"h":18,"paint":{"fill":"currentColor"}},{"t":"rect","x":33,"y":33,"w":18,"h":18,"paint":{"fill":"currentColor","opacity":0.35}},{"t":"rect","x":69,"y":69,"w":18,"h":18,"paint":{"fill":"currentColor","opacity":0.35}},{"t":"path","d":"M60 2l5 9h-10zM60 118l5-9h-10zM2 60l9 5v-10zM118 60l-9 5v-10z","paint":{"fill":"currentColor"}}]},{"id":"i-sonido","x":0,"y":0,"w":24,"h":24,"ops":[{"t":"path","d":"M4 9h4l5-4v14l-5-4H4z","paint":{"fill":"currentColor"}},{"t":"path","d":"M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12","paint":{"fill":"none","stroke":"currentColor","strokeWidth":1.8,"lineCap":"round"}}]},{"id":"i-mudo","x":0,"y":0,"w":24,"h":24,"ops":[{"t":"path","d":"M4 9h4l5-4v14l-5-4H4z","paint":{"fill":"currentColor"}},{"t":"path","d":"M16 9l5 6M21 9l-5 6","paint":{"fill":"none","stroke":"currentColor","strokeWidth":1.8,"lineCap":"round"}}]},{"id":"i-musica","x":0,"y":0,"w":24,"h":24,"ops":[{"t":"path","d":"M9 18V5l11-2v13","paint":{"fill":"none","stroke":"currentColor","strokeWidth":1.9,"lineJoin":"round"}},{"t":"circle","cx":6.5,"cy":18,"r":2.6,"paint":{"fill":"currentColor"}},{"t":"circle","cx":17.5,"cy":16,"r":2.6,"paint":{"fill":"currentColor"}}]},{"id":"i-musica-no","x":0,"y":0,"w":24,"h":24,"ops":[{"t":"path","d":"M9 18V5l11-2v13","paint":{"fill":"none","stroke":"currentColor","strokeWidth":1.9,"lineJoin":"round","opacity":0.55}},{"t":"circle","cx":6.5,"cy":18,"r":2.6,"paint":{"fill":"currentColor","opacity":0.55}},{"t":"circle","cx":17.5,"cy":16,"r":2.6,"paint":{"fill":"currentColor","opacity":0.55}},{"t":"path","d":"M3 3l18 18","paint":{"stroke":"currentColor","strokeWidth":2,"lineCap":"round"}}]}];
+export const SHELL_SYMBOLS: readonly SymbolArt[] = [
+  {
+    id: 'emblema',
+    x: 0,
+    y: 0,
+    w: 120,
+    h: 120,
+    ops: [
+      {
+        t: 'g',
+        ops: [
+          { t: 'circle', cx: 60, cy: 60, r: 53, paint: { strokeWidth: 2.5 } },
+          { t: 'circle', cx: 60, cy: 60, r: 46, paint: { strokeWidth: 1.2, dash: [2, 5.2] } },
+          { t: 'rect', x: 33, y: 33, w: 54, h: 54, paint: { strokeWidth: 2.6 }, rx: 3 },
+          { t: 'path', d: 'M51 33v54M69 33v54M33 51h54M33 69h54', paint: { strokeWidth: 1.6 } },
+        ],
+        paint: { fill: 'none', stroke: 'currentColor' },
+      },
+      { t: 'rect', x: 51, y: 51, w: 18, h: 18, paint: { fill: 'currentColor' } },
+      { t: 'rect', x: 33, y: 33, w: 18, h: 18, paint: { fill: 'currentColor', opacity: 0.35 } },
+      { t: 'rect', x: 69, y: 69, w: 18, h: 18, paint: { fill: 'currentColor', opacity: 0.35 } },
+      {
+        t: 'path',
+        d: 'M60 2l5 9h-10zM60 118l5-9h-10zM2 60l9 5v-10zM118 60l-9 5v-10z',
+        paint: { fill: 'currentColor' },
+      },
+    ],
+  },
+  {
+    id: 'i-sonido',
+    x: 0,
+    y: 0,
+    w: 24,
+    h: 24,
+    ops: [
+      { t: 'path', d: 'M4 9h4l5-4v14l-5-4H4z', paint: { fill: 'currentColor' } },
+      {
+        t: 'path',
+        d: 'M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12',
+        paint: { fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, lineCap: 'round' },
+      },
+    ],
+  },
+  {
+    id: 'i-mudo',
+    x: 0,
+    y: 0,
+    w: 24,
+    h: 24,
+    ops: [
+      { t: 'path', d: 'M4 9h4l5-4v14l-5-4H4z', paint: { fill: 'currentColor' } },
+      {
+        t: 'path',
+        d: 'M16 9l5 6M21 9l-5 6',
+        paint: { fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, lineCap: 'round' },
+      },
+    ],
+  },
+  {
+    id: 'i-musica',
+    x: 0,
+    y: 0,
+    w: 24,
+    h: 24,
+    ops: [
+      {
+        t: 'path',
+        d: 'M9 18V5l11-2v13',
+        paint: { fill: 'none', stroke: 'currentColor', strokeWidth: 1.9, lineJoin: 'round' },
+      },
+      { t: 'circle', cx: 6.5, cy: 18, r: 2.6, paint: { fill: 'currentColor' } },
+      { t: 'circle', cx: 17.5, cy: 16, r: 2.6, paint: { fill: 'currentColor' } },
+    ],
+  },
+  {
+    id: 'i-musica-no',
+    x: 0,
+    y: 0,
+    w: 24,
+    h: 24,
+    ops: [
+      {
+        t: 'path',
+        d: 'M9 18V5l11-2v13',
+        paint: {
+          fill: 'none',
+          stroke: 'currentColor',
+          strokeWidth: 1.9,
+          lineJoin: 'round',
+          opacity: 0.55,
+        },
+      },
+      { t: 'circle', cx: 6.5, cy: 18, r: 2.6, paint: { fill: 'currentColor', opacity: 0.55 } },
+      { t: 'circle', cx: 17.5, cy: 16, r: 2.6, paint: { fill: 'currentColor', opacity: 0.55 } },
+      {
+        t: 'path',
+        d: 'M3 3l18 18',
+        paint: { stroke: 'currentColor', strokeWidth: 2, lineCap: 'round' },
+      },
+    ],
+  },
+];

@@ -273,9 +273,6 @@
   );
   animation: relampago 0.7s ease-out forwards;
 }
-#board-zone {
-  position: relative;
-}
 .jefe-barra.golpeado .portrait,
 #board-zone.golpe-heroe ~ #theory-zone .jefe-barra .portrait {
   animation: temblor 0.6s ease-in-out;

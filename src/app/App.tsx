@@ -7,6 +7,7 @@ import { currentWorld } from '../core/progress/queries';
 import { resetProgress, useProgress } from '../core/progress/store';
 import { Home } from '../features/home';
 import { type AppDialog, Dialogs } from './Dialogs';
+import { useArrivalScroll } from './useArrivalScroll';
 
 const MapScreen = lazy(() => import('../features/map').then((mod) => ({ default: mod.MapScreen })));
 const Lesson = lazy(() =>
@@ -30,6 +31,8 @@ export function App() {
   const progress = useProgress();
   const [dialog, setDialog] = useState<AppDialog | null>(null);
   const close = useCallback(() => setDialog(null), []);
+
+  useArrivalScroll(hash);
 
   // Any navigation dismisses the dialog that led to it.
   // biome-ignore lint/correctness/useExhaustiveDependencies: the hash is the trigger, not an input.

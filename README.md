@@ -120,7 +120,7 @@ __runas.rellenar('b4-7'); // abre un ejercicio y escribe su solución
 
 ## Partidas guardadas
 
-Se guardan en `localStorage` con la clave `runas-cuadricula-v1`, y en la nube cuando el entorno la ofrece. El documento guardado (`StoredProgress` en `src/core/progress/storage.ts`) es un contrato: sus campos y los ids de mundo guardados (`base`, `cielo`, `final`…) no cambian. El juego lo lee y lo escribe a través de `fromStored` y `toStored`; si su forma cambia, hace falta una migración en `migrate()`.
+Se guardan en `localStorage` con la clave `runas-cuadricula-v1`, y en la nube cuando el entorno la ofrece. El documento guardado (`StoredProgress` en `src/core/progress/storage.ts`) lleva una versión (`VERSION`) y el juego solo lee partidas de la versión actual: las anteriores se descartan, no se migran. Si cambia su forma, cómo se escribe un campo o algún id de lección, se sube `VERSION`. El mundo se guarda con su id actual (`isle`, `grid`, `flex`, `sky`, `finale`). El juego lo lee y lo escribe a través de `fromStored` y `toStored`.
 
 ## Publicación
 

@@ -1,6 +1,7 @@
 /** Title screen markup. */
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { WorldId } from '../../core/models';
+import { useFocusOnMount } from '../../shared/focus/useFocusOnMount';
 import { Rune } from '../../shared/icons/Rune';
 import { MusicToggle } from '../settings/MusicToggle';
 import type { AdventureCard } from './model';
@@ -23,6 +24,8 @@ export function HomeView({
   readonly onNewGame: () => void;
   readonly onToggleSound: () => void;
 }) {
+  const heading = useRef<HTMLHeadingElement>(null);
+  useFocusOnMount(heading);
   const [motes] = useState(() =>
     Array.from({ length: MOTE_COUNT }, (_, id) => ({
       id,
@@ -52,7 +55,7 @@ export function HomeView({
       </div>
       <div className="game-header">
         <Rune id="emblema" className="emblem" title="Runas de la Cuadrícula" />
-        <h1 className="logo">
+        <h1 className="logo" ref={heading} tabIndex={-1}>
           <span className="l1">Runas de la</span>
           <span className="l2">Cuadrícula</span>
         </h1>

@@ -8,7 +8,7 @@ A Spanish-language game that teaches CSS. React 19, Vite and TypeScript, linted 
 - CSS classes a player reads or writes stay Spanish (`.tablero`, `.pieza`, `.activo`, piece types such as `huerto`): they are lesson content, not identifiers. So do public URLs (`#mapa`, `#prueba-<id>`).
 - A lesson `id` is the key of every saved game. Never renumber or reuse one; append new lessons at the end of their region and move the region's `farewell` to the new last lesson.
 - The Grid world (`src/core/data/grid.ts`) and the Flexbox world (`flex.ts`) stay pure: no lesson there may ask for the other technique. Mixed lessons belong in `sky.ts` or `finale.ts`; CSS fundamentals in `isle.ts`.
-- The saved-game document (`StoredProgress` in `src/core/progress/storage.ts`) is a compatibility contract: its field names and world ids are frozen. The game reads it through `fromStored`/`toStored`; a change of shape needs a migration in `migrate()`.
+- The saved-game document (`StoredProgress` in `src/core/progress/storage.ts`) is read through `fromStored`/`toStored`, and only at the current `VERSION`: older saves are discarded, never migrated. Any change to its shape, to how a field is written or to lesson ids bumps `VERSION`. The world is stored as the current `WorldId`.
 - Animate only `transform` and `opacity`; the game teaches that rule.
 
 ## Code conventions

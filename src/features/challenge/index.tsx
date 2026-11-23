@@ -27,6 +27,7 @@ import type { StatusLine } from './evaluate';
 import { failedDelivery, passedDelivery } from './exam';
 import { playChimes, playMatched, playVictory } from './feedback';
 import { useBoard } from './hooks/useBoard';
+import { useBoardFold } from './hooks/useBoardFold';
 import { useClock } from './hooks/useClock';
 import { useRuneInsertion } from './hooks/useRuneInsertion';
 import { type TabletField, useTablet } from './hooks/useTablet';
@@ -130,6 +131,7 @@ export function Challenge({ level, onVictory }: ChallengeProps) {
     active,
   );
   const { evaluation } = board;
+  const fold = useBoardFold(board.refs.root);
   const won = level.exam ? delivery?.tone === 'bien' : Boolean(evaluation?.solved);
 
   // Pieces that just fell into place make a sound.
@@ -166,6 +168,7 @@ export function Challenge({ level, onVictory }: ChallengeProps) {
 
   const editAndStart = (field: TabletField, index: number, value: string) => {
     start();
+    fold.setFolded(false);
     edit(field, index, value);
   };
   const runes = useRuneInsertion(board.refs.root, editAndStart);
@@ -175,6 +178,8 @@ export function Challenge({ level, onVictory }: ChallengeProps) {
   const deliver = () => {
     const exam = evaluation?.exam;
     if (!exam) return;
+    // The verdict is shown on the board: pieces out of place flash.
+    fold.setFolded(false);
     if (exam.solved) {
       setDelivery(passedDelivery(level));
       if (level.boss) {
@@ -232,6 +237,11 @@ export function Challenge({ level, onVictory }: ChallengeProps) {
           flashing={flashing}
           sparks={sparks}
           blow={blow}
+          folded={fold.folded}
+          onFold={(next) => {
+            sound.click();
+            fold.setFolded(next);
+          }}
           onGuides={(on) => changeSettings({ guides: on })}
           onPeek={(on) => {
             sound.click();

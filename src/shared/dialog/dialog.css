@@ -15,6 +15,9 @@
   text-align: center;
 }
 .dialog-card:modal {
+  /* `.panel` makes it relative, which the top layer turns into absolute: the dialog would centre on
+     the top of the page instead of the screen, out of sight once the page is scrolled. */
+  position: fixed;
   /* The panel's diamond sits above its top edge; the browser's default would clip it. */
   overflow: visible;
   overscroll-behavior: contain;

@@ -1,23 +1,17 @@
 /**
  * The saved-game document and its translation to `Progress`.
  *
- * The stored shape below is a compatibility contract: it lives in every player's localStorage and in
- * their cloud copy. Never rename or retype its fields; add a migration in `migrate()` instead.
+ * The stored shape lives in every player's localStorage and in their cloud copy. Only documents of
+ * the current `VERSION` are read; older saves are discarded, never migrated. Any change to the
+ * shape, to how a field is written or to lesson ids bumps `VERSION`.
+ *
+ * Version 3 stores the world as the current `WorldId` (version 2 wrote `base`, `cielo`, `final`).
  */
 import { isWorldId, type WorldId } from '../models';
 import { EMPTY_PROGRESS, type LessonResult, type Progress } from './types';
 
 export const STORAGE_KEY = 'runas-cuadricula-v1';
-const VERSION = 2;
-
-/** World ids as they were first saved. */
-const STORED_WORLD: Record<WorldId, string> = {
-  isle: 'base',
-  grid: 'grid',
-  flex: 'flex',
-  sky: 'cielo',
-  finale: 'final',
-};
+const VERSION = 3;
 
 interface StoredResult {
   /** mastered */
@@ -39,7 +33,7 @@ export interface StoredProgress {
   musica: boolean;
   secretos: Record<string, boolean>;
   vistas: Record<string, boolean>;
-  mundo?: string;
+  mundo?: WorldId;
   t: number;
 }
 
@@ -72,49 +66,23 @@ const readCode = (value: unknown): string[] | null =>
 const readNumber = (value: unknown): number | null => (typeof value === 'number' ? value : null);
 const readFlag = (value: unknown): boolean | null => (typeof value === 'boolean' ? value : null);
 
-function readWorld(value: unknown): WorldId | undefined {
-  const found = Object.entries(STORED_WORLD).find(([, stored]) => stored === value)?.[0];
-  return isWorldId(found) ? found : undefined;
-}
-
-/** Version 1 saves numbered the grid world's last region 7; it became 9. */
-function migrateV1(raw: Record<string, unknown>): Record<string, unknown> {
-  const rename = (key: string) => (/^7-[1-5]$/.test(key) ? `9-${key.slice(2)}` : key);
-  const renameKeys = (value: unknown) =>
-    isRecord(value)
-      ? Object.fromEntries(Object.entries(value).map(([key, entry]) => [rename(key), entry]))
-      : value;
-  return {
-    ...raw,
-    v: VERSION,
-    hechos: renameKeys(raw.hechos),
-    codigo: renameKeys(raw.codigo),
-    actual: typeof raw.actual === 'string' ? rename(raw.actual) : raw.actual,
-  };
-}
-
-function migrate(raw: Record<string, unknown>): Record<string, unknown> {
-  return typeof raw.v === 'number' && raw.v >= VERSION ? raw : migrateV1(raw);
-}
-
 /** Reads a stored document (local or cloud). Returns null when there is nothing usable. */
 export function fromStored(value: unknown): Progress | null {
-  if (!isRecord(value)) return null;
-  const raw = migrate(value);
+  if (!isRecord(value) || value.v !== VERSION) return null;
   return {
-    currentLessonId: typeof raw.actual === 'string' ? raw.actual : null,
-    world: readWorld(raw.mundo),
-    results: recordOf(raw.hechos, readResult),
-    code: recordOf(raw.codigo, readCode),
-    failedAttempts: recordOf(raw.intentos, readNumber),
-    foundSecrets: recordOf(raw.secretos, readFlag),
-    seenRegions: recordOf(raw.vistas, readFlag),
+    currentLessonId: typeof value.actual === 'string' ? value.actual : null,
+    world: isWorldId(value.mundo) ? value.mundo : undefined,
+    results: recordOf(value.hechos, readResult),
+    code: recordOf(value.codigo, readCode),
+    failedAttempts: recordOf(value.intentos, readNumber),
+    foundSecrets: recordOf(value.secretos, readFlag),
+    seenRegions: recordOf(value.vistas, readFlag),
     settings: {
-      sound: raw.sonido !== false,
-      music: raw.musica !== false,
-      guides: raw.lineas !== false,
+      sound: value.sonido !== false,
+      music: value.musica !== false,
+      guides: value.lineas !== false,
     },
-    updatedAt: typeof raw.t === 'number' ? raw.t : 0,
+    updatedAt: typeof value.t === 'number' ? value.t : 0,
   };
 }
 
@@ -140,7 +108,7 @@ export function toStored(progress: Progress): StoredProgress {
     musica: progress.settings.music,
     secretos: { ...progress.foundSecrets },
     vistas: { ...progress.seenRegions },
-    ...(progress.world ? { mundo: STORED_WORLD[progress.world] } : {}),
+    ...(progress.world ? { mundo: progress.world } : {}),
     t: progress.updatedAt,
   };
 }

@@ -990,7 +990,9 @@
   );
 }
 .victory.dialog-card {
-  overflow: hidden;
+  /* On a short screen the card is taller than the room it has: it scrolls instead of losing its
+     buttons. */
+  overflow: hidden auto;
   animation: emerger 0.6s cubic-bezier(0.2, 1.4, 0.4, 1);
 }
 .victory .emblem {
@@ -1001,7 +1003,15 @@
   color: var(--accent);
   filter: drop-shadow(0 0 12px rgba(114, 242, 224, 0.95));
 }
+/* The rays are clipped to the card here, so they never make the card scroll. */
 .sunburst {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.sunburst::before {
+  content: "";
   position: absolute;
   left: 50%;
   top: 70px;
@@ -1016,7 +1026,6 @@
   -webkit-mask: radial-gradient(circle, #000 10%, transparent 62%);
   mask: radial-gradient(circle, #000 10%, transparent 62%);
   animation: girar 18s linear infinite;
-  pointer-events: none;
 }
 .victory h3 {
   position: relative;
@@ -1088,6 +1097,22 @@
   #theory-zone {
     margin-top: 10px;
   }
+  /* Reading a long lesson scrolls the page; the code stays in sight beside the board. A tall
+     tablet keeps its header and scrolls its body, so its messages are never out of reach. */
+  #editor-zone {
+    position: sticky;
+    top: 80px;
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100dvh - 96px);
+  }
+  .tablet-body {
+    min-height: 0;
+    overflow-y: auto;
+    /* Room for focus rings, which the scrolling box would clip. */
+    margin: -4px;
+    padding: 4px;
+  }
 }
 /* ───────── mobile: board pinned on top ───────── */
 @media (max-width: 900px) {
@@ -1130,6 +1155,45 @@
   .code-line textarea {
     scroll-margin-top: calc(var(--board-h, 40vh) + 70px);
     scroll-margin-bottom: 24px;
+  }
+}
+/* ───────── mobile, board pinned: it folds away to leave room to read ───────── */
+.fold-button {
+  display: none;
+}
+@media (max-width: 900px) and (min-height: 441px) {
+  .fold-button {
+    display: inline-flex;
+  }
+  .fold-button .rune {
+    transform: rotate(-90deg);
+  }
+  #board-zone.folded .fold-button .rune {
+    transform: rotate(90deg);
+  }
+  /* Folded, not removed: the evaluation keeps measuring the pieces, so they stay laid out.
+     visibility also takes them out of the accessibility tree. */
+  #board-zone.folded #stage-frame {
+    height: 0;
+    overflow: clip;
+    visibility: hidden;
+  }
+  #board-zone.folded .switch,
+  #board-zone.folded .state-button,
+  #board-zone.folded .board-notice,
+  #board-zone.folded .legend {
+    display: none;
+  }
+}
+/* A phone on its side: a pinned board would leave a sliver to read and type in, so it scrolls.
+   Taller screens keep it pinned, and the player can fold it. Wide layouts give it its own column. */
+@media (max-width: 900px) and (max-height: 440px) {
+  #board-zone {
+    position: relative;
+    top: auto;
+  }
+  .code-line textarea {
+    scroll-margin-top: 70px;
   }
 }
 @media (prefers-reduced-motion: reduce) {

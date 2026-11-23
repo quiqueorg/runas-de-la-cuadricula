@@ -192,35 +192,38 @@ export function TabletPanel(props: TabletPanelProps) {
           </button>
         </div>
       </div>
-      {props.hint.open && <HintBox {...props} />}
-      {chrome.runes.length > 0 && (
-        <div className="runas-perm">
-          <span className="rp-et">Runas permitidas</span>
-          <span>
-            {chrome.runes.map((property) => (
-              <button
-                key={property}
-                type="button"
-                className="chip"
-                title={`Insertar ${property}`}
-                onClick={() => props.onInsertRune(property)}
-              >
-                {property}
-              </button>
-            ))}
-          </span>
-        </div>
-      )}
-      <CodeSurface {...props} />
-      <div className="status-list" aria-live="polite">
-        {props.messages.map((line) => (
-          <div key={`${line.tone}:${line.html}`} className={`msg ${line.tone}`}>
-            <Rune id={line.icon} />
+      {/* Scrolls on its own where the tablet is pinned beside the board (see challenge.css). */}
+      <div className="tablet-body">
+        {props.hint.open && <HintBox {...props} />}
+        {chrome.runes.length > 0 && (
+          <div className="runas-perm">
+            <span className="rp-et">Runas permitidas</span>
             <span>
-              <RichText html={line.html} onAction={onAction} />
+              {chrome.runes.map((property) => (
+                <button
+                  key={property}
+                  type="button"
+                  className="chip"
+                  title={`Insertar ${property}`}
+                  onClick={() => props.onInsertRune(property)}
+                >
+                  {property}
+                </button>
+              ))}
             </span>
           </div>
-        ))}
+        )}
+        <CodeSurface {...props} />
+        <div className="status-list" aria-live="polite">
+          {props.messages.map((line) => (
+            <div key={`${line.tone}:${line.html}`} className={`msg ${line.tone}`}>
+              <Rune id={line.icon} />
+              <span>
+                <RichText html={line.html} onAction={onAction} />
+              </span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

@@ -32,6 +32,9 @@ export interface BoardPanelProps {
   readonly flashing: ReadonlySet<number>;
   readonly sparks: readonly Spark[];
   readonly blow: string;
+  /** The stage is folded away, leaving the controls. Only honoured while the board is pinned. */
+  readonly folded: boolean;
+  readonly onFold: (folded: boolean) => void;
   readonly onGuides: (on: boolean) => void;
   readonly onPeek: (on: boolean) => void;
   readonly onView: (index: number) => void;
@@ -190,6 +193,18 @@ function Controls(props: BoardPanelProps) {
       <span className="board-notice" hidden={!evaluation?.guides.notice}>
         {chrome.notice}
       </span>
+      {/* A disclosure: its name stays put and aria-expanded tells the state. Shown only where the
+          board is pinned over the page (see challenge.css). */}
+      <button
+        className="button small fold-button"
+        type="button"
+        aria-expanded={!props.folded}
+        aria-controls="stage-frame"
+        onClick={() => props.onFold(!props.folded)}
+      >
+        <Rune id="i-adelante" />
+        <span>Tablero</span>
+      </button>
     </div>
   );
 }
@@ -224,7 +239,10 @@ function Legend({
 
 export function BoardPanel(props: BoardPanelProps) {
   return (
-    <div id="board-zone" className={`panel ${props.blow}`.trim()}>
+    <div
+      id="board-zone"
+      className={['panel', props.folded && 'folded', props.blow].filter(Boolean).join(' ')}
+    >
       <Stage {...props} />
       <Controls {...props} />
       <Legend evaluation={props.evaluation} guidesOn={props.guidesOn} />

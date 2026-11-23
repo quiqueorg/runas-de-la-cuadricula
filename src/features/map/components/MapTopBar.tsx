@@ -1,3 +1,5 @@
+import { useRef } from 'react';
+import { useFocusOnMount } from '../../../shared/focus/useFocusOnMount';
 import { Rune } from '../../../shared/icons/Rune';
 import { MusicToggle } from '../../settings/MusicToggle';
 import { INDEX_PANEL_ID } from './LessonIndexPanel';
@@ -15,6 +17,8 @@ export function MapTopBar({
   readonly onHome: () => void;
   readonly onToggleIndex: () => void;
 }) {
+  const heading = useRef<HTMLHeadingElement>(null);
+  useFocusOnMount(heading);
   return (
     <header className="top-bar">
       <button className="button icon-text" type="button" onClick={onHome}>
@@ -23,7 +27,9 @@ export function MapTopBar({
       </button>
       <div className="top-bar-title">
         <span className="region-kicker">{subtitle}</span>
-        <h2>{title}</h2>
+        <h2 ref={heading} tabIndex={-1}>
+          {title}
+        </h2>
       </div>
       <div className="bar-nav">
         <MusicToggle />

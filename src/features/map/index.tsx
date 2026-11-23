@@ -1,113 +1,168 @@
-/** Map screen: reduce clicks, then draw the scene. */
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { navigate } from '../../core/navigation';
-import { session } from '../../core/session';
-import { progress, saveProgress } from '../../core/state';
-import { useGame } from '../../core/useGame';
+/** A world's map: the chart, its inhabitants, the region cards and the lesson index. */
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { REGION_OFFSET, regions, routes } from '../../core/catalog';
+import type { WorldId } from '../../core/models';
+import { goHome, goToLesson } from '../../core/navigation';
+import { currentWorld, frontierLevel, isDiscovered } from '../../core/progress/queries';
+import { findSecret, getProgress, markRegionSeen, useProgress } from '../../core/progress/store';
 import { music, sound } from '../../shared/audio/audio';
-import { registerSymbols } from '../../shared/icons/registry';
 import { isleSymbols } from '../../shared/icons/isleSymbols';
+import { registerSymbols } from '../../shared/icons/registry';
 import { SYMBOLS } from '../../shared/icons/symbols';
-import { BASE_OFFSET } from '../../core/catalog';
-import { initialMapUi, type MapAction, type MapHit, type SecretNotice } from './actions';
+import { allRegions } from './geometry';
+import { greeters } from './inhabitants';
 import { MapView } from './MapView';
-import { armSpin, greetKeys, mapScene, mapTheme, reduceMap, regionsToMark, ripplePercent } from './model';
+import { mapScene } from './scene';
+import {
+  chartPercent,
+  initialMapUi,
+  type MapAction,
+  type MapEffect,
+  type MapUi,
+  reduceMap,
+  type SecretNotice,
+} from './state';
 
 registerSymbols(SYMBOLS);
-registerSymbols(isleSymbols(BASE_OFFSET));
+registerSymbols(isleSymbols(REGION_OFFSET.isle));
 
 export type { SecretNotice };
 
-export function MapViewScreen({ onSecret }: { readonly onSecret: (secret: SecretNotice) => void }) {
-  useGame();
-  const world = session.world;
-  const [ui, setUi] = useState(initialMapUi);
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const greeted = useRef(false);
-  const rippleSeq = useRef(0);
-  const uiRef = useRef(ui);
-  uiRef.current = ui;
+const RIPPLE_MS = 1200;
+/** A character greets the player if nobody has been clicked by then. */
+const GREETING_MS = 4500;
 
-  const apply = (action: MapAction) => {
-    const step = reduceMap(uiRef.current, action, world);
-    uiRef.current = step.ui;
+/** The music of the region the player is heading to. */
+function mapScore(world: WorldId): string {
+  const frontier = frontierLevel(getProgress(), world) ?? routes[world][0];
+  return (frontier && regions[frontier.region]?.terrain) || 'inicio';
+}
+
+/** Marks newly discovered regions as seen, with a fanfare for any beyond the first. */
+function useDiscoveries(world: WorldId): void {
+  useEffect(() => {
+    const progress = getProgress();
+    const fresh = allRegions.filter(
+      (region) =>
+        region.world === world &&
+        isDiscovered(progress, region.index) &&
+        !progress.seenRegions[region.index],
+    );
+    for (const region of fresh) markRegionSeen(region.index);
+    if (fresh.some((region) => region.index > 0)) sound.discover();
+  }, [world]);
+}
+
+/** Keeps the "you are here" mark in the middle of the scrolling chart. */
+function useCenterOnExplorer(scroller: React.RefObject<HTMLDivElement | null>, key: unknown): void {
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `key` says when to re-centre.
+  useLayoutEffect(() => {
+    const frame = scroller.current;
+    const explorer = frame?.querySelector('.explorer');
+    if (!frame || !(explorer instanceof HTMLElement)) return;
+    const mark = explorer.getBoundingClientRect();
+    const box = frame.getBoundingClientRect();
+    frame.scrollLeft += mark.left - box.left - box.width / 2;
+    frame.scrollTop += mark.top - box.top - box.height / 2;
+  }, [scroller, key]);
+}
+
+/**
+ * The map's state with synchronous reads: effects that dispatch later (a ripple fading, the compass
+ * spinning on the next frame) must reduce the latest state, not the one of their render.
+ */
+function useMapUi(): [MapUi, (action: MapAction) => MapEffect] {
+  const [ui, setUi] = useState(initialMapUi);
+  const latest = useRef(ui);
+  const dispatch = useCallback((action: MapAction) => {
+    const step = reduceMap(latest.current, action, getProgress());
+    latest.current = step.ui;
     setUi(step.ui);
-    const effect = step.effect;
-    if (action.type === 'hit' && action.hit.kind === 'compass') {
-      requestAnimationFrame(() => {
-        const next = armSpin(uiRef.current);
-        uiRef.current = next;
-        setUi(next);
-      });
-    }
-    if (effect.type === 'sound') sound[effect.name]();
-    else if (effect.type === 'talk') sound.charla(effect.animal);
-    else if (effect.type === 'navigate') { sound.clic(); navigate(effect.hash); }
-    else if (effect.type === 'secret') { saveProgress(true); sound.secreto(); onSecret(effect.notice); }
-    else if (effect.type === 'schedule-ripple') {
-      sound.gota();
-      const id = effect.id;
-      window.setTimeout(() => {
-        const next = reduceMap(uiRef.current, { type: 'drop-ripple', id }, world).ui;
-        uiRef.current = next;
-        setUi(next);
-      }, 1200);
-    }
+    return step.effect;
+  }, []);
+  return [ui, dispatch];
+}
+
+export interface MapScreenProps {
+  readonly onSecret: (secret: SecretNotice) => void;
+}
+
+export function MapScreen({ onSecret }: MapScreenProps) {
+  const progress = useProgress();
+  const world = currentWorld(progress);
+  const [ui, dispatch] = useMapUi();
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const nextRipple = useRef(0);
+
+  const openLesson = (id: string) => {
+    sound.click();
+    goToLesson(id);
   };
 
-  useEffect(() => {
-    music.escala(mapTheme(world));
-    const fresh = regionsToMark(world);
-    if (fresh.ids.length) {
-      fresh.ids.forEach((id) => { progress.vistas[id] = true; });
-      saveProgress();
-      if (fresh.fanfare) sound.descubrir();
+  const run = (effect: MapEffect) => {
+    switch (effect.type) {
+      case 'sound':
+        sound[effect.name]();
+        break;
+      case 'talk':
+        sound.chatter(effect.voice);
+        break;
+      case 'open-lesson':
+        openLesson(effect.id);
+        break;
+      case 'secret':
+        findSecret(effect.notice.id);
+        sound.secret();
+        onSecret(effect.notice);
+        break;
+      case 'ripple':
+        sound.drop();
+        window.setTimeout(() => dispatch({ type: 'drop-ripple', id: effect.id }), RIPPLE_MS);
+        break;
+      case 'spin-compass':
+        sound.click();
+        requestAnimationFrame(() => dispatch({ type: 'spin', on: true }));
+        break;
+      case 'none':
+        break;
     }
-  }, [world]);
-
-  useLayoutEffect(() => {
-    const scroller = scrollRef.current;
-    const explorer = scroller?.querySelector('.explorer');
-    if (!scroller || !(explorer instanceof HTMLElement)) return;
-    const mark = explorer.getBoundingClientRect();
-    const frame = scroller.getBoundingClientRect();
-    scroller.scrollLeft += mark.left - frame.left - frame.width / 2;
-    scroller.scrollTop += mark.top - frame.top - frame.height / 2;
-  }, [world, progress.actual]);
+  };
+  const act = (action: MapAction) => run(dispatch(action));
 
   useEffect(() => {
-    if (greeted.current) return;
-    const timer = window.setTimeout(() => {
-      greeted.current = true;
-      const keys = greetKeys(world);
-      const key = keys[Math.floor(Math.random() * keys.length)];
-      if (key && !uiRef.current.joke) apply({ type: 'greet', key });
-    }, 4500);
-    return () => window.clearTimeout(timer);
+    music.setScene(mapScore(world));
   }, [world]);
+  useDiscoveries(world);
+  useCenterOnExplorer(scrollRef, `${world}:${progress.currentLessonId}`);
 
-  const scene = mapScene(world, ui);
-  const onHit = (hit: MapHit) => apply({ type: 'hit', hit, rippleId: 0 });
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      const keys = greeters(world);
+      const key = keys[Math.floor(Math.random() * keys.length)];
+      if (key) dispatch({ type: 'greet', key });
+    }, GREETING_MS);
+    return () => window.clearTimeout(timer);
+  }, [world, dispatch]);
+
   return (
     <MapView
-      scene={scene}
+      scene={mapScene(world, ui, progress)}
       scrollRef={scrollRef}
-      onHit={onHit}
-      onGround={(x, y, width, height, left, top) => {
-        const id = rippleSeq.current++;
-        const point = ripplePercent(x, y, left, top, width, height);
-        apply({ type: 'hit', hit: { kind: 'ground', x: point.x, y: point.y }, rippleId: id });
+      onHit={(hit) => act({ type: 'hit', hit })}
+      onGround={(clientX, clientY, chart) => {
+        const { x, y } = chartPercent(clientX, clientY, chart);
+        act({ type: 'hit', hit: { kind: 'ground', x, y, rippleId: nextRipple.current++ } });
       }}
-      onHome={() => navigate('inicio')}
-      onToggleIndex={() => apply({ type: 'toggle-index' })}
-      onCloseIndex={() => apply({ type: 'close-index' })}
-      onQuery={(value) => apply({ type: 'query', value })}
-      onStatus={(value) => apply({ type: 'status', value })}
-      onTag={(tag) => apply({ type: 'toggle-tag', tag })}
-      onClearFilters={() => apply({ type: 'clear-filters' })}
-      onSpinDone={() => apply({ type: 'spin-done' })}
-      onCloseCard={() => apply({ type: 'close-card' })}
-      onOpen={(id) => { sound.clic(); navigate(`prueba-${id}`); }}
+      onHome={goHome}
+      onToggleIndex={() => act({ type: 'toggle-index' })}
+      onCloseIndex={() => act({ type: 'close-index' })}
+      onQuery={(value) => act({ type: 'query', value })}
+      onStatus={(value) => act({ type: 'status', value })}
+      onTag={(tag) => act({ type: 'toggle-tag', tag })}
+      onClearFilters={() => act({ type: 'clear-filters' })}
+      onSpinDone={() => act({ type: 'spin', on: false })}
+      onCloseCard={() => act({ type: 'close-card' })}
+      onOpen={openLesson}
     />
   );
 }

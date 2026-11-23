@@ -1,16 +1,90 @@
 /* ═══════════ v7: the underground (Flexbox) ═══════════ */
 /* tamaños por defecto de las pieces en flex (especificidad cero: cualquier regla del jugador manda) */
-:where(#view-challenge.is-flex .board-layer .tablero > .pieza:not(.cartel)){width:64px;height:64px}
-:where(#view-challenge.is-flex .board-layer .pieza .pieza){width:40px;height:40px;padding:3px}
-.board-layer .pieza.contenedor{display:block;flex-direction:row;justify-content:normal;align-items:normal;gap:0;width:auto;height:auto;padding:24px 8px 8px;overflow:visible}
-:where(#view-challenge.is-flex .board-layer .tablero > .pieza.contenedor){width:auto;height:auto}
-#view-challenge.is-flex .pieza.contenedor>.ic{position:absolute;left:6px;top:4px;width:18px;height:18px}
-#view-challenge.is-flex .pieza.contenedor>.et{position:absolute;left:28px;top:3px;max-width:calc(100% - 34px)}
-#view-challenge.is-flex .pieza .pieza .ic{width:26px;height:26px}
-#view-challenge.is-flex .pieza.cartel{height:auto}
+:where(#view-challenge.is-flex .board-layer .tablero > .pieza:not(.cartel)) {
+  width: 64px;
+  height: 64px;
+}
+:where(#view-challenge.is-flex .board-layer .pieza .pieza) {
+  width: 40px;
+  height: 40px;
+  padding: 3px;
+}
+.board-layer .pieza.contenedor {
+  display: block;
+  flex-direction: row;
+  justify-content: normal;
+  align-items: normal;
+  gap: 0;
+  width: auto;
+  height: auto;
+  padding: 24px 8px 8px;
+  overflow: visible;
+}
+:where(#view-challenge.is-flex .board-layer .tablero > .pieza.contenedor) {
+  width: auto;
+  height: auto;
+}
+#view-challenge.is-flex .pieza.contenedor > .ic {
+  position: absolute;
+  left: 6px;
+  top: 4px;
+  width: 18px;
+  height: 18px;
+}
+#view-challenge.is-flex .pieza.contenedor > .et {
+  position: absolute;
+  left: 28px;
+  top: 3px;
+  max-width: calc(100% - 34px);
+}
+#view-challenge.is-flex .pieza .pieza .ic {
+  width: 26px;
+  height: 26px;
+}
+#view-challenge.is-flex .pieza.cartel {
+  height: auto;
+}
 /* underground materials */
-.pieza.m-musgo{background:radial-gradient(circle at 30% 20%,rgba(190,255,220,.45),transparent 40%),repeating-linear-gradient(90deg,#2f6a5a 0 6px,#3c8a6e 6px 9px,#2a5a4e 9px 14px);border-color:#16342c}
-.pieza.m-hierro{background:radial-gradient(circle,#c8ccd4 0 2px,#4a4e58 2.5px,transparent 3.5px) 6px 6px/28px 28px,linear-gradient(180deg,#9aa0ac,#5c626e 55%,#454a54);border-color:#1e2228}
-.pieza.m-oro{background:linear-gradient(160deg,rgba(255,255,255,.55),transparent 30%),linear-gradient(180deg,#f6d36a,#d49a2a 60%,#a8701a);border-color:#5a3a0a}
-.pieza.m-obsidiana{background:radial-gradient(120% 80% at 25% 15%,rgba(210,170,255,.35),transparent 50%),linear-gradient(170deg,#3a2a52,#1e1630 70%);border-color:#0e0a18;box-shadow:inset 0 0 0 1px rgba(200,160,255,.25),inset 0 0 18px rgba(160,90,255,.25),0 3px 0 rgba(0,0,0,.35)}
-.pieza.m-seda{background:repeating-radial-gradient(circle at 50% 0,transparent 0 9px,rgba(240,236,255,.55) 9px 10px),repeating-conic-gradient(from 0deg at 50% 0,transparent 0 14deg,rgba(240,236,255,.5) 14deg 15deg),linear-gradient(#5a4e72,#3a3150);border-color:#1e1830}
+.pieza.m-musgo {
+  background:
+    radial-gradient(circle at 30% 20%, rgba(190, 255, 220, 0.45), transparent 40%),
+    repeating-linear-gradient(90deg, #2f6a5a 0 6px, #3c8a6e 6px 9px, #2a5a4e 9px 14px);
+  border-color: #16342c;
+}
+.pieza.m-hierro {
+  background:
+    radial-gradient(circle, #c8ccd4 0 2px, #4a4e58 2.5px, transparent 3.5px) 6px 6px / 28px 28px,
+    linear-gradient(180deg, #9aa0ac, #5c626e 55%, #454a54);
+  border-color: #1e2228;
+}
+.pieza.m-oro {
+  background:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.55), transparent 30%),
+    linear-gradient(180deg, #f6d36a, #d49a2a 60%, #a8701a);
+  border-color: #5a3a0a;
+}
+.pieza.m-obsidiana {
+  background:
+    radial-gradient(120% 80% at 25% 15%, rgba(210, 170, 255, 0.35), transparent 50%),
+    linear-gradient(170deg, #3a2a52, #1e1630 70%);
+  border-color: #0e0a18;
+  box-shadow:
+    inset 0 0 0 1px rgba(200, 160, 255, 0.25),
+    inset 0 0 18px rgba(160, 90, 255, 0.25),
+    0 3px 0 rgba(0, 0, 0, 0.35);
+}
+.pieza.m-seda {
+  background:
+    repeating-radial-gradient(
+      circle at 50% 0,
+      transparent 0 9px,
+      rgba(240, 236, 255, 0.55) 9px 10px
+    ),
+    repeating-conic-gradient(
+      from 0deg at 50% 0,
+      transparent 0 14deg,
+      rgba(240, 236, 255, 0.5) 14deg 15deg
+    ),
+    linear-gradient(#5a4e72, #3a3150);
+  border-color: #1e1830;
+}

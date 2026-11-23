@@ -1,8 +1,42 @@
-.status-list{display:grid;gap:6px;margin-top:12px;font-size:15.5px}
-.status-list:empty{display:none}
-.msg{display:flex;gap:8px;align-items:flex-start;padding:7px 10px;border-radius:8px;line-height:1.4}
-.msg .rune{width:17px;height:17px;flex:none;margin-top:2px}
-.msg.error{background:rgba(255,138,118,.1);border:1px solid rgba(255,138,118,.38);color:#ffd2c8}
-.msg.aviso{background:rgba(246,185,85,.09);border:1px solid rgba(246,185,85,.35);color:#fbe3b5}
-.msg.bien{background:rgba(114,242,224,.1);border:1px solid rgba(114,242,224,.4);color:#c8fff7}
-.msg code{color:inherit;font-weight:600}
+.status-list {
+  display: grid;
+  gap: 6px;
+  margin-top: 12px;
+  font-size: 15.5px;
+}
+.status-list:empty {
+  display: none;
+}
+.msg {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  padding: 7px 10px;
+  border-radius: 8px;
+  line-height: 1.4;
+}
+.msg .rune {
+  width: 17px;
+  height: 17px;
+  flex: none;
+  margin-top: 2px;
+}
+.msg.error {
+  background: rgba(255, 138, 118, 0.1);
+  border: 1px solid rgba(255, 138, 118, 0.38);
+  color: #ffd2c8;
+}
+.msg.aviso {
+  background: rgba(246, 185, 85, 0.09);
+  border: 1px solid rgba(246, 185, 85, 0.35);
+  color: #fbe3b5;
+}
+.msg.bien {
+  background: rgba(114, 242, 224, 0.1);
+  border: 1px solid rgba(114, 242, 224, 0.4);
+  color: #c8fff7;
+}
+.msg code {
+  color: inherit;
+  font-weight: 600;
+}

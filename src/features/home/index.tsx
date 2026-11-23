@@ -1,52 +1,63 @@
-/** Title screen: cards from the model, sounds and navigation here. */
+/** Title screen: the adventures, new game and the sound switches. */
 import { useEffect, useState } from 'react';
-import { navigate } from '../../core/navigation';
-import { session } from '../../core/session';
-import { progress, saveProgress } from '../../core/state';
-import { useGame } from '../../core/useGame';
+import type { WorldId } from '../../core/models';
+import { goToMap } from '../../core/navigation';
+import { finaleUnlocked } from '../../core/progress/queries';
+import {
+  changeSettings,
+  enterWorld,
+  getProgress,
+  resetProgress,
+  useProgress,
+} from '../../core/progress/store';
 import { music, sound } from '../../shared/audio/audio';
-import type { HomeAction } from './actions';
 import { HomeView } from './HomeView';
-import { adventureCards, clearProgress, decideHome } from './model';
+import { adventureCards, resetWarning } from './model';
 
-export function Home({ onNewGame }: { readonly onNewGame: (text: string) => void }) {
-  useGame();
+export interface HomeProps {
+  /** Ask the player to confirm before the progress is wiped. */
+  readonly onConfirmReset: (warning: string) => void;
+}
+
+export function Home({ onConfirmReset }: HomeProps) {
+  const progress = useProgress();
   const [shake, setShake] = useState(false);
-  useEffect(() => { music.escala('inicio'); }, []);
 
-  const apply = (action: HomeAction) => {
-    const effect = decideHome(action);
-    if (effect.type === 'shake') {
+  useEffect(() => {
+    music.setScene('inicio');
+  }, []);
+
+  const select = (world: WorldId) => {
+    if (world === 'finale' && !finaleUnlocked(getProgress())) {
       sound.error();
+      // Restart the animation even if it is still running from the last click.
       setShake(false);
       requestAnimationFrame(() => setShake(true));
       return;
     }
-    if (effect.type === 'enter') {
-      sound.clic();
-      session.world = effect.world;
-      progress.mundo = effect.world;
-      saveProgress();
-      navigate('mapa');
-      return;
-    }
-    if (effect.type === 'confirm-reset') {
-      sound.clic();
-      onNewGame(effect.text);
-      return;
-    }
-    if (effect.type === 'reset') {
-      sound.clic();
-      clearProgress();
-      saveProgress(true);
-      return;
-    }
-    progress.sonido = !progress.sonido;
-    saveProgress();
-    sound.clic();
+    sound.click();
+    enterWorld(world);
+    goToMap();
   };
 
-  return <HomeView cards={adventureCards()} shake={shake} soundOn={progress.sonido} onSelect={(world) => apply({ type: 'select', world })} onNewGame={() => apply({ type: 'new-game' })} onToggleSound={() => apply({ type: 'toggle-sound' })} />;
-}
+  const newGame = () => {
+    sound.click();
+    const warning = resetWarning(getProgress());
+    if (warning) onConfirmReset(warning);
+    else resetProgress();
+  };
 
-export { clearProgress as resetProgress };
+  return (
+    <HomeView
+      cards={adventureCards(progress)}
+      shake={shake}
+      soundOn={progress.settings.sound}
+      onSelect={select}
+      onNewGame={newGame}
+      onToggleSound={() => {
+        changeSettings({ sound: !progress.settings.sound });
+        sound.click();
+      }}
+    />
+  );
+}

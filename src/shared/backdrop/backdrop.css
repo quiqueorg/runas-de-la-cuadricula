@@ -1,9 +1,43 @@
 /* ───────── backdrop ───────── */
-#backdrop{position:fixed;inset:0;z-index:-1;overflow:hidden;background:#1b2b33}
-.backdrop-scene{position:absolute;inset:-30px;background:url(../../../assets/paisaje.jpg) 60% 40%/cover;transition:filter .8s,transform .8s}
-.backdrop-veil{position:absolute;inset:0;transition:background .8s}
-body[data-view=home] .backdrop-veil{background:radial-gradient(ellipse 60% 42% at 50% 30%,rgba(8,20,30,.42),transparent 70%),linear-gradient(180deg,transparent 45%,rgba(6,12,14,.78))}
-body:not([data-view=home]) .backdrop-scene{filter:blur(14px) saturate(1.1) brightness(.5);transform:scale(1.06)}
-body[data-mundo=flex]:not([data-view=home]) .backdrop-scene{background-image:url(../../../assets/mapa-sub.jpg);background-position:50% 50%}
-body:not([data-view=home]) .backdrop-veil{background:radial-gradient(ellipse at 50% 0,rgba(20,40,44,.2),rgba(6,10,12,.72) 75%)}
-@media (orientation:portrait) and (max-width:900px){.backdrop-scene{background-image:url(../../../assets/paisaje-vertical.jpg);background-position:50% 35%}}
+#backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  background: #1b2b33;
+}
+.backdrop-scene {
+  position: absolute;
+  inset: -30px;
+  background: url(../../../assets/paisaje.jpg) 60% 40% / cover;
+  transition:
+    filter 0.8s,
+    transform 0.8s;
+}
+.backdrop-veil {
+  position: absolute;
+  inset: 0;
+  transition: background 0.8s;
+}
+body[data-view="home"] .backdrop-veil {
+  background:
+    radial-gradient(ellipse 60% 42% at 50% 30%, rgba(8, 20, 30, 0.42), transparent 70%),
+    linear-gradient(180deg, transparent 45%, rgba(6, 12, 14, 0.78));
+}
+body:not([data-view="home"]) .backdrop-scene {
+  filter: blur(14px) saturate(1.1) brightness(0.5);
+  transform: scale(1.06);
+}
+body[data-world="flex"]:not([data-view="home"]) .backdrop-scene {
+  background-image: url(../../../assets/mapa-sub.jpg);
+  background-position: 50% 50%;
+}
+body:not([data-view="home"]) .backdrop-veil {
+  background: radial-gradient(ellipse at 50% 0, rgba(20, 40, 44, 0.2), rgba(6, 10, 12, 0.72) 75%);
+}
+@media (orientation: portrait) and (max-width: 900px) {
+  .backdrop-scene {
+    background-image: url(../../../assets/paisaje-vertical.jpg);
+    background-position: 50% 35%;
+  }
+}

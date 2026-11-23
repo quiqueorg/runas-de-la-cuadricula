@@ -1,14 +1,34 @@
 /** Authored lesson HTML becomes React nodes. It is not assigned as innerHTML. */
 import { createElement, type ReactNode } from 'react';
 
-const ALLOWED = new Set(['p', 'b', 'i', 'em', 'strong', 'code', 'pre', 'span', 'br', 'button', 'small', 'ul', 'ol', 'li', 'div']);
+const ALLOWED = new Set([
+  'p',
+  'b',
+  'i',
+  'em',
+  'strong',
+  'code',
+  'pre',
+  'span',
+  'br',
+  'button',
+  'small',
+  'ul',
+  'ol',
+  'li',
+  'div',
+]);
 
 export interface RichTextProps {
   readonly html: string;
   readonly onAction?: (id: string) => void;
 }
 
-function renderNodes(parent: Node, prefix: string, onAction: ((id: string) => void) | undefined): ReactNode[] {
+function renderNodes(
+  parent: Node,
+  prefix: string,
+  onAction: ((id: string) => void) | undefined,
+): ReactNode[] {
   return [...parent.childNodes].map((node, index) => {
     const key = `${prefix}.${index}`;
     if (node.nodeType === Node.TEXT_NODE) return node.textContent;
@@ -20,7 +40,15 @@ function renderNodes(parent: Node, prefix: string, onAction: ((id: string) => vo
     if (tag === 'button') {
       const id = node.id;
       return (
-        <button key={key} type="button" className={node.className || undefined} id={id || undefined} onClick={() => { if (id) onAction?.(id); }}>
+        <button
+          key={key}
+          type="button"
+          className={node.className || undefined}
+          id={id || undefined}
+          onClick={() => {
+            if (id) onAction?.(id);
+          }}
+        >
           {children}
         </button>
       );
